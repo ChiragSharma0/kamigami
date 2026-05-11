@@ -1,0 +1,121 @@
+@font-face {
+  font-family: "gothic";
+  src: url("../../assets/fonts/GothicVille.ttf");
+}
+
+@font-face {
+  font-family: "bytes";
+  src: url("../../assets/fonts/BYTES.ttf") format("truetype");
+}
+
+
+/* SECTION */
+
+.product-section{
+  background:#000;
+  min-height:100vh;
+  padding:60px 80px;
+}
+
+
+/* FILTER BAR */
+
+.filter-bar{
+  display:flex;
+  align-items:center;
+  gap:10px;
+
+  color:#d1d5db;
+  margin-bottom:35px;
+
+  cursor:pointer;
+
+  font-size:14px;
+  letter-spacing:1px;
+
+  transition:0.3s;
+
+  font-family: "bytes", sans-serif;
+}
+
+.filter-bar:hover{
+  color:#fff;
+  transform:translateY(-2px);
+}
+
+
+/* PRODUCT GRID */
+
+.product-grid{ 
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0,1fr));
+  gap:35px;
+  width:100%;
+  justify-items:center;
+}
+
+
+/* CARD HOVER EFFECT */
+
+.product-grid > *{
+  transition:0.35s ease;
+}
+
+/* .product-grid > *:hover{
+  transform:translateY(-6px);
+} */
+
+
+
+
+/* LARGE TABLET */
+
+@media (max-width:1200px){
+
+  .product-section{
+    padding:50px 60px;
+  }
+
+  .product-grid{
+    grid-template-columns:repeat(2, 1fr);
+    gap:30px;
+  }
+
+}
+
+
+/* TABLET */
+
+@media (max-width:900px){
+
+  .product-section{
+    padding:40px 30px;
+  }
+
+  .product-grid{
+    grid-template-columns:repeat(2, 1fr);
+    gap:25px;
+  }
+
+}
+
+
+/* MOBILE */
+
+@media (max-width:600px){
+
+  .product-section{
+    padding:30px 12px;
+  }
+
+  .filter-bar{
+    font-size:13px;
+    margin-bottom:25px;
+  }
+
+  .product-grid{
+    grid-template-columns:repeat(2, 1fr);
+    gap:20px;
+  }
+
+}

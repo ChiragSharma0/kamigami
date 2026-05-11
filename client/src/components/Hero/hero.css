@@ -1,0 +1,171 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+}
+.hero {
+  height: 100vh;
+  width: 100%;
+  background: black;
+  position: relative;
+  overflow: hidden;
+}
+
+
+
+.mask-box {
+  position: absolute;
+  border: 1px solid white;
+  cursor: grab;
+  will-change: transform;
+  z-index: 0;
+}
+
+/* corner container */
+.corners {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* 4 corner elements */
+.mask-box::before,
+.mask-box::after,
+.corners::before,
+.corners::after {
+  content: "";
+  position: absolute;
+  width: 25px;
+  height: 25px;
+  border: 2px solid white;
+}
+
+/* top left */
+.mask-box::before {
+  top: -6px;
+  left: -6px;
+  border-right: none;
+  border-bottom: none;
+}
+
+/* bottom right */
+.mask-box::after {
+  bottom: -6px;
+  right: -6px;
+  border-left: none;
+  border-top: none;
+}
+
+/* top right */
+.corners::before {
+  top: -6px;
+  right: -6px;
+  border-left: none;
+  border-bottom: none;
+}
+
+/* bottom left */
+.corners::after {
+  bottom: -6px;
+  left: -6px;
+  border-right: none;
+  border-top: none;
+}
+
+/* HERO FRAME CORNERS */
+
+.hero::before,
+.hero::after,
+.hero .hero-corners::before,
+.hero .hero-corners::after {
+  content: "";
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border: 1px solid white;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* top-left */
+.hero::before {
+  top: 68px;   /* 80 navbar + 20 spacing */
+  left: 20px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.hero::after {
+  top: 68px;
+  right: 20px;
+  border-left: none;
+  border-bottom: none;
+}
+
+/* bottom-left */
+.hero .hero-corners::before {
+  bottom: 20px;
+  left: 20px;
+  border-right: none;
+  border-top: none;
+}
+
+/* bottom-right */
+.hero .hero-corners::after {
+  bottom: 20px;
+  right: 20px;
+  border-left: none;
+  border-top: none;
+}
+
+.coord-label {
+  position: absolute;
+  top: -25px;
+  left: 0;
+  background: rgba(255,255,255,0.8);
+  color: black;
+  font-size: 12px;
+  padding: 2px 6px;
+  font-family: monospace;
+  pointer-events: none;
+}
+
+
+
+
+
+.mask-box:active {
+  cursor: grabbing;
+}
+
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+
+.cursor-coords{
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  font-family: monospace;
+  font-size: 9px;
+  color: white;
+}
+
+.coord-grab{
+  display:none;
+}
+
+/* .cursor-coords div{
+  background: rgba(0,0,0,0.7);
+  padding: 3px 6px;
+  margin-top: 2px;
+  border: 1px solid rgba(255,255,255,0.3);
+} */

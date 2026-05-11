@@ -1,0 +1,75 @@
+.main {
+  width: 100%;
+  min-height: 100vh;
+  background: #0f172a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  color: white;
+}
+
+.main h2 {
+  font-size: 28px;
+  margin-bottom: 30px;
+  letter-spacing: 1px;
+}
+
+/* form container */
+.admin-form {
+  width: 420px;
+  background: #1e293b;
+  padding: 30px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0px 10px 25px rgba(0,0,0,0.4);
+}
+
+/* inputs */
+.admin-form input,
+.admin-form textarea,
+.admin-form select {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  outline: none;
+  background: #0f172a;
+  color: white;
+  font-size: 14px;
+  transition: 0.2s ease;
+}
+
+/* textarea resize control */
+.admin-form textarea {
+  resize: none;
+  min-height: 90px;
+}
+
+/* focus effect */
+.admin-form input:focus,
+.admin-form textarea:focus,
+.admin-form select:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 5px rgba(56,189,248,0.5);
+}
+
+/* button */
+.admin-form button {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg,#38bdf8,#0ea5e9);
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.admin-form button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(14,165,233,0.4);
+}
