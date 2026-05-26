@@ -1,4 +1,3 @@
-// src/components/Navbar/Navbar.jsx
 import { useState, useContext } from "react";
 import "./navbar.css";
 import {
@@ -10,26 +9,35 @@ import {
   Menu,
   X,
   Compass,
+  LogOut
 } from "lucide-react";
 
 import { Sling as Hamburger } from 'hamburger-react'
 
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/images/Logo.png";
 import StoryIcon from "../../elements/StoryIcon";
 import CartSidebar from "../CartSidebar/CartSidebar";
 import SearchOverlay from "../Search/SearchBox";
 import { CartContext } from "../../Context/CartContext";
+import { useAuth } from "../../Context/AuthContext";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const { cartItems, isCartOpen, setIsCartOpen } = useContext(CartContext);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const [openDropdown, setOpenDropdown] = useState(null);
 
   const toggleDropdown = (name) => {
     setOpenDropdown(openDropdown === name ? null : name);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
   };
 
   return (
@@ -56,12 +64,24 @@ export default function Navbar() {
           <button onClick={() => setSearchOpen(true)}>
             <Search size={22} />
           </button>
-          <Link to="/userprofile">
-            <User size={22} />
-          </Link>
-          <Link to="/wishlist">
-            <Heart size={22} />
-          </Link>
+          
+          {user ? (
+            <div className="user-nav-group">
+              <Link to="/userprofile">
+                <User size={22} />
+              </Link>
+              <button onClick={handleLogout} className="logout-btn-nav">
+                <LogOut size={18} />
+              </button>
+            </div>
+          ) : (
+            <Link to="/sign-up" className="login-link-nav">
+              <User size={22} />
+              <span className="nav-label">Login</span>
+            </Link>
+          )}
+
+          
           <button onClick={() => setIsCartOpen(true)}>
             <ShoppingCart size={22} />
           </button>
@@ -182,12 +202,20 @@ export default function Navbar() {
 
           {/* Secondary links */}
           <div className="mobile-overlay-secondary">
-            <Link to="/userprofile" onClick={() => setOpen(false)}>
-              User Profile
-            </Link>
-            <Link to="/sign-up" onClick={() => setOpen(false)}>
-              Sign Up
-            </Link>
+            {user ? (
+              <>
+                <Link to="/userprofile" onClick={() => setOpen(false)}>
+                  User Profile ({user.email})
+                </Link>
+                <button onClick={handleLogout} className="mobile-logout-btn">
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link to="/sign-up" onClick={() => setOpen(false)}>
+                Sign Up / Login
+              </Link>
+            )}
             <Link to="/userprofile" onClick={() => setOpen(false)}>
               Accessories
             </Link>
@@ -243,7 +271,7 @@ export default function Navbar() {
           <Link to="/all-products" className="bottom-nav-item">
             <Compass size={22} />
           </Link>
-          <Link to="/userprofile" className="bottom-nav-item">
+          <Link to={user ? "/userprofile" : "/sign-up"} className="bottom-nav-item">
             <User size={22} />
           </Link>
           <Link className="bottom-nav-item" onClick={() => setSearchOpen(true)}>

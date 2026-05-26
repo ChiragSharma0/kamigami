@@ -4,31 +4,28 @@ import App from "./App";
 import "./index.css";
 
 import { BrowserRouter } from "react-router-dom";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import { Toaster } from "react-hot-toast";
 
-import { ProductDataProvider } 
-from "./context/ProductDataContext";
+import { ProductDataProvider } from "./Context/ProductDataContext";
+import { CartProvider } from "./Context/CartContext";
+import { AuthProvider } from "./Context/AuthContext";
 
-import { CartProvider } 
-from "./Context/CartContext";
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-
   <React.StrictMode>
-
-    <ProductDataProvider>
-
-      <CartProvider>
-
-        <BrowserRouter>
-
-          <App />
-
-        </BrowserRouter>
-
-      </CartProvider>
-
-    </ProductDataProvider>
-
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <AuthProvider>
+        <ProductDataProvider>
+          <CartProvider>
+            <BrowserRouter>
+              <Toaster position="top-center" reverseOrder={false} />
+              <App />
+            </BrowserRouter>
+          </CartProvider>
+        </ProductDataProvider>
+      </AuthProvider>
+    </GoogleOAuthProvider>
   </React.StrictMode>
-
 );

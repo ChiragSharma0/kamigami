@@ -67,32 +67,15 @@
 
 /* Google Button */
 
-.google-btn {
+.google-btn-container {
     width: 100%;
-    padding: 12px;
-
-    border-radius: 8px;
-
-    background: red;
-
-    border: none;
-
-    color: white;
-
-    font-size: 0.95rem;
-    font-weight: 400;
-
-    cursor: pointer;
-
     margin-bottom: 20px;
-
-    transition: 0.2s;
-    font-family: "bytes", sans-serif;
-    letter-spacing: 1px;
+    display: flex;
+    justify-content: center;
 }
 
-.google-btn:hover {
-    opacity: 0.9;
+.google-btn-container iframe {
+    width: 100% !important;
 }
 
 /* Divider */
@@ -180,6 +163,29 @@
 
 .continue-btn:hover {
     background-color: #222;
+}
+
+.continue-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.toggle-auth {
+    color: red;
+    font-size: 0.8rem;
+    text-align: center;
+    cursor: pointer;
+    margin-bottom: 15px;
+    font-family: "bytes", sans-serif;
+    transition: 0.2s;
+}
+
+.toggle-auth:hover {
+    opacity: 0.8;
+}
+
+.login-form {
+    width: 100%;
 }
 
 /* Terms */

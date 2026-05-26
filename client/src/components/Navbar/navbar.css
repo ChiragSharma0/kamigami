@@ -101,6 +101,47 @@
   transform: scale(1.1);
 }
 
+.user-nav-group {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.logout-btn-nav {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #E71E22;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: transform 0.3s;
+}
+
+.logout-btn-nav:hover {
+  transform: scale(1.1);
+}
+
+.login-link-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.3s;
+}
+
+.login-link-nav:hover {
+  transform: scale(1.05);
+}
+
+.nav-label {
+  font-family: "bytes", sans-serif;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
 
 
 /* ... keep all your existing CSS above the @media block ... */
@@ -286,6 +327,23 @@
 
 .mobile-overlay-secondary a:hover {
   color: #E71E22;
+}
+
+.mobile-logout-btn {
+  background: none;
+  border: none;
+  padding: 14px 0;
+  font-family: "bytes", sans-serif;
+  font-size: 15px;
+  color: #E71E22;
+  text-decoration: underline;
+  text-align: left;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.mobile-logout-btn:hover {
+  opacity: 0.8;
 }
 
 /* Icons row at bottom */

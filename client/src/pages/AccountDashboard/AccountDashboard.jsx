@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import {
   ShoppingBag,
   Package,
@@ -6,7 +7,10 @@ import {
   User,
   Phone,
   Mail,
+  Loader2
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../Context/AuthContext";
 
 import AccountSidebar from "../../components/AccountSidebar/AccountSidebar";
 import StatCard from "../../components/StatCard/StatCard";
@@ -56,19 +60,30 @@ const orders = [
     date: "March 13, 2026",
     price: "1,899",
   },
-  {
-    image:
-      "https://images.unsplash.com/photo-1542272604-787c3835535d?w=200&h=200&fit=crop",
-    name: "Kamigami Cargo Joggers — Charcoal",
-    status: "Processing",
-    date: "March 15, 2026",
-    price: "2,799",
-  },
 ];
 
 /* ── Page Component ── */
 
 const AccountDashboard = () => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/sign-up");
+    }
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="dashboard-loading">
+        <Loader2 className="animate-spin text-red-600" size={48} />
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
   return (
     <div className="dashboard-page">
       <div className="dashboard-container">
@@ -105,14 +120,14 @@ const AccountDashboard = () => {
                     <User size={14} />
                     Full Name
                   </label>
-                  <input type="text" defaultValue="Rahul Sharma" />
+                  <input type="text" defaultValue={user.firstName ? `${user.firstName} ${user.lastName || ''}` : 'Set your name'} />
                 </div>
                 <div className="detail-field">
                   <label>
                     <Phone size={14} />
                     Phone Number
                   </label>
-                  <input type="text" defaultValue="+91 98765 43210" />
+                  <input type="text" defaultValue={user.phone || "No phone added"} />
                 </div>
                 <div className="detail-field">
                   <label>
@@ -121,7 +136,8 @@ const AccountDashboard = () => {
                   </label>
                   <input
                     type="email"
-                    defaultValue="rahul.sharma@email.com"
+                    value={user.email}
+                    readOnly
                   />
                 </div>
               </div>
@@ -155,3 +171,4 @@ const AccountDashboard = () => {
 };
 
 export default AccountDashboard;
+

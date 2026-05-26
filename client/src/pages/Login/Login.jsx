@@ -1,7 +1,44 @@
-import React from "react";
+import React, { useState } from "react";
+import { GoogleLogin } from "@react-oauth/google";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../Context/AuthContext";
 import "./module.css";
 
 const Login = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isRegister, setIsRegister] = useState(false);
+  const [loading, setLoading] = useState(false);
+  
+  const { login, register, googleLogin } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      if (isRegister) {
+        await register({ email, password });
+      } else {
+        await login(email, password);
+      }
+      navigate("/");
+    } catch (error) {
+      console.error("Auth failed:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      await googleLogin(credentialResponse.credential);
+      navigate("/");
+    } catch (error) {
+      console.error("Google login failed:", error);
+    }
+  };
+
   return (
     <div className="login-page">
       <div className="login-card">
@@ -9,23 +46,58 @@ const Login = () => {
         <h1 className="logo-text">KAMIGAMI</h1>
 
         {/* Title */}
-        <h2 className="login-title">Sign in</h2>
+        <h2 className="login-title">{isRegister ? "Create Account" : "Sign in"}</h2>
 
-        <p className="login-subtext">Sign in or create an account</p>
+        <p className="login-subtext">
+          {isRegister ? "Join us today" : "Sign in to your account"}
+        </p>
 
         {/* Google Button */}
-        <button className="google-btn">Continue with Google</button>
+        <div className="google-btn-container">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => {
+              console.log("Login Failed");
+            }}
+            useOneTap
+            width="100%"
+          />
+        </div>
 
         {/* Divider */}
         <div className="divider">
           <span>or</span>
         </div>
 
-        {/* Phone Input */}
-        <input type="tel" placeholder="Phone number" className="phone-input" />
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="login-form">
+          <input
+            type="email"
+            placeholder="Email address"
+            className="phone-input"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            className="phone-input"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+          />
 
-        {/* Continue Button */}
-        <button className="continue-btn">Continue</button>
+          {/* Continue Button */}
+          <button type="submit" className="continue-btn" disabled={loading}>
+            {loading ? "Processing..." : isRegister ? "Sign up" : "Continue"}
+          </button>
+        </form>
+
+        <p className="toggle-auth" onClick={() => setIsRegister(!isRegister)}>
+          {isRegister ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
+        </p>
 
         {/* Terms */}
         <p className="terms-text">
