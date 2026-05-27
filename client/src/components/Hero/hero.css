@@ -23,7 +23,7 @@ html, body {
   border: 1px solid white;
   cursor: grab;
   will-change: transform;
-  z-index: 0;
+  z-index: 1;
 }
 
 /* corner container */
@@ -89,7 +89,7 @@ html, body {
   height: 40px;
   border: 1px solid white;
   pointer-events: none;
-  z-index: 2;
+  z-index: 20;
 }
 
 /* top-left */
@@ -169,3 +169,99 @@ canvas {
   margin-top: 2px;
   border: 1px solid rgba(255,255,255,0.3);
 } */
+
+/* Timed Drop Countdown Hero Button */
+.hero-countdown-btn {
+  position: absolute;
+  bottom: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(12px);
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+  padding: 14px 28px;
+  border-radius: 40px;
+  color: #fff;
+  text-decoration: none;
+  font-family: 'Outfit', 'Inter', monospace;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.hero-countdown-btn:hover {
+  border-color: #fff;
+  background: #fff;
+  color: #000;
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 0 10px 25px rgba(255, 255, 255, 0.15);
+}
+
+.btn-pulse-dot {
+  width: 8px;
+  height: 8px;
+  background: #e71e22; /* Brand Red */
+  border-radius: 50%;
+  position: relative;
+}
+
+.hero-countdown-btn:hover .btn-pulse-dot {
+  background: #000;
+}
+
+.btn-pulse-dot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid #e71e22;
+  animation: pulse-ring 1.5s infinite;
+}
+
+.hero-countdown-btn:hover .btn-pulse-dot::after {
+  border-color: #000;
+}
+
+.btn-label {
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 600;
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  padding-right: 16px;
+  transition: all 0.3s ease;
+}
+
+.hero-countdown-btn:hover .btn-label {
+  color: rgba(0, 0, 0, 0.6);
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+.btn-timer {
+  font-family: monospace;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: #fff;
+  transition: all 0.3s ease;
+}
+
+.hero-countdown-btn:hover .btn-timer {
+  color: #000;
+  font-weight: 900;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.6);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}

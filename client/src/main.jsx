@@ -7,6 +7,8 @@ import { BrowserRouter } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Toaster } from "react-hot-toast";
 
+import { HelmetProvider } from "react-helmet-async";
+
 import { ProductDataProvider } from "./Context/ProductDataContext";
 import { CartProvider } from "./Context/CartContext";
 import { AuthProvider } from "./Context/AuthContext";
@@ -19,10 +21,12 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <AuthProvider>
         <ProductDataProvider>
           <CartProvider>
-            <BrowserRouter>
-              <Toaster position="top-center" reverseOrder={false} />
-              <App />
-            </BrowserRouter>
+            <HelmetProvider>
+              <BrowserRouter>
+                <Toaster position="top-center" reverseOrder={false} />
+                <App />
+              </BrowserRouter>
+            </HelmetProvider>
           </CartProvider>
         </ProductDataProvider>
       </AuthProvider>

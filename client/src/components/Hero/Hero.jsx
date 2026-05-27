@@ -1,13 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import "../Hero/hero.css";
 import gsap from "gsap";
 import Draggable from "gsap/dist/Draggable";
 import videoSrc from "../../assets/videos/14.mp4";
-
-import Product from "../../pages/ProductPages/Product";
-import HeroSlider from "../../pages/HeroSlider/HeroSlider";
-import AboutSection from "../../pages/AboutSection/AboutSection";
-import TestimonialSection from "../../pages/TestimonialSection/TestimonialSection";
+import api from "../../services/api";
 
 gsap.registerPlugin(Draggable);
 
@@ -23,6 +20,60 @@ export default function MaskVideo() {
   const videoRef = useRef(null);
   const maskRefs = useRef([]);
   const heroRef = useRef(null);
+  const [featuredDrop, setFeaturedDrop] = useState(null);
+  const [timeLeft, setTimeLeft] = useState("");
+
+  // Fetch drops and active status on load
+  useEffect(() => {
+    const fetchDrops = async () => {
+      try {
+        const res = await api.get('/drops');
+        const drops = res.data?.data?.drops || [];
+        const active = drops.find(d => d.status === 'ACTIVE');
+        if (active) {
+          setFeaturedDrop({ ...active, isActive: true });
+        } else {
+          const nextDrop = drops.find(d => d.status === 'SCHEDULED');
+          if (nextDrop) {
+            setFeaturedDrop({ ...nextDrop, isActive: false });
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching drops for hero:", err);
+      }
+    };
+    fetchDrops();
+  }, []);
+
+  // Timer Tick Hook
+  useEffect(() => {
+    if (!featuredDrop) return;
+    if (featuredDrop.isActive) {
+      setTimeLeft("GO TO DROP");
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const difference = new Date(featuredDrop.startTime) - new Date();
+      if (difference <= 0) {
+        setTimeLeft("LIVE NOW");
+        clearInterval(interval);
+        // Refresh page/state to transition to active
+        window.location.reload();
+        return;
+      }
+
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((difference / 1000 / 60) % 60);
+      const seconds = Math.floor((difference / 1000) % 60);
+
+      const formatted = `${days > 0 ? `${days}d : ` : ""}${String(hours).padStart(2, "0")}h : ${String(minutes).padStart(2, "0")}m : ${String(seconds).padStart(2, "0")}s`;
+      setTimeLeft(formatted);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [featuredDrop]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -55,7 +106,9 @@ export default function MaskVideo() {
     });
 
     function handleMouseMove(e) {
-      const heroRect = heroRef.current.getBoundingClientRect();
+      const heroRefCurrent = heroRef.current;
+      if (!heroRefCurrent) return;
+      const heroRect = heroRefCurrent.getBoundingClientRect();
 
       // check if cursor inside hero + navbar area
       if (e.clientY < heroRect.bottom) {
@@ -202,33 +255,12 @@ export default function MaskVideo() {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener("mousemove", handleMouseMove);
     };
-
-    // cursor
-  }, []);
+  }, [featuredDrop]);
 
   const addMaskRef = (el) => {
     if (el && !maskRefs.current.includes(el)) {
       maskRefs.current.push(el);
     }
-  };
-
-  const makeDraggable = (e, element) => {
-    e.preventDefault();
-    let offsetX = e.clientX - element.offsetLeft;
-    let offsetY = e.clientY - element.offsetTop;
-
-    function onMouseMove(e) {
-      element.style.left = e.clientX - offsetX + "px";
-      element.style.top = e.clientY - offsetY + "px";
-    }
-
-    function onMouseUp() {
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
-    }
-
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
   };
 
   return (
@@ -259,6 +291,16 @@ export default function MaskVideo() {
             <canvas />
           </div>
         ))}
+
+        {featuredDrop && (
+          <Link to="/drops" className="hero-countdown-btn">
+            <span className="btn-pulse-dot"></span>
+            <span className="btn-label">
+              {featuredDrop.isActive ? "GATES ARE OPEN" : "THE DESCENSION"}
+            </span>
+            <span className="btn-timer">{timeLeft}</span>
+          </Link>
+        )}
 
         <div className="cursor-coords">
           <div className="coord-x">X: 0px</div>

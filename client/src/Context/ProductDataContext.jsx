@@ -1,5 +1,6 @@
-import { createContext, useState } from "react";
+import { createContext, useState, useEffect } from "react";
 import SoonImage from "../assets/images/soon.png"; 
+import api from "../services/api";
 
 export const ProductDataContext = createContext();
 
@@ -7,7 +8,7 @@ export const ProductDataProvider = ({ children }) => {
   const dummyProducts = [
     {
       id: "MN001A12",
-      image:SoonImage,
+      image: SoonImage,
       title: "Men Casual Street T-Shirt",
       description:
         "Stylish slim-fit casual t-shirt perfect for daily wear and street fashion.",
@@ -79,6 +80,64 @@ export const ProductDataProvider = ({ children }) => {
   ];
 
   const [productData, setProductData] = useState(dummyProducts);
+
+  const formatServerProduct = (p) => {
+    // 1. Get first image URL or fallback
+    let image = SoonImage;
+    if (p.media && p.media.length > 0 && p.media[0].media && p.media[0].media.url) {
+      image = p.media[0].media.url;
+    }
+    
+    // 2. Parse price
+    const price = p.basePrice ? Number(p.basePrice) : 0;
+    
+    // 3. Compute discount dynamically from retail pricing differences
+    let discount = 0;
+    if (p.compareAtPrice && Number(p.compareAtPrice) > price) {
+      const comparePrice = Number(p.compareAtPrice);
+      discount = Math.round(((comparePrice - price) / comparePrice) * 100);
+    }
+    
+    // 4. Get category string
+    const category = p.category?.name?.toLowerCase() || 'unassigned';
+
+    // 5. Get sizing options from variants (fallback to 'M')
+    let size = 'M';
+    if (p.variants && p.variants.length > 0) {
+      const sizeAttr = p.variants[0].attributes?.size || p.variants[0].attributes?.Size;
+      if (sizeAttr) size = sizeAttr;
+    }
+
+    return {
+      id: p.id,
+      title: p.name,
+      description: p.description || "",
+      price,
+      image,
+      category,
+      size,
+      discount,
+      slug: p.slug,
+      variants: p.variants,
+    };
+  };
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await api.get("/products");
+        const serverProducts = response.data.data.products || [];
+        
+        if (serverProducts.length > 0) {
+          const formatted = serverProducts.map(formatServerProduct);
+          setProductData(formatted);
+        }
+      } catch (error) {
+        console.error("Error fetching products from server:", error.message);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   console.log("Context Data:", productData);
 

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import PageMeta from "../../components/PageMeta";
 import { GoogleLogin } from "@react-oauth/google";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../Context/AuthContext";
@@ -41,6 +42,14 @@ const Login = () => {
 
   return (
     <div className="login-page">
+      <PageMeta 
+        title={isRegister ? "Create Account" : "Sign In"} 
+        description={
+          isRegister 
+            ? "Create a Kamigami account to enjoy exclusive access to limited-edition streetwear drops, track your order history, and save your preferred delivery addresses."
+            : "Sign in to your Kamigami account to manage your profile details, track recent orders, view saved wishlist items, and update your personal shipping addresses."
+        } 
+      />
       <div className="login-card">
         {/* Logo */}
         <h1 className="logo-text">KAMIGAMI</h1>

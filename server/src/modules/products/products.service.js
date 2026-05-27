@@ -156,13 +156,15 @@ exports.listProducts = async (filters) => {
   return result;
 };
 
-exports.getProductBySlug = async (slug) => {
-  const cacheKey = `product:${slug}`;
+exports.getProductBySlug = async (slugOrId) => {
+  const cacheKey = `product:${slugOrId}`;
   const cached = await cache.getCache(cacheKey);
   if (cached) return cached;
 
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
+
   const product = await prisma.product.findUnique({
-    where: { slug },
+    where: isUuid ? { id: slugOrId } : { slug: slugOrId },
     include: {
       variants: { include: { inventory: { select: { stockAvailable: true } } } },
       category: { select: { name: true, slug: true } },

@@ -10,6 +10,8 @@ import ProductDetails from "./pages/ProductDetails/ProductDeatils";
 import Admin from "./pages/Admin/Admin";
 import Login from "./pages/Login/Login";
 import Collections from "./pages/Collections/Collections";
+import CollectionDetail from "./pages/Collections/CollectionDetail";
+import Drops from "./pages/Drops/Drops";
 import MainContainer from "./components/Main Container/MainContainer";
 import AboutPage from "./pages/About Page/AboutPage";
 import ScrollToTop from "./components/ScrollToTop";
@@ -43,6 +45,8 @@ const App = () => {
 
         <Route path="/cartsidebar" element={<CartSidebar />} />
         <Route path="/collections" element={<Collections />} />
+        <Route path="/collections/:slug" element={<CollectionDetail />} />
+        <Route path="/drops" element={<Drops />} />
       </Routes>
 
       {/* Footer */}

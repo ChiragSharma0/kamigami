@@ -44,7 +44,7 @@ export default function Navbar() {
     <>
       <nav className="navbar">
         <div className="nav-left">
-          <Link to="/new">New In</Link>
+          <Link to="/drops">Drops</Link>
           <Link to="/collections">Collections</Link>
         </div>
 
@@ -104,13 +104,13 @@ export default function Navbar() {
         <div className="mobile-overlay-inner">
           {/* Top section — primary nav links */}
           <div className="mobile-overlay-top">
-            {/* New Arrivals — simple link, no dropdown */}
+            {/* Drops — simple link, no dropdown */}
             <Link
-              to="/new"
+              to="/drops"
               className="overlay-link"
               onClick={() => setOpen(false)}
             >
-              New Arrivals
+              Timed Drops
             </Link>
 
             {/* Collections — dropdown */}

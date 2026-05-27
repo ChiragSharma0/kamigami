@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import PageMeta from "../../components/PageMeta";
 import {
   ShoppingBag,
   Package,
@@ -86,6 +87,10 @@ const AccountDashboard = () => {
 
   return (
     <div className="dashboard-page">
+      <PageMeta 
+        title="My Account" 
+        description="Access and manage your personal Kamigami customer dashboard. View and track active orders, update your saved addresses, customize your profile, and more." 
+      />
       <div className="dashboard-container">
         {/* Left Sidebar */}
         <AccountSidebar />
