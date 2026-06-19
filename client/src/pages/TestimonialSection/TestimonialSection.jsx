@@ -1,12 +1,13 @@
-import { useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import api from "../../services/api";
 import "./testimonialSection.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
-/* ── Sample Data ─────────────────────────────────── */
-const testimonials = [
+/* ── Default Sample Data ─────────────────────────── */
+const DEFAULT_TESTIMONIALS = [
   {
     id: 1,
     name: "Arjun Mehta",
@@ -57,8 +58,24 @@ const Stars = ({ count }) => (
 
 /* ── Component ───────────────────────────────────── */
 const TestimonialSection = () => {
+  const [testimonials, setTestimonials] = useState(DEFAULT_TESTIMONIALS);
   const sectionRef = useRef(null);
   const cardRefs = useRef([]);
+
+  // Fetch testimonies on mount
+  useEffect(() => {
+    const fetchTestimonialsCms = async () => {
+      try {
+        const res = await api.get('/settings/homepage_cms');
+        if (res.data?.data?.value?.testimonials) {
+          setTestimonials(res.data.data.value.testimonials);
+        }
+      } catch (err) {
+        console.log('[CMS-Testimonials] Fetch failed or settings unseeded, using default reviews.');
+      }
+    };
+    fetchTestimonialsCms();
+  }, []);
 
   // Reset refs array on each render to avoid stale entries
   cardRefs.current = [];
@@ -139,7 +156,7 @@ const TestimonialSection = () => {
         if (st.trigger === sectionRef.current) st.kill();
       });
     };
-  }, []);
+  }, [testimonials]); // React on testimonies update
 
   return (
     <section className="testimonial-section" ref={sectionRef}>

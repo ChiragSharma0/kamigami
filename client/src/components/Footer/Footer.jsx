@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 import "./Module.css"
 
@@ -13,14 +14,16 @@ const LINKS = {
   ],
   orderSupport: [
     { label: "Make a return/Exchange", href: "#" },
-    { label: "Refund/Exchange policy", href: "#" },
+    { label: "Refund/Exchange policy", href: "/refund-policy" },
     { label: "Track your order", href: "#" },
     { label: "Shipping policy", href: "#" },
     { label: "FAQ's", href: "#" },
-    { label: "Terms", href: "#" },
+    { label: "Terms & Conditions", href: "/terms-and-conditions" },
+    { label: "Privacy Policy", href: "/privacy-policy" },
   ],
   weAreKAMIGAMI: [
-    { label: "Our story", href: "#" },
+    { label: "Our Story", href: "/about-us" },
+    { label: "Contact Us", href: "/contact-us" },
     { label: "Walk-in Stores", href: "#" },
     { label: "Collaborations", href: "#" },
     { label: "Careers", href: "#" },
@@ -37,7 +40,11 @@ function LinkColumn({ title, links }) {
       <ul>
         {links.map((link) => (
           <li key={link.label}>
-            <a href={link.href}>{link.label}</a>
+            {link.href.startsWith("/") ? (
+              <Link to={link.href}>{link.label}</Link>
+            ) : (
+              <a href={link.href}>{link.label}</a>
+            )}
           </li>
         ))}
       </ul>

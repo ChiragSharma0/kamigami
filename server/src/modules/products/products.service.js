@@ -43,7 +43,7 @@ exports.createProduct = async (productData) => {
 
   // Invalidate Cache
   await cache.deleteByPattern('products:list:*');
-  
+
   return product;
 };
 
@@ -88,7 +88,7 @@ exports.updateProduct = async (productId, updateData) => {
 
 exports.listProducts = async (filters) => {
   const { page = 1, limit = 10, category = 'all', search, sort, status = 'all', showDeleted = 'false' } = filters;
-  
+
   const cacheKey = `products:list:${page}:${limit}:${category}:${sort || 'default'}:${status}:${showDeleted}`;
   if (!search) {
     const cached = await cache.getCache(cacheKey);
@@ -97,23 +97,23 @@ exports.listProducts = async (filters) => {
 
   const skip = (page - 1) * limit;
   const where = {};
-  
+
   // Handle Deleted Filter
   if (showDeleted === 'true') {
     where.deletedAt = { not: null };
   } else {
     where.deletedAt = null;
   }
-  
+
   if (category !== 'all') where.categoryId = category;
-  
+
   if (status !== 'all') {
     where.status = status;
   } else if (!filters.isAdmin) {
     where.status = 'PUBLISHED';
     where.isDrop = false;
   }
-  
+
   if (search) {
     where.OR = [
       { name: { contains: search, mode: 'insensitive' } },

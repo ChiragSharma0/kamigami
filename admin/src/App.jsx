@@ -21,6 +21,9 @@ import EditDrop from './pages/EditDrop';
 import useAuthStore from './store/authStore';
 import Categories from './pages/Categories';
 import Collections from './pages/Collections';
+import CmsSettings from './pages/CmsSettings';
+import MediaGallery from './pages/MediaGallery';
+import Logistics from './pages/Logistics';
 
 function App() {
   const { checkAuth, isAuthenticated } = useAuthStore();
@@ -52,7 +55,9 @@ function App() {
           <Route path="/drops/edit/:id" element={<EditDrop />} />
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/orders" element={<Orders />} />
-          <Route path="/logistics" element={<div>Logistics Panel (Coming Soon)</div>} />
+          <Route path="/logistics" element={<Logistics />} />
+          <Route path="/settings" element={<CmsSettings />} />
+          <Route path="/media" element={<MediaGallery />} />
         </Route>
 
         {/* Default Redirects */}

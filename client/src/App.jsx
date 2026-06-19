@@ -15,6 +15,8 @@ import Drops from "./pages/Drops/Drops";
 import MainContainer from "./components/Main Container/MainContainer";
 import AboutPage from "./pages/About Page/AboutPage";
 import ScrollToTop from "./components/ScrollToTop";
+import ProductSection from "./pages/ProductPages/Product";
+import AllProductsPage from "./pages/ProductPages/AllProductsPage";
 
 const App = () => {
 
@@ -41,6 +43,7 @@ const App = () => {
         <Route path="/userprofile" element={<AccountDashboard />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/all-products/:id" element={<ProductDetails />} />
+        <Route path="/all-products" element={<AllProductsPage />} />
         <Route path="/sign-up" element={<Login />} />
 
         <Route path="/cartsidebar" element={<CartSidebar />} />

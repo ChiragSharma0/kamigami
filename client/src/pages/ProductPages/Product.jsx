@@ -1,95 +1,50 @@
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 import ProductCard from "../../components/ProductCards/ProductCards";
 import CartSidebar from "../../components/CartSidebar/CartSidebar";
-import { Funnel } from "lucide-react";
-import "../ProductPages/module.css";
+import { Link } from "react-router-dom";
+import "../ProductPages/Module.css";
 
-import { ProductDataContext } 
-from "../../context/ProductDataContext";
+import { ProductDataContext } from "../../Context/ProductDataContext";
 
 const ProductSection = () => {
+  const { productData } = useContext(ProductDataContext);
 
-  const { productData } =
-    useContext(ProductDataContext);
-
-  console.log(productData);
-
-  const [cartItems, setCartItems] = useState([]);
-  const [isOpen, setIsOpen] = useState(false);
-
-  const addToCart = (product) => {
-
-    const existing =
-      cartItems.find(
-        (item) => item.id === product.id
-      );
-
-    if (existing) {
-
-      const updated =
-        cartItems.map((item) =>
-          item.id === product.id
-            ? {
-                ...item,
-                quantity: item.quantity + 1,
-              }
-            : item
-        );
-
-      setCartItems(updated);
-
-    } else {
-
-      setCartItems([
-        ...cartItems,
-        { ...product, quantity: 1 },
-      ]);
-
-    }
-
-    setIsOpen(true);
-  };
+  // Limit homepage showcase to the first 6 products for a premium grid presentation
+  const featuredProducts = productData ? productData.slice(0, 6) : [];
 
   return (
+    <section className="homepage-product-section">
+      <div className="homepage-product-container">
+        
+        {/* Title Header */}
+        <div className="homepage-product-header">
+          <h2>NEW RELEASES</h2>
+          <div className="gothic-divider" />
+          <p>EXPLORE THE EXCLUSIVE DEBUT DROPS FROM KAMIGAMI</p>
+        </div>
 
-    <section className="product-section">
+        {/* Dynamic Showcase Grid */}
+        <div className="product-grid">
+          {featuredProducts.length === 0 ? (
+            <p className="no-products-msg">NO APPAREL CURRENTLY RELEASING</p>
+          ) : (
+            featuredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))
+          )}
+        </div>
 
-      <div className="filter-bar">
-        <Funnel size={18} />
-        <span>Filter</span>
+        {/* Discovery Action CTA */}
+        <div className="homepage-product-footer">
+          <Link to="/all-products" className="discover-all-btn">
+            DISCOVER ALL GEAR
+          </Link>
+        </div>
+
       </div>
 
-      <div className="product-grid">
-
-        {productData.length === 0 ? (
-
-          <p>No Products Available</p>
-
-        ) : (
-
-          productData.map((product) => (
-
-            <ProductCard
-              key={product.id}
-              product={product}
-              addToCart={addToCart}
-            />
-
-          ))
-
-        )}
-
-      </div>
-
-      <CartSidebar
-        cartItems={cartItems}
-        setCartItems={setCartItems}
-        isOpen={isOpen}
-        setIsOpen={setIsOpen}
-      />
-
+      <CartSidebar />
     </section>
-
   );
 };
 

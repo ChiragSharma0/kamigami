@@ -1,3 +1,5 @@
+/* Premium Unified Glassmorphic Navbar Stylesheet */
+
 @font-face {
   font-family: "bytes";
   src: url("../../assets/fonts/BYTES.ttf") format("truetype");
@@ -5,42 +7,87 @@
   font-style: normal;
 }
 
-.navbar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  /* position: sticky; */
-  width: 100%;
-  height: 80px;
+/* Floating capsule container - dynamic visibility transitions */
+.navbar-container {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  width: calc(100% - 40px);
+  max-width: 1280px;
+  height: 72px;
+  
+  /* State of the art glassmorphism */
+  background: rgba(10, 10, 10, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  z-index: 100;
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.6), 
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  
+  /* High performance CSS transitions (GSAP-free) */
+  transition: 
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+    opacity 0.4s ease, 
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
 
+/* Scroll Hide State */
+.navbar-container.hidden {
+  transform: translateX(-50%) translateY(-110px);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Subtle Neon Glow on Hover */
+.navbar-container:hover {
+  border-color: rgba(231, 30, 34, 0.35);
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.75), 
+    0 0 20px rgba(231, 30, 34, 0.12);
+}
+
+.navbar {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-
-  padding: 0 40px;
-
+  padding: 0 32px;
   color: #E71E22;
-  background-color: black;
-
-  z-index: 100;
 }
 
-
-
+/* LEFT: Desktop Menu Links */
 .nav-left {
   display: flex;
-  gap: 40px;
+  gap: 32px;
   font-size: 14px;
   letter-spacing: 1px;
 }
 
 .nav-left a {
   cursor: pointer;
-  font-family: "gothic", sans-serif;
+  font-family: "circular-web", "general", sans-serif;
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #dfdff2;
+  text-decoration: none;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
 }
 
+.nav-left a:hover {
+  color: #E71E22;
+  text-shadow: 0 0 8px rgba(231, 30, 34, 0.5);
+}
 
-
+/* CENTER: Logo aspect */
 .nav-center {
   position: absolute;
   left: 50%;
@@ -48,11 +95,85 @@
 }
 
 .logo {
-  height: 40px;
+  height: 32px;
   width: auto;
-  max-width: 120px;       /* add this */
+  max-width: 115px;
   object-fit: contain;
   display: block;
+  transition: transform 0.3s ease;
+}
+
+.logo:hover {
+  transform: scale(1.05);
+}
+
+/* RIGHT: System actions */
+.nav-right {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.nav-right a,
+.nav-right button {
+  background: none;
+  border: none;
+  padding: 6px;
+  color: #dfdff2;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease, transform 0.2s ease;
+  border-radius: 50%;
+}
+
+.nav-right a:hover,
+.nav-right button:hover {
+  color: #E71E22;
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.user-nav-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logout-btn-nav {
+  color: #a0a0b0 !important;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.logout-btn-nav:hover {
+  color: #E71E22 !important;
+  background: rgba(231, 30, 34, 0.05) !important;
+}
+
+.login-link-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #dfdff2;
+  transition: color 0.2s, transform 0.2s;
+  padding: 4px 10px;
+  border-radius: 99px;
+}
+
+.login-link-nav:hover {
+  color: #E71E22;
+  transform: scale(1.03);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.nav-label {
+  font-family: "circular-web", "general", sans-serif;
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
 }
 
 .outer {
@@ -64,103 +185,34 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.outer:hover {
+  transform: scale(1.1);
 }
 
 .outer img {
   height: 100%;
   width: 100%;
   border-radius: 50%;
-  object-fit: cover;   /* ← this was missing, causing the full-size render */
+  object-fit: cover;
 }
 
-
-
-.nav-right {
-  display: flex;
-  gap: 30px;
-  align-items: center;
-}
-
-.nav-right button,
-.mobile-icons button {
-  background: none;
-  border: none;
-  padding: 0;
-  color: inherit;
+/* mobile-menu hidden on desktop */
+.mobile-menu {
+  display: none;
   cursor: pointer;
-  display: flex;
-  align-items: center;
 }
-
-.nav-right svg {
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.nav-right svg:hover {
-  transform: scale(1.1);
-}
-
-.user-nav-group {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.logout-btn-nav {
-  background: none;
-  border: none;
-  padding: 0;
-  color: #E71E22;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  transition: transform 0.3s;
-}
-
-.logout-btn-nav:hover {
-  transform: scale(1.1);
-}
-
-.login-link-nav {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  text-decoration: none;
-  color: inherit;
-  transition: transform 0.3s;
-}
-
-.login-link-nav:hover {
-  transform: scale(1.05);
-}
-
-.nav-label {
-  font-family: "bytes", sans-serif;
-  font-size: 13px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-
-
-
-/* ... keep all your existing CSS above the @media block ... */
 
 /* ─── FULL-PAGE MOBILE OVERLAY ─────────────────────────────── */
 .mobile-overlay {
   display: none;
-  /* hidden on desktop */
   position: fixed;
   inset: 0;
-  /* covers entire viewport */
   background: #000000;
-  /* light off-white like image 4 */
   z-index: 99;
-  /* below navbar (z:100) so X icon stays visible */
-
   flex-direction: column;
-
-  /* hidden state */
   opacity: 0;
   pointer-events: none;
   transform: translateX(100%);
@@ -178,24 +230,18 @@
   flex-direction: column;
   height: 100%;
   padding: 100px 32px 40px;
-  /* top padding clears the navbar */
+  overflow-y: auto;
 }
 
-.mobile-menu {
-  display: none;          /* ADD THIS — was missing from base styles */
-  cursor: pointer;
-}
-
-/* Simple link (no dropdown) */
 .overlay-link {
   font-family: "bytes", sans-serif;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
-  color: #414141;
+  color: #dfdff2;
   text-decoration: none;
   letter-spacing: 1px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  padding: 14px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 16px 0;
   display: block;
   transition: color 0.2s;
 }
@@ -204,26 +250,24 @@
   color: #E71E22;
 }
 
-/* Dropdown wrapper */
 .overlay-dropdown {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* Trigger button */
 .overlay-dropdown-trigger {
   width: 100%;
   background: none;
   border: none;
-  padding: 14px 0;
+  padding: 16px 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
 
   font-family: "bytes", sans-serif;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
-  color: #414141;
+  color: #dfdff2;
   letter-spacing: 1px;
   text-align: left;
   transition: color 0.2s;
@@ -233,19 +277,16 @@
   color: #E71E22;
 }
 
-/* Arrow */
 .dropdown-arrow {
-  font-size: 18px;
-  line-height: 1;
+  font-size: 16px;
   transition: transform 0.3s ease;
-  color: #414141;
+  color: #E71E22;
 }
 
 .dropdown-arrow.open {
   transform: rotate(180deg);
 }
 
-/* Dropdown menu — animated */
 .overlay-dropdown-menu {
   display: flex;
   flex-direction: column;
@@ -256,17 +297,17 @@
 }
 
 .overlay-dropdown-menu.open {
-  max-height: 300px;   /* tall enough for any menu */
+  max-height: 250px;
   opacity: 1;
 }
 
 .overlay-dropdown-menu a {
-  font-family: "gothic", sans-serif;
-  font-size: 15px;
-  color: #666;
+  font-family: sans-serif;
+  font-size: 14px;
+  color: #8a8a9a;
   text-decoration: none;
-  padding: 5px 16px;  /* indented to show hierarchy */
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  padding: 8px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
   transition: color 0.2s;
 }
 
@@ -279,49 +320,30 @@
   color: #E71E22;
 }
 
-/* Primary links — large */
 .mobile-overlay-top {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-
-.mobile-overlay-top a {
-  font-family: "bytes", sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  color: #414141;
-  text-decoration: none;
-  letter-spacing: 1px;
-  /* padding: 10px 0; */
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  transition: color 0.2s;
-}
-
-.mobile-overlay-top a:hover {
-  color: #E71E22;
+  gap: 4px;
 }
 
 .mobile-overlay-divider {
   height: 1px;
-  background: rgba(0, 0, 0, 0.12);
-  margin: 24px 0;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 32px 0;
 }
 
-/* Secondary links — smaller */
 .mobile-overlay-secondary {
   display: flex;
   flex-direction: column;
-  /* gap: 4px; */
 }
 
 .mobile-overlay-secondary a {
-  font-family: "bytes", sans-serif;
-  font-size: 15px;
-  color: #444;
+  font-family: sans-serif;
+  font-size: 14px;
+  color: #8a8a9a;
   text-decoration: none;
-  padding: 2px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
   transition: color 0.2s;
 }
 
@@ -333,8 +355,8 @@
   background: none;
   border: none;
   padding: 14px 0;
-  font-family: "bytes", sans-serif;
-  font-size: 15px;
+  font-family: sans-serif;
+  font-size: 14px;
   color: #E71E22;
   text-decoration: underline;
   text-align: left;
@@ -346,13 +368,13 @@
   opacity: 0.8;
 }
 
-/* Icons row at bottom */
+/* Icons row at bottom of overlay */
 .mobile-overlay-icons {
   display: flex;
   gap: 24px;
   margin-top: auto;
   padding-top: 32px;
-  color: #111;
+  color: #dfdff2;
   font-family: "bytes", sans-serif;
 }
 
@@ -364,40 +386,35 @@
   cursor: pointer;
   display: flex;
   align-items: center;
-   transition: color 0.2s;
+  transition: color 0.2s;
 }
 
-.mobile-overlay-icons button:hover{
+.mobile-overlay-icons button:hover {
   color: #E71E22;
 }
 
-/* Close label */
 .mobile-overlay-close {
   background: none;
   border: none;
-  margin-top: 20px;
-  font-size: 13px;
+  margin-top: 40px;
+  font-size: 12px;
   letter-spacing: 2px;
   color: #888;
   cursor: pointer;
   text-transform: uppercase;
   align-self: center;
   text-decoration: underline;
-  text-underline-offset: 3px;
-  font-family: "bytes", sans-serif;
+  text-underline-offset: 4px;
   transition: color 0.2s;
 }
 
-.mobile-overlay-close:hover{
+.mobile-overlay-close:hover {
   color: #E71E22;
 }
 
-/* ─── RESPONSIVE ────────────────────────────────────────────── */
+/* ─── RESPONSIVE HOOKS ───────────────────────────────────────── */
 @media (max-width: 900px) {
-  .nav-left {
-    display: none;
-  }
-
+  .nav-left,
   .nav-right {
     display: none;
   }
@@ -405,33 +422,45 @@
   .mobile-menu {
     display: block;
     z-index: 101;
-    /* always above overlay */
-    color: #E71E22;
   }
 
   .mobile-overlay {
     display: flex;
-    /* only flex on mobile */
   }
 
-   .navbar {
-    padding: 0 20px;
-    background-color: transparent; /* ← only change needed */
+  .navbar-container {
+    top: 0;
+    left: 0;
+    transform: none;
+    width: 100%;
+    height: 72px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    background: rgba(10, 10, 10, 0.9);
+  }
+  
+  .navbar-container.hidden {
+    transform: translateY(-80px);
+    opacity: 0;
+  }
+
+  .navbar {
+    padding: 0 24px;
   }
 
   .nav-center {
     position: static;
     transform: none;
   }
+  
+  body {
+    padding-bottom: 80px; /* Space for bottom nav bar */
+  }
 }
 
-/* Remove old .mobile-nav styles if present */
-.mobile-nav {
-  display: none !important;
-}
-
-/* ─── BOTTOM NAV — Mobile Only ─────────────────────────────── */
-
+/* ─── MOBILE BOTTOM ACTION PILL ────────────────────────────── */
 .bottom-nav {
   display: none;
 }
@@ -441,92 +470,74 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 16px;
-
     position: fixed;
     bottom: 24px;
     left: 50%;
     transform: translateX(-50%);
-
     z-index: 200;
     width: auto;
   }
 
-  /* Red rounded pill */
-  /* Red rounded pill */
   .bottom-nav-pill {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 25px;
-  border-radius: 9999px;
-  padding: 8px 24px;
-  background: transparent;
-  border: none;
-  z-index: 0;
-}
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    border-radius: 9999px;
+    padding: 10px 28px;
+    background: transparent;
+    border: none;
+    z-index: 0;
+  }
 
-/* inner glow border — liquid glass highlight */
-.bottom-nav-pill::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  border-radius: 9999px;
-  pointer-events: none;
-  box-shadow: 
-    inset 2px 2px 0px -2px rgba(231, 30, 34, 0.9),
-    inset 0 0 3px 1px rgba(231, 30, 34, 0.6),
-    inset 0 0 20px rgba(231, 30, 34, 0.15);
-  background-color: rgba(231, 30, 34, 0.12);
-}
+  /* Liquid glass highlight outline */
+  .bottom-nav-pill::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    border-radius: 9999px;
+    pointer-events: none;
+    box-shadow: 
+      inset 2px 2px 0px -2px rgba(231, 30, 34, 0.9),
+      inset 0 0 4px 1px rgba(231, 30, 34, 0.6),
+      inset 0 0 20px rgba(231, 30, 34, 0.15);
+    background-color: rgba(10, 10, 10, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
 
-/* backdrop blur + liquid displacement */
-.bottom-nav-pill::after {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  border-radius: 9999px;
-  pointer-events: none;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  filter: url(#btn-glass);
-  overflow: hidden;
-  isolation: isolate;
-}
+  .bottom-nav-pill::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    border-radius: 9999px;
+    pointer-events: none;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    overflow: hidden;
+  }
 
   .bottom-nav-item {
     display: flex;
     align-items: center;
     justify-content: center;
-
-    color: #ffffff;
+    color: #dfdff2;
     text-decoration: none;
     background: none;
     border: none;
     cursor: pointer;
-
-    padding: 6px;
+    padding: 8px;
     border-radius: 50%;
-    transition: background 0.2s;
+    transition: all 0.2s ease;
+    z-index: 1;
   }
 
   .bottom-nav-item:hover {
-    background: rgba(255, 255, 255, 0.15);
-  }
-
-  /* StoryIcon outside pill */
-  .bottom-nav-story {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-
-  body {
-    padding-bottom: 100px;
+    color: #E71E22;
+    background: rgba(255, 255, 255, 0.05);
+    transform: scale(1.1);
   }
 }

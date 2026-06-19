@@ -189,6 +189,7 @@ const ProductForm = ({ onSubmit, isLoading, initialData }) => {
     status: initialData?.status || 'PUBLISHED',
     isDrop: initialData?.isDrop || false,
     media: initialData?.media?.map(m => m.media) || [],
+    metadata: initialData?.metadata || { gender: 'UNISEX' },
     variants: initialData?.variants || [
       { sku: '', attributes: { size: 'M', color: 'Ebony', colorHex: '#28282B' }, price: '', initialStock: 0 }
     ]
@@ -208,6 +209,7 @@ const ProductForm = ({ onSubmit, isLoading, initialData }) => {
         status: initialData.status || 'PUBLISHED',
         isDrop: initialData.isDrop || false,
         media: initialData.media?.map(m => m.media) || [],
+        metadata: initialData.metadata || { gender: 'UNISEX' },
         variants: initialData.variants && initialData.variants.length > 0 ? initialData.variants.map(v => ({
           ...v,
           price: v.price || '',
@@ -511,6 +513,30 @@ const ProductForm = ({ onSubmit, isLoading, initialData }) => {
             >
               <option value="">Select Category</option>
               {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Target Gender / Demographic</label>
+            <select
+              name="gender"
+              className="w-full px-5 py-3 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-primary-500 font-bold text-sm"
+              value={formData.metadata?.gender || 'UNISEX'}
+              onChange={(e) => {
+                const val = e.target.value;
+                setFormData(prev => ({
+                  ...prev,
+                  metadata: {
+                    ...(prev.metadata || {}),
+                    gender: val
+                  }
+                }));
+              }}
+            >
+              <option value="MEN">Men</option>
+              <option value="WOMEN">Women</option>
+              <option value="KIDS">Kids</option>
+              <option value="UNISEX">Unisex</option>
             </select>
           </div>
 

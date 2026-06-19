@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Loader2, Layers } from 'lucide-react';
 
-const CategoryForm = ({ onSubmit, isLoading }) => {
+const CategoryForm = ({ onSubmit, isLoading, initialData }) => {
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -9,17 +9,55 @@ const CategoryForm = ({ onSubmit, isLoading }) => {
     isActive: true
   });
 
+  // Sync state if initialData changes (e.g., when switching between edit items)
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        name: initialData.name || '',
+        slug: initialData.slug || '',
+        description: initialData.description || '',
+        isActive: initialData.isActive !== undefined ? initialData.isActive : true
+      });
+    }
+  }, [initialData]);
+
+  const slugify = (text) => {
+    if (!text) return '';
+    return text
+      .toString()
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]+/g, '')
+      .replace(/\-\-+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+  };
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({ 
-      ...prev, 
-      [name]: type === 'checkbox' ? checked : value 
-    }));
+    setFormData(prev => {
+      const updated = {
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      };
+      
+      // Auto-generate slug from name in real-time
+      if (name === 'name') {
+        const expectedSlug = slugify(prev.name);
+        // Only update if slug was empty or matched the slugify of previous name (so we don't overwrite manual edits)
+        if (!prev.slug || prev.slug === expectedSlug) {
+          updated.slug = slugify(value);
+        }
+      }
+      
+      return updated;
+    });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.slug) return;
+    if (!formData.name) return;
     onSubmit(formData);
   };
 
@@ -32,19 +70,21 @@ const CategoryForm = ({ onSubmit, isLoading }) => {
             type="text"
             name="name"
             required
-            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 transition-all"
+            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 transition-all font-medium text-slate-800"
             placeholder="e.g. Streetwear"
             value={formData.name}
             onChange={handleChange}
           />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-bold text-slate-700">Slug</label>
+          <div className="flex justify-between items-center">
+            <label className="text-sm font-bold text-slate-700">Slug</label>
+            <span className="text-xs text-slate-400 font-semibold">(Auto-generated if left blank)</span>
+          </div>
           <input
             type="text"
             name="slug"
-            required
-            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 transition-all"
+            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 transition-all font-medium text-slate-600"
             placeholder="e.g. streetwear"
             value={formData.slug}
             onChange={handleChange}
@@ -57,7 +97,7 @@ const CategoryForm = ({ onSubmit, isLoading }) => {
         <textarea
           name="description"
           rows="3"
-          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 transition-all"
+          className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 transition-all font-medium text-slate-800"
           placeholder="What kind of products belong here?"
           value={formData.description}
           onChange={handleChange}
@@ -69,11 +109,11 @@ const CategoryForm = ({ onSubmit, isLoading }) => {
           type="checkbox"
           id="isActive"
           name="isActive"
-          className="w-5 h-5 text-primary-600 rounded focus:ring-primary-500"
+          className="w-5 h-5 text-primary-600 rounded focus:ring-primary-500 cursor-pointer"
           checked={formData.isActive}
           onChange={handleChange}
         />
-        <label htmlFor="isActive" className="text-sm font-bold text-slate-700">
+        <label htmlFor="isActive" className="text-sm font-bold text-slate-700 cursor-pointer select-none">
           Make this category active immediately
         </label>
       </div>
@@ -89,7 +129,7 @@ const CategoryForm = ({ onSubmit, isLoading }) => {
           ) : (
             <>
               <Layers className="w-5 h-5" />
-              <span>Create Category</span>
+              <span>{initialData ? 'Save Changes' : 'Create Category'}</span>
             </>
           )}
         </button>

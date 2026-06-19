@@ -1,0 +1,576 @@
+import React, { useState, useEffect, useContext } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import PageMeta from "../../components/PageMeta";
+import { CartContext } from "../../Context/CartContext";
+import api from "../../services/api";
+import { 
+  MapPin, 
+  Plus, 
+  CreditCard, 
+  Loader2, 
+  CheckCircle2, 
+  Truck, 
+  AlertCircle, 
+  ShieldCheck, 
+  ShoppingBag,
+  ArrowLeft
+} from "lucide-react";
+import "./checkout.css";
+
+const Checkout = () => {
+  const { cartItems, setCartItems } = useContext(CartContext);
+  const navigate = useNavigate();
+
+  // Authentication & Loading States
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [loading, setLoading] = useState(true);
+  
+  // Addresses States
+  const [addresses, setAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState("");
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [addressForm, setAddressForm] = useState({
+    street1: "",
+    street2: "",
+    city: "",
+    stateProvince: "",
+    postalCode: "",
+    country: "India"
+  });
+  const [savingAddress, setSavingAddress] = useState(false);
+
+  // Checkout Status States
+  const [placingOrder, setPlacingOrder] = useState(false);
+  const [checkoutError, setCheckoutError] = useState("");
+  
+  // Order & Payment Gate States
+  const [createdOrder, setCreatedOrder] = useState(null);
+  const [showPaymentGate, setShowPaymentGate] = useState(false);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [paidOrderDetails, setPaidOrderDetails] = useState(null);
+
+  // Check auth and fetch user addresses on load
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setIsLoggedIn(false);
+      setLoading(false);
+      return;
+    }
+
+    const fetchAddresses = async () => {
+      try {
+        setLoading(true);
+        const res = await api.get("/users/me/addresses");
+        const addressList = res.data?.data?.addresses || res.data?.addresses || [];
+        setAddresses(addressList);
+        
+        // Auto-select default address
+        const defaultAddr = addressList.find(addr => addr.isDefault) || addressList[0];
+        if (defaultAddr) {
+          setSelectedAddressId(defaultAddr.id);
+        }
+      } catch (err) {
+        console.error("Failed to fetch addresses:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAddresses();
+  }, []);
+
+  const handleAddressInputChange = (e) => {
+    const { name, value } = e.target;
+    setAddressForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveAddress = async (e) => {
+    e.preventDefault();
+    if (!addressForm.street1 || !addressForm.city || !addressForm.stateProvince || !addressForm.postalCode) {
+      alert("Please fill all required shipping fields.");
+      return;
+    }
+
+    try {
+      setSavingAddress(true);
+      const payload = {
+        type: "SHIPPING",
+        street1: addressForm.street1,
+        street2: addressForm.street2,
+        city: addressForm.city,
+        stateProvince: addressForm.stateProvince,
+        postalCode: addressForm.postalCode,
+        country: addressForm.country,
+        isDefault: addresses.length === 0 // Make default if it's the first
+      };
+
+      const res = await api.post("/users/me/addresses", payload);
+      const newAddress = res.data?.data?.address || res.data?.address;
+      
+      if (newAddress) {
+        setAddresses(prev => [...prev, newAddress]);
+        setSelectedAddressId(newAddress.id);
+        setShowAddressForm(false);
+        setAddressForm({
+          street1: "",
+          street2: "",
+          city: "",
+          stateProvince: "",
+          postalCode: "",
+          country: "India"
+        });
+      }
+    } catch (err) {
+      console.error("Failed to add shipping address:", err);
+      alert("Failed to save shipping address. Please retry.");
+    } finally {
+      setSavingAddress(false);
+    }
+  };
+
+  // 1. Initiate Order placement (POST /checkout/intent)
+  const handlePlaceOrder = async () => {
+    if (!selectedAddressId) {
+      setCheckoutError("Select or add a shipping address first.");
+      return;
+    }
+    if (cartItems.length === 0) {
+      setCheckoutError("Your cart is empty.");
+      return;
+    }
+
+    try {
+      setPlacingOrder(true);
+      setCheckoutError("");
+
+      const payload = {
+        shippingAddressId: selectedAddressId,
+        billingAddressId: selectedAddressId, // simplify, billing same as shipping
+        items: cartItems.map(item => ({
+          variantId: item.variantId,
+          quantity: item.quantity
+        }))
+      };
+
+      // Call backend checkout endpoint
+      const res = await api.post("/checkout/intent", payload);
+      const orderResult = res.data?.data;
+
+      if (orderResult) {
+        setCreatedOrder(orderResult);
+        setShowPaymentGate(true); // Open Shinto Razorpay Simulation Modal
+      } else {
+        setCheckoutError("Failed to initiate order. Try again.");
+      }
+    } catch (err) {
+      console.error("Checkout intent failure:", err);
+      setCheckoutError(err.response?.data?.message || "Checkout failed. A selected item may be out of stock.");
+    } finally {
+      setPlacingOrder(false);
+    }
+  };
+
+  // 2. Commencing the simulated payment capture flow (calls server mock success)
+  const handleSimulatePaymentSuccess = async () => {
+    if (!createdOrder) return;
+
+    try {
+      setPaymentProcessing(true);
+      
+      // Hit developer mockup endpoint
+      const res = await api.post("/payments/mock-success", {
+        orderId: createdOrder.orderId
+      });
+
+      const result = res.data?.data?.order;
+      if (result) {
+        setPaidOrderDetails(result);
+        setPaymentSuccess(true);
+        setShowPaymentGate(false);
+        // Clear storefront shopping cart upon successful payment
+        setCartItems([]);
+      } else {
+        alert("Payment simulation failed.");
+      }
+    } catch (err) {
+      console.error("Payment capture failure:", err);
+      alert("Payment simulation failed. Checkout error logged.");
+    } finally {
+      setPaymentProcessing(false);
+    }
+  };
+
+  const getPrice = (price) => (typeof price === "number" ? price : parseInt(price.replace(/[^0-9]/g, "")));
+  const subtotal = cartItems.reduce((total, item) => total + getPrice(item.price) * item.quantity, 0);
+  const discount = cartItems.reduce((total, item) => total + (item.discount ? (getPrice(item.price) * (item.discount / 100)) * item.quantity : 0), 0);
+  const total = subtotal - discount;
+
+  // Render Access Initiation state if user not authenticated
+  if (!isLoggedIn) {
+    return (
+      <div id="main" className="checkout-auth-gate">
+        <PageMeta title="Checkout Access" description="Initiate access pact to proceed." />
+        <div className="auth-gate-box">
+          <div className="auth-icon">🔒</div>
+          <h2>ACCESS DENIED</h2>
+          <p>You must seal your login credentials pact in the sanctum to purchase sacred vestments.</p>
+          <Link to="/sign-up" className="auth-redirect-btn">INITIATE PROFILE ACCESS</Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Render Successful Order Manifestation Renders
+  if (paymentSuccess && paidOrderDetails) {
+    return (
+      <div id="main" className="checkout-success-view animate-fade">
+        <PageMeta title="Ritual Sealed" description="Your Shinto vestments manifest. Checkout successful." />
+        <div className="success-card">
+          <div className="glowing-success-icon">✓</div>
+          <h1 className="success-title">PACT SEALED & MANIFESTED</h1>
+          <p className="success-subtitle">The deities have received your offering. Order successfully captured.</p>
+
+          <div className="success-details-box">
+            <div className="detail-row">
+              <span className="label">Order Code:</span>
+              <span className="value glow">{paidOrderDetails.orderNumber}</span>
+            </div>
+            <div className="detail-row">
+              <span className="label">Offering Amount:</span>
+              <span className="value text-red-500">₹{Number(paidOrderDetails.totalAmount).toFixed(0)}</span>
+            </div>
+            <div className="detail-row">
+              <span className="label">Billing Status:</span>
+              <span className="value status-paid">PAID / SECURED</span>
+            </div>
+            <div className="detail-row">
+              <span className="label">Shipment Status:</span>
+              <span className="value status-shipped">DISPATCHED / SHIPPED</span>
+            </div>
+          </div>
+
+          {/* Dynamic Shiprocket Tracking Info */}
+          <div className="shiprocket-delivery-card">
+            <div className="delivery-header">
+              <Truck className="delivery-icon text-blue-500 animate-pulse" />
+              <h3>SHIPROCKET INTEGRATED LOGISTICS</h3>
+            </div>
+            <p className="delivery-desc">Your order is logged and dispatched via Shiprocket premium logistics network.</p>
+            <div className="tracking-meta">
+              <div className="tracking-row">
+                <span>Courier Agent:</span>
+                <strong>{paidOrderDetails.courierName}</strong>
+              </div>
+              <div className="tracking-row">
+                <span>AWB Slip Code:</span>
+                <strong className="text-white font-mono">{paidOrderDetails.awbCode}</strong>
+              </div>
+            </div>
+            <a 
+              href={paidOrderDetails.trackingUrl || `https://shiprocket.co/tracking/${paidOrderDetails.awbCode}`} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="tracking-action-link"
+            >
+              TRACK MANIFESTATION SHIPMENT
+            </a>
+          </div>
+
+          <Link to="/" className="home-action-btn">RETURN TO REALM</Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div id="main" className="checkout-main-container">
+      <PageMeta title="Checkout Manifest" description="Select shipping and commence billing offering." />
+
+      <div className="checkout-back-nav">
+        <Link to="/" className="back-link-btn">
+          <ArrowLeft size={16} />
+          Return to Temple
+        </Link>
+      </div>
+
+      <h1 className="checkout-page-title">THE MANIFESTATION</h1>
+      <p className="checkout-page-subtitle">Configure your physical drop delivery coordinates and complete the offering.</p>
+
+      {loading ? (
+        <div className="checkout-loading-screen">
+          <Loader2 className="animate-spin text-red-600" size={40} />
+          <p>Unraveling scroll addresses...</p>
+        </div>
+      ) : (
+        <div className="checkout-split-layout">
+          {/* LEFT: Shipping details */}
+          <div className="checkout-left-panel">
+            <section className="checkout-section select-address-sec">
+              <div className="section-title-wrap">
+                <MapPin className="sec-icon text-red-600" size={20} />
+                <h2>SHIPPING COORDINATES</h2>
+              </div>
+              
+              <div className="address-selections-list">
+                {addresses.map(addr => (
+                  <label 
+                    key={addr.id} 
+                    className={`address-card ${selectedAddressId === addr.id ? "selected" : ""}`}
+                  >
+                    <input 
+                      type="radio" 
+                      name="selected_address" 
+                      value={addr.id}
+                      checked={selectedAddressId === addr.id}
+                      onChange={() => setSelectedAddressId(addr.id)}
+                      className="hidden-radio"
+                    />
+                    <div className="card-selector-dot"></div>
+                    <div className="address-content-meta">
+                      <span className="addr-tag">{addr.isDefault ? "Primary Vault" : "Alternate Coordinates"}</span>
+                      <p className="street-line">{addr.street1}</p>
+                      {addr.street2 && <p className="street-line-2">{addr.street2}</p>}
+                      <p className="city-zip-line">{addr.city}, {addr.stateProvince} - {addr.postalCode}</p>
+                      <p className="country-line">{addr.country}</p>
+                    </div>
+                  </label>
+                ))}
+
+                {addresses.length === 0 && !showAddressForm && (
+                  <div className="no-addresses-card">
+                    <AlertCircle className="text-yellow-600" size={24} />
+                    <p>No delivery coordinates are currently logged for this profile.</p>
+                  </div>
+                )}
+              </div>
+
+              {!showAddressForm ? (
+                <button 
+                  type="button" 
+                  onClick={() => setShowAddressForm(true)} 
+                  className="add-coordinates-btn"
+                >
+                  <Plus size={16} /> ADD DELIVERY COORDINATES
+                </button>
+              ) : (
+                <form onSubmit={handleSaveAddress} className="address-inline-form animate-fade">
+                  <h3>ADD NEW COORDINATES</h3>
+                  <div className="form-grid">
+                    <input 
+                      type="text" 
+                      name="street1" 
+                      placeholder="STREET ADDRESS 1 *" 
+                      value={addressForm.street1}
+                      onChange={handleAddressInputChange}
+                      required
+                    />
+                    <input 
+                      type="text" 
+                      name="street2" 
+                      placeholder="STREET ADDRESS 2 (APARTMENT, SUITE, ETC.)" 
+                      value={addressForm.street2}
+                      onChange={handleAddressInputChange}
+                    />
+                    <input 
+                      type="text" 
+                      name="city" 
+                      placeholder="CITY *" 
+                      value={addressForm.city}
+                      onChange={handleAddressInputChange}
+                      required
+                    />
+                    <input 
+                      type="text" 
+                      name="stateProvince" 
+                      placeholder="STATE / PROVINCE *" 
+                      value={addressForm.stateProvince}
+                      onChange={handleAddressInputChange}
+                      required
+                    />
+                    <input 
+                      type="text" 
+                      name="postalCode" 
+                      placeholder="PINCODE / POSTAL CODE *" 
+                      value={addressForm.postalCode}
+                      onChange={handleAddressInputChange}
+                      required
+                    />
+                    <input 
+                      type="text" 
+                      name="country" 
+                      placeholder="COUNTRY *" 
+                      value={addressForm.country}
+                      onChange={handleAddressInputChange}
+                      required
+                    />
+                  </div>
+                  <div className="form-action-btns">
+                    <button type="submit" disabled={savingAddress} className="save-btn">
+                      {savingAddress ? <Loader2 className="animate-spin" size={14} /> : "LOG COORDINATES"}
+                    </button>
+                    <button type="button" onClick={() => setShowAddressForm(false)} className="cancel-btn">CANCEL</button>
+                  </div>
+                </form>
+              )}
+            </section>
+
+            <section className="checkout-section security-credentials-sec">
+              <div className="security-banner">
+                <ShieldCheck className="sec-icon text-green-500" size={22} />
+                <div>
+                  <h4>OCCULT ENCRYPTED BILLING</h4>
+                  <p>All spiritual offerings and transactional data are bound securely via custom cryptographic tokens.</p>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          {/* RIGHT: Order summary */}
+          <div className="checkout-right-panel">
+            <div className="checkout-sticky-summary">
+              <div className="section-title-wrap">
+                <ShoppingBag className="sec-icon text-red-600" size={20} />
+                <h2>SACRED ITEMS</h2>
+              </div>
+
+              <div className="summary-items-list">
+                {cartItems.map(item => (
+                  <div key={`${item.id}-${item.size}-${item.color}`} className="summary-item">
+                    <img src={item.image} alt={item.title} className="item-thumbnail" />
+                    <div className="summary-item-meta">
+                      <h3>{item.title}</h3>
+                      <p className="options">SIZE: {item.size} • COLOR: {item.color}</p>
+                      <div className="qty-price">
+                        <span>QTY: {item.quantity}</span>
+                        <strong className="text-white">₹{getPrice(item.price) * item.quantity}</strong>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {cartItems.length === 0 && (
+                  <div className="summary-empty-state">
+                    <p>No sacred items are active in your portal.</p>
+                    <Link to="/" className="browse-link">Acquire Vestments</Link>
+                  </div>
+                )}
+              </div>
+
+              <div className="bill-calculations-box">
+                <div className="calc-row">
+                  <span>Offering Subtotal</span>
+                  <span>₹{subtotal}</span>
+                </div>
+                {discount > 0 && (
+                  <div className="calc-row discount">
+                    <span>Initiate Rebate Discount</span>
+                    <span>- ₹{discount.toFixed(0)}</span>
+                  </div>
+                )}
+                <div className="calc-row delivery-shipping">
+                  <span>Shiprocket Delivery Fee</span>
+                  <span className="text-green-500">FREE / COMPLIMENTARY</span>
+                </div>
+                <div className="calc-divider"></div>
+                <div className="calc-row total">
+                  <span>Total Offering Value</span>
+                  <span className="glow">₹{total.toFixed(0)}</span>
+                </div>
+              </div>
+
+              {checkoutError && (
+                <div className="checkout-error-banner animate-fade">
+                  <AlertCircle size={16} />
+                  <span>{checkoutError}</span>
+                </div>
+              )}
+
+              <button 
+                type="button" 
+                onClick={handlePlaceOrder} 
+                disabled={placingOrder || cartItems.length === 0 || !selectedAddressId}
+                className="commence-checkout-btn"
+              >
+                {placingOrder ? (
+                  <>
+                    <Loader2 className="animate-spin" size={16} />
+                    LOCKING VESTMENTS IN ARCHIVE...
+                  </>
+                ) : (
+                  "CONFIRM & PLACE ORDER"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==============================================
+          OCCULT PAYMENT GATE (RAZORPAY MODAL SIMULATOR)
+         ============================================== */}
+      {showPaymentGate && createdOrder && (
+        <div className="occult-gate-overlay animate-fade">
+          <div className="occult-gate-box">
+            <div className="gate-glow-halo"></div>
+            <CreditCard className="gate-header-icon text-red-600 animate-pulse" size={48} />
+            
+            <h2 className="gate-title">THE SUMMONING GATE</h2>
+            <p className="gate-subtitle">RAZORPAY SANDBOX SECURE SIMULATOR</p>
+
+            <div className="gate-details-card">
+              <div className="gate-row">
+                <span>Ritual Order ID:</span>
+                <strong className="text-white font-mono">{createdOrder.orderNumber}</strong>
+              </div>
+              <div className="gate-row">
+                <span>Deity Offering:</span>
+                <strong className="text-red-500 font-mono text-lg">₹{Number(createdOrder.totalAmount).toFixed(0)}</strong>
+              </div>
+              <div className="gate-row">
+                <span>Payment Intent Ref:</span>
+                <strong className="text-gray-400 font-mono text-xs">{createdOrder.paymentIntentId}</strong>
+              </div>
+            </div>
+
+            <p className="gate-warning-meta">
+              This is a developer sandbox mock gate. Clicking "Commence Ritual" will trigger secure local database stock capturing, complete the payment event, and trigger the integrated **Shiprocket** dispatch.
+            </p>
+
+            <div className="gate-actions-wrap">
+              <button 
+                type="button" 
+                onClick={handleSimulatePaymentSuccess} 
+                disabled={paymentProcessing}
+                className="gate-btn-success"
+              >
+                {paymentProcessing ? (
+                  <>
+                    <Loader2 className="animate-spin" size={16} />
+                    BINDING SOUL PACT...
+                  </>
+                ) : (
+                  "COMMENCE RITUAL"
+                )}
+              </button>
+              <button 
+                type="button" 
+                onClick={() => {
+                  setShowPaymentGate(false);
+                  setCheckoutError("Offering aborted by user.");
+                }} 
+                disabled={paymentProcessing}
+                className="gate-btn-cancel"
+              >
+                ABORT RITUAL
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Checkout;

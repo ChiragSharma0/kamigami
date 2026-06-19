@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect } from "react";
-import SoonImage from "../assets/images/soon.png"; 
+import SoonImage from "../assets/images/soon.png";
 import api from "../services/api";
 
 export const ProductDataContext = createContext();
@@ -77,6 +77,30 @@ export const ProductDataProvider = ({ children }) => {
       size: "s",
       discount: 18,
     },
+    {
+      id: "AWAKEN-TEE-01",
+      image: "/img/awaken_front.jpg",
+      media: [
+        { media: { url: "/img/awaken_front.jpg" } },
+        { media: { url: "/img/awaken_back.jpg" } },
+        { media: { url: "/img/awaken_detail_1.jpg" } },
+        { media: { url: "/img/awaken_detail_2.jpg" } }
+      ],
+      title: "Kamigami 'AWAKEN' Heavyweight Graphic Tee",
+      description: "Awaken your inner divinity with the Kamigami 'AWAKEN' Graphic Tee. Crafted from 240+ GSM ultra-heavyweight premium combed cotton, this streetwear staple features a minimalist front-print 'AWAKEN' logo and a high-fidelity white-haired deity graphic screen-printed on the back. Designed with a modern relaxed, drop-shoulder silhouette for ultimate luxury comfort.",
+      price: 1499,
+      category: "men",
+      size: "M",
+      discount: 40,
+      slug: "awaken-heavyweight-graphic-tee",
+      variants: [
+        { id: "v-awaken-s", attributes: { size: "S", color: "Black" }, price: 1499, inventory: { stockAvailable: 10 } },
+        { id: "v-awaken-m", attributes: { size: "M", color: "Black" }, price: 1499, inventory: { stockAvailable: 15 } },
+        { id: "v-awaken-l", attributes: { size: "L", color: "Black" }, price: 1499, inventory: { stockAvailable: 8 } },
+        { id: "v-awaken-xl", attributes: { size: "XL", color: "Black" }, price: 1499, inventory: { stockAvailable: 12 } },
+        { id: "v-awaken-xxl", attributes: { size: "XXL", color: "Black" }, price: 1499, inventory: { stockAvailable: 5 } }
+      ]
+    },
   ];
 
   const [productData, setProductData] = useState(dummyProducts);
@@ -87,17 +111,17 @@ export const ProductDataProvider = ({ children }) => {
     if (p.media && p.media.length > 0 && p.media[0].media && p.media[0].media.url) {
       image = p.media[0].media.url;
     }
-    
+
     // 2. Parse price
     const price = p.basePrice ? Number(p.basePrice) : 0;
-    
+
     // 3. Compute discount dynamically from retail pricing differences
     let discount = 0;
     if (p.compareAtPrice && Number(p.compareAtPrice) > price) {
       const comparePrice = Number(p.compareAtPrice);
       discount = Math.round(((comparePrice - price) / comparePrice) * 100);
     }
-    
+
     // 4. Get category string
     const category = p.category?.name?.toLowerCase() || 'unassigned';
 
@@ -114,11 +138,13 @@ export const ProductDataProvider = ({ children }) => {
       description: p.description || "",
       price,
       image,
+      media: p.media,
       category,
       size,
       discount,
       slug: p.slug,
       variants: p.variants,
+      metadata: p.metadata || {},
     };
   };
 
@@ -127,7 +153,7 @@ export const ProductDataProvider = ({ children }) => {
       try {
         const response = await api.get("/products");
         const serverProducts = response.data.data.products || [];
-        
+
         if (serverProducts.length > 0) {
           const formatted = serverProducts.map(formatServerProduct);
           setProductData(formatted);

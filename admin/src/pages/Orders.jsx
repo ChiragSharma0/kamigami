@@ -9,15 +9,21 @@ import {
   XCircle,
   Loader2,
   ExternalLink,
-  ChevronDown
+  ChevronDown,
+  RefreshCw
 } from 'lucide-react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
+import Modal from '../components/Modal';
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('ALL');
+  
+  // Lightbox Modal state
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   const statusMap = {
     PENDING: { label: 'Pending', icon: Clock, color: 'text-amber-600 bg-amber-50 border-amber-100' },
@@ -33,7 +39,8 @@ const Orders = () => {
     setIsLoading(true);
     try {
       const response = await api.get('/admin/orders');
-      setOrders(response.orders || []);
+      // Fix frontend API data-binding unwrapping status: success layer
+      setOrders(response.data?.orders || response.orders || []);
     } catch (err) {
       toast.error('Failed to load orders');
     } finally {
@@ -54,6 +61,18 @@ const Orders = () => {
       toast.error('Failed to update status');
     }
   };
+
+  const handleViewDetails = async (orderId) => {
+    try {
+      const response = await api.get(`/admin/orders/${orderId}`);
+      setSelectedOrder(response.data?.order || response.order);
+      setIsDetailsModalOpen(true);
+    } catch (err) {
+      toast.error('Failed to load order details');
+    }
+  };
+
+  const filteredOrders = orders.filter(o => filter === 'ALL' || o.status === filter);
 
   return (
     <div className="space-y-6">
@@ -109,8 +128,8 @@ const Orders = () => {
                     <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary-500" />
                   </td>
                 </tr>
-              ) : orders.length > 0 ? (
-                orders.map((order) => {
+              ) : filteredOrders.length > 0 ? (
+                filteredOrders.map((order) => {
                   const status = statusMap[order.status] || { label: order.status, icon: Clock, color: 'bg-slate-100' };
                   return (
                     <tr key={order.id} className="hover:bg-slate-50/50 transition-all group">
@@ -143,7 +162,11 @@ const Orders = () => {
                       </td>
                       <td className="px-6 py-4">
                          <div className="flex items-center gap-2">
-                           <button className="p-2 bg-slate-50 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all" title="View Details">
+                           <button 
+                             onClick={() => handleViewDetails(order.id)}
+                             className="p-2 bg-slate-50 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all" 
+                             title="View Details"
+                           >
                              <Eye className="w-4 h-4" />
                            </button>
                            {order.status === 'PAID' && (
@@ -171,6 +194,128 @@ const Orders = () => {
           </table>
         </div>
       </div>
+
+      {/* Details Lightbox Modal */}
+      <Modal
+        isOpen={isDetailsModalOpen}
+        onClose={() => {
+          setIsDetailsModalOpen(false);
+          setSelectedOrder(null);
+        }}
+        title={`Order Details - #${selectedOrder?.orderNumber}`}
+      >
+        {selectedOrder && (
+          <div className="space-y-6 text-slate-800 max-h-[75vh] overflow-y-auto pr-1">
+            {/* Status & Date */}
+            <div className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <div>
+                <p className="text-xs text-slate-500 font-semibold">Ordered On</p>
+                <p className="text-sm font-bold text-slate-700">{new Date(selectedOrder.createdAt).toLocaleString()}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-slate-500 font-semibold">Payment Status</p>
+                <div className={`mt-1 flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider w-fit ml-auto ${
+                  statusMap[selectedOrder.status]?.color || 'bg-slate-100 text-slate-600'
+                }`}>
+                  {selectedOrder.status}
+                </div>
+              </div>
+            </div>
+
+            {/* Customer Details */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Customer Details</h3>
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1">
+                <p className="text-sm font-bold text-slate-900">{selectedOrder.user?.firstName} {selectedOrder.user?.lastName}</p>
+                <p className="text-xs text-slate-500">Email: {selectedOrder.user?.email}</p>
+                {selectedOrder.user?.phoneNumber && (
+                  <p className="text-xs text-slate-500">Phone: {selectedOrder.user?.phoneNumber}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Shipping Address */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Shipping Address</h3>
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-1">
+                <p className="font-bold text-slate-800">{selectedOrder.shippingAddress?.firstName || selectedOrder.user?.firstName} {selectedOrder.shippingAddress?.lastName || selectedOrder.user?.lastName}</p>
+                <p>{selectedOrder.shippingAddress?.street_1 || selectedOrder.shippingAddress?.addressLine1}</p>
+                {(selectedOrder.shippingAddress?.street_2 || selectedOrder.shippingAddress?.addressLine2) && <p>{selectedOrder.shippingAddress?.street_2 || selectedOrder.shippingAddress?.addressLine2}</p>}
+                <p>{selectedOrder.shippingAddress?.city}, {selectedOrder.shippingAddress?.state_province || selectedOrder.shippingAddress?.state} {selectedOrder.shippingAddress?.postal_code || selectedOrder.shippingAddress?.pincode || selectedOrder.shippingAddress?.postalCode}</p>
+                <p>{selectedOrder.shippingAddress?.country}</p>
+              </div>
+            </div>
+
+            {/* Order Items */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Line Items</h3>
+              <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-200">
+                {selectedOrder.items?.map((item) => (
+                  <div key={item.id} className="p-4 flex justify-between items-center bg-white hover:bg-slate-50/50 transition-colors">
+                    <div>
+                      <p className="text-sm font-bold text-slate-900">{item.name}</p>
+                      <p className="text-[10px] text-slate-400 font-mono mt-0.5">SKU: {item.sku}</p>
+                      {item.attributes && Object.keys(item.attributes).length > 0 && (
+                        <div className="flex gap-2 mt-1">
+                          {Object.entries(item.attributes).map(([k, v]) => (
+                            <span key={k} className="text-[10px] bg-slate-100 px-2 py-0.5 rounded font-semibold text-slate-500">
+                              {k}: {v}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-slate-900">${parseFloat(item.priceAtPurchase).toFixed(2)}</p>
+                      <p className="text-xs text-slate-500">Qty: {item.quantity}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Pricing Summary */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 text-sm font-medium">
+              <div className="flex justify-between text-slate-500">
+                <span>Subtotal</span>
+                <span>${parseFloat(selectedOrder.subtotal).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-slate-500">
+                <span>Shipping</span>
+                <span>${parseFloat(selectedOrder.shippingAmount || 0).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-slate-500">
+                <span>Tax</span>
+                <span>${parseFloat(selectedOrder.taxAmount || 0).toFixed(2)}</span>
+              </div>
+              <div className="border-t border-slate-200 pt-2 flex justify-between font-bold text-slate-900 text-base">
+                <span>Total Amount</span>
+                <span>${parseFloat(selectedOrder.totalAmount).toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* Tracking / Logistics */}
+            {selectedOrder.awbCode && (
+              <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl space-y-1">
+                <p className="text-xs text-indigo-700 font-bold uppercase tracking-wider">Logistics & Tracking</p>
+                <p className="text-sm font-bold text-indigo-900">AWB Code: {selectedOrder.awbCode}</p>
+                <p className="text-xs text-indigo-600">Courier: {selectedOrder.courierName}</p>
+                {selectedOrder.trackingUrl && (
+                  <a 
+                    href={selectedOrder.trackingUrl} 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-primary-600 font-bold hover:underline mt-2 cursor-pointer"
+                  >
+                    <span>Track Package</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

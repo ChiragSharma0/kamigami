@@ -173,3 +173,41 @@ async function handlePaymentFailure(order, payload) {
     return { status: 'processed_failure' };
   });
 }
+
+exports.processMockPaymentSuccess = async (orderId) => {
+  const logisticsService = require('../logistics/logistics.service');
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { items: true }
+  });
+  if (!order) throw new AppError('Order not found', 404);
+  if (order.status === 'PAID') return { status: 'already_paid', order };
+
+  // 1. Process payment success in DB
+  const mockPayload = { id: `mock_evt_${Date.now()}`, event: 'payment.captured' };
+  await handlePaymentSuccess(order, mockPayload);
+
+  // 2. Trigger automatic Shiprocket shipping integration
+  let shipmentResult = null;
+  try {
+    shipmentResult = await logisticsService.createShipment(order.userId, orderId);
+    console.log('[MockPayment] Shiprocket order created successfully!');
+  } catch (shipmentErr) {
+    console.warn('[MockPayment] Shiprocket credentials invalid or service unavailable, using local mock fallback:', shipmentErr.message);
+    const awbCode = `SR-MOCK-${Math.floor(100000 + Math.random() * 900000)}`;
+    shipmentResult = await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        awbCode,
+        courierName: 'Shiprocket Mock Express',
+        shipmentStatus: 'shipped',
+        status: 'SHIPPED',
+        trackingUrl: `https://shiprocket.co/tracking/${awbCode}`
+      }
+    });
+  }
+
+  return { status: 'processed_success', order: shipmentResult };
+};
+

@@ -1,5 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { TiLocationArrow } from "react-icons/ti";
+import api from "../../services/api";
 
 export const BentoTilt = ({ children, className = "" }) => {
   const [transformStyle, setTransformStyle] = useState("");
@@ -98,95 +99,113 @@ export const BentoCard = ({ src, title, description, isComingSoon }) => {
   );
 };
 
-const Features = () => (
-  <section className="bg-black pb-52">
-    <div className="container mx-auto px-3 md:px-10">
-      <div className="px-5 py-32">
-        <p className="font-circular-web text-lg text-[#E71E22]">
-          Into the Bloodbound Realm
-        </p>
-        <p className="max-w-md font-circular-web text-lg text-[#F1D6D7] opacity-50">
-          Immerse yourself in a cursed and ever-expanding universe where sacred
-          symbols and dark creations unite into an interconnected legacy etched
-          into your soul.
-        </p>
+const Features = () => {
+  const [aboutPageData, setAboutPageData] = useState({});
+
+  useEffect(() => {
+    const fetchAboutCms = async () => {
+      try {
+        const res = await api.get('/settings/about_page_cms');
+        if (res.data?.data?.value) {
+          setAboutPageData(res.data.data.value);
+        }
+      } catch (err) {
+        console.log('[CMS-Features] Fetch failed or settings unseeded, using default parameters.');
+      }
+    };
+    fetchAboutCms();
+  }, []);
+
+  return (
+    <section className="bg-black pb-52">
+      <div className="container mx-auto px-3 md:px-10">
+        <div className="px-5 py-32">
+          <p className="font-circular-web text-lg text-[#E71E22]">
+            Into the Bloodbound Realm
+          </p>
+          <p className="max-w-md font-circular-web text-lg text-[#F1D6D7] opacity-50">
+            Immerse yourself in a cursed and ever-expanding universe where sacred
+            symbols and dark creations unite into an interconnected legacy etched
+            into your soul.
+          </p>
+        </div>
+
+        <BentoTilt className="bento-tilt_1 relative mb-7 h-96 w-full overflow-hidden rounded-md md:h-[65vh]">
+          <BentoCard
+            src={aboutPageData.featureVideo1 || "videos/feature-1.mp4"}
+            title={
+              <>
+                blood<b>e</b>d
+              </>
+            }
+            description="A cross-realm fashion movement, turning your presence across streets and shadows into a powerful statement of identity."
+            isComingSoon
+          />
+        </BentoTilt>
+
+        <div className="grid h-[135vh] w-full grid-cols-2 grid-rows-3 gap-7">
+          <BentoTilt className="bento-tilt_1 row-span-1 md:col-span-1 md:row-span-2">
+            <BentoCard
+              src={aboutPageData.featureVideo2 || "videos/feature-2.mp4"}
+              title={
+                <>
+    bloo<b>d</b>
+  </>
+              }
+              description="A dark anime and gothic-inspired fashion collection — a legacy built for endless evolution."
+              isComingSoon
+            />
+          </BentoTilt>
+
+          <BentoTilt className="bento-tilt_1 row-span-1 ms-32 md:col-span-1 md:ms-0">
+            <BentoCard
+              src={aboutPageData.featureVideo3 || "videos/feature-3.mp4"}
+              title={
+                <>
+    r<b>e</b>alm
+  </>
+              }
+              description="A unified social realm, adding a new dimension of connection to shared identity among dark fashion communities."
+              isComingSoon
+            />
+          </BentoTilt>
+
+          <BentoTilt className="bento-tilt_1 me-14 md:col-span-1 md:me-0">
+            <BentoCard
+              src={aboutPageData.featureVideo4 || "videos/feature-4.mp4"}
+              title={
+                <>
+    ar<b>m</b>r
+  </>
+              }
+              description="A cross-realm design force — enhancing your style to be more powerful and expressive."
+              isComingSoon
+            />
+          </BentoTilt>
+
+          <BentoTilt className="bento-tilt_2">
+            <div className="flex size-full flex-col justify-between bg-[#111111] p-5">
+              <h1 className="bento-title special-font max-w-56 text-[#E71E22] ">
+                M<b>o</b>re co<b>m</b>ing s<b>o</b>on.
+              </h1>
+
+              <TiLocationArrow className="m-5 scale-[5] self-end text-[#E71E22]" />
+            </div>
+          </BentoTilt>
+
+          <BentoTilt className="bento-tilt_2">
+            <video
+              src={aboutPageData.featureVideo5 || "videos/feature-5.mp4"}
+              loop
+              muted
+              autoPlay
+              className="size-full object-cover object-center"
+            />
+          </BentoTilt>
+        </div>
       </div>
-
-      <BentoTilt className="bento-tilt_1 relative mb-7 h-96 w-full overflow-hidden rounded-md md:h-[65vh]">
-        <BentoCard
-          src="videos/feature-1.mp4"
-          title={
-            <>
-              blood<b>e</b>d
-            </>
-          }
-          description="A cross-realm fashion movement, turning your presence across streets and shadows into a powerful statement of identity."
-          isComingSoon
-        />
-      </BentoTilt>
-
-      <div className="grid h-[135vh] w-full grid-cols-2 grid-rows-3 gap-7">
-        <BentoTilt className="bento-tilt_1 row-span-1 md:col-span-1 md:row-span-2">
-          <BentoCard
-            src="videos/feature-2.mp4"
-            title={
-              <>
-  bloo<b>d</b>
-</>
-            }
-            description="A dark anime and gothic-inspired fashion collection — a legacy built for endless evolution."
-            isComingSoon
-          />
-        </BentoTilt>
-
-        <BentoTilt className="bento-tilt_1 row-span-1 ms-32 md:col-span-1 md:ms-0">
-          <BentoCard
-            src="videos/feature-3.mp4"
-            title={
-              <>
-  r<b>e</b>alm
-</>
-            }
-            description="A unified social realm, adding a new dimension of connection to shared identity among dark fashion communities."
-            isComingSoon
-          />
-        </BentoTilt>
-
-        <BentoTilt className="bento-tilt_1 me-14 md:col-span-1 md:me-0">
-          <BentoCard
-            src="videos/feature-4.mp4"
-            title={
-              <>
-  ar<b>m</b>r
-</>
-            }
-            description="A cross-realm design force — enhancing your style to be more powerful and expressive."
-            isComingSoon
-          />
-        </BentoTilt>
-
-        <BentoTilt className="bento-tilt_2">
-          <div className="flex size-full flex-col justify-between bg-[#111111] p-5">
-            <h1 className="bento-title special-font max-w-56 text-[#E71E22] ">
-              M<b>o</b>re co<b>m</b>ing s<b>o</b>on.
-            </h1>
-
-            <TiLocationArrow className="m-5 scale-[5] self-end text-[#E71E22]" />
-          </div>
-        </BentoTilt>
-
-        <BentoTilt className="bento-tilt_2">
-          <video
-            src="videos/feature-5.mp4"
-            loop
-            muted
-            autoPlay
-            className="size-full object-cover object-center"
-          />
-        </BentoTilt>
-      </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 export default Features;

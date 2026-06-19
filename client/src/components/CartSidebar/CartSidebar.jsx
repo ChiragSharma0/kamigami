@@ -1,11 +1,13 @@
 // src/components/CartSidebar/CartSidebar.jsx
 import React, { useState, useEffect, useContext } from "react";
 import { X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import "../CartSidebar/module.css";
 import { CartContext } from "../../Context/CartContext";
 
 const CartSidebar = () => {
   const { cartItems, setCartItems, isCartOpen, setIsCartOpen } = useContext(CartContext);
+  const navigate = useNavigate();
 
   const [coupon, setCoupon] = useState("");
   const [discount, setDiscount] = useState(0);
@@ -108,7 +110,15 @@ const CartSidebar = () => {
                 <span>₹{total.toFixed(0)}</span>
               </div>
 
-              <button className="checkout-btn">Check Out</button>
+              <button 
+                onClick={() => {
+                  setIsCartOpen(false);
+                  navigate("/checkout");
+                }} 
+                className="checkout-btn"
+              >
+                Check Out
+              </button>
             </div>
           </>
         )}

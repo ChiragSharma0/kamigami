@@ -4,6 +4,38 @@ const productsService = require('../products/products.service');
 const dropsService = require('../drops/drops.service');
 const inventoryService = require('../inventory/inventory.service');
 
+const generateSlug = (text) => {
+  if (!text) return '';
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')           // Replace spaces with -
+    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+    .replace(/\-\-+/g, '-')         // Replace multiple - with single -
+    .replace(/^-+/, '')             // Trim - from start of text
+    .replace(/-+$/, '');            // Trim - from end of text
+};
+
+const generateUniqueSlug = async (tx, modelName, text, currentId = null) => {
+  let slug = generateSlug(text);
+  if (!slug) {
+    slug = 'item-' + Math.random().toString(36).substring(2, 6);
+  }
+
+  // Try to find if slug exists
+  const where = { slug };
+  if (currentId) {
+    where.id = { not: currentId };
+  }
+
+  const existing = await tx[modelName].findFirst({ where });
+  if (existing) {
+    slug = `${slug}-${Math.random().toString(36).substring(2, 6)}`;
+  }
+  return slug;
+};
+
 // Helper to log admin actions
 async function logAction(tx, adminId, action, entityId, metadata = {}) {
   await tx.adminLog.create({
@@ -39,23 +71,20 @@ exports.getProduct = async (productId) => {
 exports.createProduct = async (adminId, productData) => {
   console.log(`[AdminService] Creating product: ${productData.name} with ${productData.variants?.length || 0} variants`);
   const product = await prisma.$transaction(async (tx) => {
-    // Check slug uniqueness
-    const existing = await tx.product.findUnique({ where: { slug: productData.slug } });
-    if (existing) {
-      console.error(`[AdminService] Slug already exists: ${productData.slug}`);
-      throw new AppError('Product slug already exists', 409);
-    }
+    // Auto-generate unique slug
+    const slug = await generateUniqueSlug(tx, 'product', productData.slug || productData.name);
 
     const newProduct = await tx.product.create({
       data: {
         sku: productData.sku,
         name: productData.name,
-        slug: productData.slug,
+        slug: slug,
         description: productData.description,
         basePrice: productData.basePrice,
         categoryId: productData.categoryId || null,
         isDrop: productData.isDrop || false,
         status: 'PUBLISHED',
+        metadata: productData.metadata || {},
         variants: {
           create: productData.variants.map(v => ({
             sku: v.sku,
@@ -99,19 +128,22 @@ exports.createProduct = async (adminId, productData) => {
 exports.updateProduct = async (adminId, productId, updateData) => {
   console.log(`[AdminService] Updating product ${productId} with ${updateData.variants?.length || 0} variants`);
   const result = await prisma.$transaction(async (tx) => {
+    const slug = await generateUniqueSlug(tx, 'product', updateData.slug || updateData.name, productId);
+
     // 1. Update top-level product fields
     const product = await tx.product.update({
       where: { id: productId },
       data: {
         name: updateData.name,
-        slug: updateData.slug,
+        slug: slug,
         sku: updateData.sku,
         description: updateData.description,
         basePrice: updateData.basePrice,
         categoryId: updateData.categoryId || null,
         isDrop: updateData.isDrop !== undefined ? updateData.isDrop : undefined,
         status: updateData.status,
-        deletedAt: updateData.deletedAt
+        deletedAt: updateData.deletedAt,
+        metadata: updateData.metadata !== undefined ? updateData.metadata : undefined
       },
       include: { variants: true }
     });
@@ -233,13 +265,12 @@ exports.listCategories = async () => {
 
 exports.createCategory = async (adminId, categoryData) => {
   return await prisma.$transaction(async (tx) => {
-    const existing = await tx.category.findUnique({ where: { slug: categoryData.slug } });
-    if (existing) throw new AppError('Category slug already exists', 409);
+    const slug = await generateUniqueSlug(tx, 'category', categoryData.slug || categoryData.name);
 
     const category = await tx.category.create({
       data: {
         name: categoryData.name,
-        slug: categoryData.slug,
+        slug: slug,
         description: categoryData.description,
         isActive: categoryData.isActive !== undefined ? categoryData.isActive : true
       }
@@ -252,11 +283,13 @@ exports.createCategory = async (adminId, categoryData) => {
 
 exports.updateCategory = async (adminId, categoryId, updateData) => {
   return await prisma.$transaction(async (tx) => {
+    const slug = await generateUniqueSlug(tx, 'category', updateData.slug || updateData.name, categoryId);
+
     const category = await tx.category.update({
       where: { id: categoryId },
       data: {
         name: updateData.name,
-        slug: updateData.slug,
+        slug: slug,
         description: updateData.description,
         isActive: updateData.isActive
       }
@@ -274,10 +307,12 @@ exports.listDrops = async (status) => {
 
 exports.createDrop = async (adminId, dropData) => {
   const result = await prisma.$transaction(async (tx) => {
+    const slug = await generateUniqueSlug(tx, 'drop', dropData.slug || dropData.title);
+
     const drop = await tx.drop.create({
       data: {
         title: dropData.title,
-        slug: dropData.slug,
+        slug: slug,
         description: dropData.description,
         description: dropData.description,
         startTime: new Date(dropData.startTime),
@@ -312,11 +347,13 @@ exports.updateDrop = async (adminId, dropId, dropData) => {
     const drop = await tx.drop.findUnique({ where: { id: dropId } });
     if (!drop) throw new AppError('Drop not found', 404);
 
+    const slug = await generateUniqueSlug(tx, 'drop', dropData.slug || dropData.title, dropId);
+
     const updated = await tx.drop.update({
       where: { id: dropId },
       data: {
         title: dropData.title,
-        description: dropData.description,
+        slug: slug,
         description: dropData.description,
         startTime: dropData.startTime ? new Date(dropData.startTime) : undefined,
         endTime: dropData.endTime ? new Date(dropData.endTime) : undefined,
@@ -540,4 +577,173 @@ exports.getOrderDetails = async (orderId) => {
 
   if (!order) throw new AppError('Order not found', 404);
   return order;
+};
+
+exports.updateOrderStatus = async (orderId, status, adminId) => {
+  return await prisma.$transaction(async (tx) => {
+    const order = await tx.order.findUnique({ where: { id: orderId } });
+    if (!order) throw new AppError('Order not found', 404);
+
+    const updated = await tx.order.update({
+      where: { id: orderId },
+      data: { status }
+    });
+
+    await logAction(tx, adminId, 'updated_order_status', orderId, { oldStatus: order.status, newStatus: status });
+    return updated;
+  });
+};
+
+exports.getStats = async () => {
+  // 1. Total Revenue
+  const revenueAgg = await prisma.order.aggregate({
+    where: {
+      status: { in: ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'] }
+    },
+    _sum: {
+      totalAmount: true
+    }
+  });
+  const totalRevenue = parseFloat(revenueAgg._sum.totalAmount || 0).toFixed(2);
+
+  // 2. Total Orders
+  const totalOrders = await prisma.order.count();
+
+  // 3. Active Drops
+  const activeDrops = await prisma.drop.count({
+    where: { status: 'ACTIVE' }
+  });
+
+  // 4. Low Stock Alerts
+  const inventory = await prisma.inventory.findMany({
+    select: { stockAvailable: true, lowStockThreshold: true }
+  });
+  const lowStock = inventory.filter(item => item.stockAvailable <= (item.lowStockThreshold ?? 5)).length;
+
+  // 5. Calculate Weekly Trends (This Week vs Last Week)
+  const thisWeekStart = new Date();
+  thisWeekStart.setDate(thisWeekStart.getDate() - 7);
+  const lastWeekStart = new Date();
+  lastWeekStart.setDate(lastWeekStart.getDate() - 14);
+
+  const thisWeekOrders = await prisma.order.findMany({
+    where: {
+      createdAt: { gte: thisWeekStart },
+      status: { in: ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'] }
+    },
+    select: { totalAmount: true }
+  });
+
+  const lastWeekOrders = await prisma.order.findMany({
+    where: {
+      createdAt: { gte: lastWeekStart, lt: thisWeekStart },
+      status: { in: ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'] }
+    },
+    select: { totalAmount: true }
+  });
+
+  const thisWeekRev = thisWeekOrders.reduce((sum, o) => sum + parseFloat(o.totalAmount), 0);
+  const lastWeekRev = lastWeekOrders.reduce((sum, o) => sum + parseFloat(o.totalAmount), 0);
+
+  const thisWeekCount = thisWeekOrders.length;
+  const lastWeekCount = lastWeekOrders.length;
+
+  // Revenue trend
+  let revenueChange = null;
+  let revenueTrend = 'up';
+  if (lastWeekRev > 0) {
+    const diff = ((thisWeekRev - lastWeekRev) / lastWeekRev) * 100;
+    revenueChange = `${Math.abs(diff).toFixed(0)}%`;
+    revenueTrend = diff >= 0 ? 'up' : 'down';
+  } else if (thisWeekRev > 0) {
+    revenueChange = '100%';
+    revenueTrend = 'up';
+  }
+
+  // Orders trend
+  let ordersChange = null;
+  let ordersTrend = 'up';
+  if (lastWeekCount > 0) {
+    const diff = ((thisWeekCount - lastWeekCount) / lastWeekCount) * 100;
+    ordersChange = `${Math.abs(diff).toFixed(0)}%`;
+    ordersTrend = diff >= 0 ? 'up' : 'down';
+  } else if (thisWeekCount > 0) {
+    ordersChange = '100%';
+    ordersTrend = 'up';
+  }
+
+  // 6. Sales Trend (Past 7 Days Chart)
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  sevenDaysAgo.setHours(0, 0, 0, 0);
+
+  const successfulOrders = await prisma.order.findMany({
+    where: {
+      createdAt: { gte: sevenDaysAgo },
+      status: { in: ['PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED'] }
+    },
+    select: { createdAt: true, totalAmount: true }
+  });
+
+  const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const trendData = [];
+  
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dayLabel = daysOfWeek[d.getDay()];
+    
+    const dayStart = new Date(d);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(d);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    const dailyRevenue = successfulOrders
+      .filter(o => {
+        const orderDate = new Date(o.createdAt);
+        return orderDate >= dayStart && orderDate <= dayEnd;
+      })
+      .reduce((sum, o) => sum + parseFloat(o.totalAmount), 0);
+
+    trendData.push({
+      label: dayLabel,
+      revenue: parseFloat(dailyRevenue).toFixed(2)
+    });
+  }
+
+  // 7. Recent Orders (limit to 5)
+  const recentOrders = await prisma.order.findMany({
+    take: 5,
+    orderBy: { createdAt: 'desc' },
+    include: {
+      user: {
+        select: { firstName: true, lastName: true, email: true }
+      }
+    }
+  });
+
+  return {
+    totalRevenue: `$${totalRevenue}`,
+    revenueChange,
+    revenueTrend,
+    totalOrders,
+    ordersChange,
+    ordersTrend,
+    activeDrops,
+    lowStock,
+    chartData: {
+      labels: trendData.map(t => t.label),
+      datasets: [
+        {
+          fill: true,
+          label: 'Sales Revenue',
+          data: trendData.map(t => parseFloat(t.revenue)),
+          borderColor: '#0ea5e9',
+          backgroundColor: 'rgba(14, 165, 233, 0.1)',
+          tension: 0.4
+        }
+      ]
+    },
+    recentOrders
+  };
 };

@@ -1,12 +1,43 @@
 const prisma = require('../../db/prisma');
 const AppError = require('../../common/errors/AppError');
 
+const generateSlug = (text) => {
+  if (!text) return '';
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')           // Replace spaces with -
+    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+    .replace(/\-\-+/g, '-')         // Replace multiple - with single -
+    .replace(/^-+/, '')             // Trim - from start of text
+    .replace(/-+$/, '');            // Trim - from end of text
+};
+
+const generateUniqueSlug = async (modelName, text, currentId = null) => {
+  let slug = generateSlug(text);
+  if (!slug) {
+    slug = 'item-' + Math.random().toString(36).substring(2, 6);
+  }
+
+  // Try to find if slug exists
+  const where = { slug };
+  if (currentId) {
+    where.id = { not: currentId };
+  }
+
+  const existing = await prisma[modelName].findFirst({ where });
+  if (existing) {
+    slug = `${slug}-${Math.random().toString(36).substring(2, 6)}`;
+  }
+  return slug;
+};
+
 // 1. ADMIN SERVICES
 exports.createCollection = async (adminId, collectionData) => {
-  const { name, slug, description, sortOrder, metadata, mediaIds } = collectionData;
+  const { name, slug: inputSlug, description, sortOrder, metadata, mediaIds } = collectionData;
 
-  const existing = await prisma.collection.findUnique({ where: { slug } });
-  if (existing) throw new AppError('Collection slug already exists', 409);
+  const slug = await generateUniqueSlug('collection', inputSlug || name);
 
   const collection = await prisma.collection.create({
     data: {
@@ -35,6 +66,11 @@ exports.updateCollection = async (adminId, collectionId, updateData) => {
   const collection = await prisma.collection.findUnique({ where: { id: collectionId } });
   if (!collection) throw new AppError('Collection not found', 404);
   if (collection.deletedAt) throw new AppError('Cannot update a deleted collection', 400);
+
+  if (updateData.name || updateData.slug) {
+    const slug = await generateUniqueSlug('collection', updateData.slug || updateData.name || collection.name, collectionId);
+    updateData.slug = slug;
+  }
 
   return await prisma.collection.update({
     where: { id: collectionId },
@@ -75,9 +111,9 @@ exports.addProductsToCollection = async (collectionId, productIds) => {
 
 exports.reorderProducts = async (collectionId, items) => {
   return await prisma.$transaction(async (tx) => {
-    const updates = items.map(item => 
+    const updates = items.map(item =>
       tx.collectionProduct.update({
-        where: { 
+        where: {
           collectionId_productId: {
             collectionId,
             productId: item.productId
@@ -173,7 +209,7 @@ exports.getCollectionBySlug = async (slug, productFilters) => {
 
   // Flatten the response
   const products = collection.products.map(cp => cp.product);
-  
+
   return {
     ...collection,
     products,

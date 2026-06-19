@@ -8,7 +8,9 @@ import {
   ShoppingCart,
   LogOut,
   Truck,
-  Layers
+  Layers,
+  Settings,
+  Image
 } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 
@@ -24,6 +26,8 @@ const Sidebar = () => {
     { to: '/inventory', icon: Package, label: 'Inventory' },
     { to: '/orders', icon: ShoppingCart, label: 'Orders' },
     { to: '/logistics', icon: Truck, label: 'Logistics' },
+    { to: '/settings', icon: Settings, label: 'Homepage CMS' },
+    { to: '/media', icon: Image, label: 'Media Gallery' },
   ];
 
   return (

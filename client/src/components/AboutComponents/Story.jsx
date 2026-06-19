@@ -1,11 +1,35 @@
 import gsap from "gsap";
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
+import api from "../../services/api";
 
 import Button from "./Button";
 import AnimatedTitle from "./AnimatedTitle";
 
+const DEFAULT_ABOUT_PAGE = {
+  storySub: "the divine shadow world",
+  storyTitle: "the bl<b>o</b>od of <br /> a sacred real<b>m</b>",
+  storyImage: "/img/entrance.webp",
+  storyText: "Where shadows converge, rises KAMIGAMI and the eternal gateway. Uncover its secrets and forge your identity within infinite darkness.",
+  storyBtnText: "UNLOCK THE ORIGIN"
+};
+
 const FloatingImage = () => {
   const frameRef = useRef(null);
+  const [aboutPageData, setAboutPageData] = useState(DEFAULT_ABOUT_PAGE);
+
+  useEffect(() => {
+    const fetchAboutCms = async () => {
+      try {
+        const res = await api.get('/settings/about_page_cms');
+        if (res.data?.data?.value) {
+          setAboutPageData(res.data.data.value);
+        }
+      } catch (err) {
+        console.log('[CMS-AboutPage-Story] Fetch failed or settings unseeded, using default parameters.');
+      }
+    };
+    fetchAboutCms();
+  }, []);
 
   const handleMouseMove = (e) => {
     const { clientX, clientY } = e;
@@ -49,28 +73,29 @@ const FloatingImage = () => {
     <div id="story" className="min-h-dvh w-full bg-black text-[#E71E22] overflow-hidden">
       <div className="flex size-full flex-col items-center py-10 pb-24">
         <p className="font-general text-sm uppercase md:text-[10px]">
-         the divine shadow world
+          {aboutPageData.storySub || "the divine shadow world"}
         </p>
-
-        <div className="relative size-full">
+ 
+         <div className="relative size-full">
           <AnimatedTitle
-            title="the bl<b>o</b>od of <br /> a sacred real<b>m</b>"
+            key={aboutPageData.storyTitle || "default"}
+            title={aboutPageData.storyTitle || "the bl<b>o</b>od of <br /> a sacred real<b>m</b>"}
             containerClass="mt-5 pointer-events-none mix-blend-difference relative z-10"
           />
-
-          <div className="story-img-container">
-            <div className="story-img-mask">
-              <div className="story-img-content">
-                <img
-                  ref={frameRef}
-                  onMouseMove={handleMouseMove}
-                  onMouseLeave={handleMouseLeave}
-                  onMouseUp={handleMouseLeave}
-                  onMouseEnter={handleMouseLeave}
-                  src="/img/entrance.webp"
-                  alt="entrance.webp"
-                  className="object-contain"
-                />
+ 
+           <div className="story-img-container">
+             <div className="story-img-mask">
+               <div className="story-img-content">
+                 <img
+                   ref={frameRef}
+                   onMouseMove={handleMouseMove}
+                   onMouseLeave={handleMouseLeave}
+                   onMouseUp={handleMouseLeave}
+                   onMouseEnter={handleMouseLeave}
+                   src={aboutPageData.storyImage || "/img/entrance.webp"}
+                   alt="entrance"
+                   className="object-contain"
+                 />
               </div>
             </div>
 
@@ -105,14 +130,17 @@ const FloatingImage = () => {
 
         <div className="-mt-80 flex w-full justify-center md:-mt-64 md:me-44 md:justify-end">
           <div className="flex h-full w-fit flex-col items-center md:items-start">
-            <p className="mt-3 max-w-sm text-center font-circular-web text-[#dfdff2] md:text-start">
-             Where shadows converge, rises KAMIGAMI and the eternal gateway. 
-Uncover its secrets and forge your identity within infinite darkness.
-            </p>
+            <p 
+              className="mt-3 max-w-sm text-center font-circular-web text-[#dfdff2] md:text-start"
+              dangerouslySetInnerHTML={{ 
+                __html: (aboutPageData.storyText || "Where shadows converge, rises KAMIGAMI and the eternal gateway. Uncover its secrets and forge your identity within infinite darkness.")
+                  .replace(/\n/g, '<br />')
+              }}
+            />
 
             <Button
               id="realm-btn"
-              title="UNLOCK THE ORIGIN"
+              title={aboutPageData.storyBtnText || "UNLOCK THE ORIGIN"}
               containerClass="mt-5"
             />
           </div>

@@ -13,6 +13,7 @@ const collectionRoutes = require('./collections/collections.routes');
 const reservationRoutes = require('./reservation/reservation.routes');
 const paymentRoutes = require('./payments/payment.routes');
 const mediaRoutes = require('./media/media.routes');
+const settingsRoutes = require('./settings/settings.routes');
 
 const router = express.Router();
 
@@ -28,6 +29,7 @@ router.use('/', orderRoutes); // Handles /checkout/intent and /orders/*
 router.use('/logistics', logisticsRoutes);
 router.use('/admin', adminRoutes);
 router.use('/admin/media', mediaRoutes);
+router.use('/settings', settingsRoutes);
 router.use('/webhooks', paymentRoutes);
 
 module.exports = router;

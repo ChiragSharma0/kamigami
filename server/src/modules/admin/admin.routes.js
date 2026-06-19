@@ -36,8 +36,11 @@ router.post('/inventory/update', adminController.updateInventory);
 router.post('/inventory/set', adminController.setInventory);
 
 // Order Management
+router.get('/stats', adminController.getStats);
 router.get('/orders', adminController.listOrders);
 router.get('/orders/:id', adminController.getOrder);
+router.put('/orders/:id/status', adminController.updateOrderStatus);
+
 
 // Logistics Management
 router.post('/logistics/create-shipment', logisticsController.createShipment);

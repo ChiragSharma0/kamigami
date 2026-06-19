@@ -121,3 +121,15 @@ exports.getOrder = asyncHandler(async (req, res) => {
   const order = await adminService.getOrderDetails(req.params.id);
   res.status(200).json({ status: 'success', data: { order } });
 });
+
+exports.updateOrderStatus = asyncHandler(async (req, res) => {
+  const { status } = req.body;
+  const order = await adminService.updateOrderStatus(req.params.id, status, req.user.userId);
+  res.status(200).json({ status: 'success', data: { order } });
+});
+
+exports.getStats = asyncHandler(async (req, res) => {
+  const result = await adminService.getStats();
+  res.status(200).json({ status: 'success', data: result });
+});
+

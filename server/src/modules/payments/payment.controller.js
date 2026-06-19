@@ -31,3 +31,21 @@ exports.handleRazorpayWebhook = async (req, res) => {
     return res.status(200).json({ received: true, error_logged: true });
   }
 };
+
+exports.handleMockPaymentSuccess = async (req, res) => {
+  try {
+    const { orderId } = req.body;
+    if (!orderId) {
+      return res.status(400).json({ status: 'fail', message: 'orderId is required' });
+    }
+    const result = await paymentService.processMockPaymentSuccess(orderId);
+    return res.status(200).json({ status: 'success', data: result });
+  } catch (err) {
+    console.error('[MockPayment] Error processing mock payment success:', err);
+    return res.status(err.statusCode || 500).json({
+      status: 'error',
+      message: err.message || 'Internal server error during mock payment'
+    });
+  }
+};
+

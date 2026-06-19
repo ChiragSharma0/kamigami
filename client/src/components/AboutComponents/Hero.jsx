@@ -3,9 +3,16 @@ import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/all";
 import { TiLocationArrow } from "react-icons/ti";
 import { useEffect, useRef, useState } from "react";
+import api from "../../services/api";
 
 import Button from "./Button";
 import VideoPreview from "./VideoPreview";
+
+const DEFAULT_ABOUT_PAGE = {
+  heroTitle: "reawak<b>e</b>n",
+  heroText: "Enter the Realm of Shadows <br /> Unleash Your Dark Identity",
+  heroBtnText: "EXPLORE COLLECTION"
+};
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -19,9 +26,25 @@ const Hero = () => {
   const totalVideos = 4;
   const nextVdRef = useRef(null);
 
+  const [aboutPageData, setAboutPageData] = useState(DEFAULT_ABOUT_PAGE);
+
   const handleVideoLoad = () => {
     setLoadedVideos((prev) => prev + 1);
   };
+
+  useEffect(() => {
+    const fetchAboutCms = async () => {
+      try {
+        const res = await api.get('/settings/about_page_cms');
+        if (res.data?.data?.value) {
+          setAboutPageData(res.data.data.value);
+        }
+      } catch (err) {
+        console.log('[CMS-AboutPage] Fetch failed or settings unseeded, using default parameters.');
+      }
+    };
+    fetchAboutCms();
+  }, []);
 
   useEffect(() => {
     if (loadedVideos === totalVideos - 1) {
@@ -80,7 +103,10 @@ const Hero = () => {
     });
   });
 
-  const getVideoSrc = (index) => `videos/hero-${index}.mp4`;
+  const getVideoSrc = (index) => {
+    const customUrl = aboutPageData[`heroVideo${index}`];
+    return customUrl || `videos/hero-${index}.mp4`;
+  };
 
   return (
     <div className="relative h-dvh w-full overflow-x-hidden">
@@ -146,17 +172,22 @@ const Hero = () => {
 
         <div className="absolute left-0 top-0 z-40 size-full">
           <div className="mt-24 px-5 sm:px-10">
-            <h1 className="special-font hero-heading text-[#F1D6D7]">
-              reawak<b>e</b>n
-            </h1>
+            <h1 
+              className="special-font hero-heading text-[#F1D6D7]"
+              dangerouslySetInnerHTML={{ __html: aboutPageData.heroTitle || "reawak<b>e</b>n" }}
+            />
 
-            <p className="mb-5 max-w-64 font-robert-regular text-[#F1D6D7]">
-              Enter the Realm of Shadows <br /> Unleash Your Dark Identity
-            </p>
+            <p 
+              className="mb-5 max-w-64 font-robert-regular text-[#F1D6D7]"
+              dangerouslySetInnerHTML={{ 
+                __html: (aboutPageData.heroText || "Enter the Realm of Shadows <br /> Unleash Your Dark Identity")
+                  .replace(/\n/g, '<br />')
+              }}
+            />
 
             <Button
               id="watch-trailer"
-              title="EXPLORE COLLECTION"
+              title={aboutPageData.heroBtnText || "EXPLORE COLLECTION"}
               leftIcon={<TiLocationArrow />}
               containerClass="bg-[#F1D6D7] flex-center gap-1"
             />

@@ -1,19 +1,15 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import "./navbar.css";
 import {
   MapPin,
   Search,
   User,
-  Heart,
   ShoppingCart,
-  Menu,
-  X,
-  Compass,
-  LogOut
+  LogOut,
+  Compass
 } from "lucide-react";
 
-import { Sling as Hamburger } from 'hamburger-react'
-
+import { Sling as Hamburger } from 'hamburger-react';
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/images/Logo.png";
 import StoryIcon from "../../elements/StoryIcon";
@@ -30,6 +26,8 @@ export default function Navbar() {
   const navigate = useNavigate();
 
   const [openDropdown, setOpenDropdown] = useState(null);
+  const [isNavVisible, setIsNavVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
   const toggleDropdown = (name) => {
     setOpenDropdown(openDropdown === name ? null : name);
@@ -40,71 +38,93 @@ export default function Navbar() {
     navigate("/");
   };
 
+  // High-performance vanilla scroll listener (GSAP-free)
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY <= 80) {
+        setIsNavVisible(true);
+      } else if (currentScrollY > lastScrollY) {
+        // Scrolling down: hide navbar
+        setIsNavVisible(false);
+      } else {
+        // Scrolling up: reveal navbar
+        setIsNavVisible(true);
+      }
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastScrollY]);
+
   return (
     <>
-      <nav className="navbar">
-        <div className="nav-left">
-          <Link to="/drops">Drops</Link>
-          <Link to="/collections">Collections</Link>
-        </div>
+      <div className={`navbar-container ${isNavVisible ? "visible" : "hidden"}`}>
+        <nav className="navbar">
+          <div className="nav-left">
+            <Link to="/drops">Drops</Link>
+            <Link to="/collections">Collections</Link>
+            <Link to="/about-us">About Us</Link>
+          </div>
 
-        <div className="nav-center">
-          <Link to="/">
-            <img src={logo} alt="Kamigami logo" className="logo" />
-          </Link>
-        </div>
-
-        <div className="nav-right">
-          <Link to="/stories">
-            <StoryIcon />
-          </Link>
-          <Link to="/location">
-            <MapPin size={22} />
-          </Link>
-          <button onClick={() => setSearchOpen(true)}>
-            <Search size={22} />
-          </button>
-          
-          {user ? (
-            <div className="user-nav-group">
-              <Link to="/userprofile">
-                <User size={22} />
-              </Link>
-              <button onClick={handleLogout} className="logout-btn-nav">
-                <LogOut size={18} />
-              </button>
-            </div>
-          ) : (
-            <Link to="/sign-up" className="login-link-nav">
-              <User size={22} />
-              <span className="nav-label">Login</span>
+          <div className="nav-center">
+            <Link to="/">
+              <img src={logo} alt="Kamigami logo" className="logo" />
             </Link>
-          )}
+          </div>
 
-          
-          <button onClick={() => setIsCartOpen(true)}>
-            <ShoppingCart size={22} />
-          </button>
-        </div>
+          <div className="nav-right">
+            <Link to="/stories">
+              <StoryIcon />
+            </Link>
+            <Link to="/location">
+              <MapPin size={18} />
+            </Link>
+            <button onClick={() => setSearchOpen(true)}>
+              <Search size={18} />
+            </button>
+            
+            {user ? (
+              <div className="user-nav-group">
+                <Link to="/userprofile">
+                  <User size={18} />
+                </Link>
+                <button onClick={handleLogout} className="logout-btn-nav">
+                  <LogOut size={16} />
+                </button>
+              </div>
+            ) : (
+              <Link to="/sign-up" className="login-link-nav">
+                <User size={18} />
+                <span className="nav-label">Login</span>
+              </Link>
+            )}
 
-        {/* Mobile: hamburger OR close icon */}
-        <div className="mobile-menu">
-          <Hamburger
-            toggled={open}
-            toggle={setOpen}
-            size={24}
-            color="#E71E22"
-            duration={0.4}
-          />
-        </div>
-      </nav>
+            <button onClick={() => setIsCartOpen(true)}>
+              <ShoppingCart size={18} />
+            </button>
+          </div>
+
+          {/* Mobile: hamburger OR close icon */}
+          <div className="mobile-menu">
+            <Hamburger
+              toggled={open}
+              toggle={setOpen}
+              size={24}
+              color="#E71E22"
+              duration={0.4}
+            />
+          </div>
+        </nav>
+      </div>
 
       {/* Full-page mobile overlay */}
       <div className={`mobile-overlay ${open ? "active" : ""}`}>
         <div className="mobile-overlay-inner">
           {/* Top section — primary nav links */}
           <div className="mobile-overlay-top">
-            {/* Drops — simple link, no dropdown */}
             <Link
               to="/drops"
               className="overlay-link"
@@ -163,8 +183,6 @@ export default function Navbar() {
                 <Link to="/iconics/tshirts" onClick={() => setOpen(false)}>
                   The Awakening
                 </Link>
-                {/* <Link to="/iconics/hoodies" onClick={() => setOpen(false)}>Hoodies</Link>
-      <Link to="/iconics/caps" onClick={() => setOpen(false)}>Caps</Link> */}
               </div>
             </div>
 
@@ -284,8 +302,6 @@ export default function Navbar() {
             <ShoppingCart size={22} />
           </button>
         </div>
-
-        {/* Story icon outside the pill */}
       </div>
     </>
   );

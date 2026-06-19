@@ -5,7 +5,7 @@ import SoonImage from "../../assets/images/soon.png";
 
 import { Heart, Truck, Calendar, Package, Percent } from "lucide-react";
 
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 import ReviewsSection from "../../components/ReviewsSection/ReviewsSection";
 import RelatedProducts from "../../components/RelatedProducts/RelatedProducts";
@@ -18,6 +18,7 @@ const ProductDetails = () => {
   const { cartItems, setCartItems, setIsCartOpen } = useContext(CartContext);
   const { id } = useParams();
   const { productData } = useContext(ProductDataContext);
+  const navigate = useNavigate();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -38,7 +39,7 @@ const ProductDetails = () => {
       try {
         const response = await api.get(`/products/${id}`);
         const p = response.data.data.product;
-        
+
         if (p) {
           let image = SoonImage;
           if (p.media && p.media.length > 0 && p.media[0].media && p.media[0].media.url) {
@@ -63,6 +64,7 @@ const ProductDetails = () => {
             description: p.description || "",
             price,
             image,
+            media: p.media,
             category,
             size: sizeVal,
             discount,
@@ -79,7 +81,7 @@ const ProductDetails = () => {
         setLoading(false);
       }
     };
-    
+
     fetchProductDetails();
   }, [id, productData]);
   // Extract all variants
@@ -98,7 +100,7 @@ const ProductDetails = () => {
       const defaultVariant = variants.find(v => (v.inventory?.stockAvailable || 0) > 0) || variants[0];
       const initialSize = defaultVariant.attributes?.size || defaultVariant.attributes?.Size || defaultVariant.attributes?.SIZE || "";
       const initialColor = defaultVariant.attributes?.color || defaultVariant.attributes?.Color || defaultVariant.attributes?.COLOR || "";
-      
+
       setSelectedSize(initialSize);
       setSelectedColor(initialColor);
     }
@@ -116,17 +118,17 @@ const ProductDetails = () => {
     if (!product) return "";
     const rawDesc = product.description || "";
     const fallback = `Buy ${product.title} at Kamigami. Experience the ultimate in premium Japanese streetwear, featuring exclusive graphic designs, oversized fits, and luxury comfort.`;
-    
+
     let desc = rawDesc ? `${product.title} — ${rawDesc}` : fallback;
-    
+
     if (desc.length >= 140 && desc.length <= 160) {
       return desc;
     }
-    
+
     if (desc.length > 160) {
       return desc.substring(0, 157) + "...";
     }
-    
+
     const suffix = " | Discover premium Japanese streetwear, oversized graphic hoodies, and high-fashion luxury apparel at the official Kamigami store.";
     const padded = desc + suffix;
     return padded.substring(0, 157) + "...";
@@ -143,9 +145,9 @@ const ProductDetails = () => {
   if (!product) {
     return (
       <>
-        <PageMeta 
-          title="Product Not Found" 
-          description="We couldn't find the product you're looking for. Browse the Kamigami store to explore our exclusive range of graphic hoodies, tees, and premium streetwear." 
+        <PageMeta
+          title="Product Not Found"
+          description="We couldn't find the product you're looking for. Browse the Kamigami store to explore our exclusive range of graphic hoodies, tees, and premium streetwear."
         />
         <h2 className="text-white text-center mt-40">Product Not Found</h2>
       </>
@@ -153,15 +155,15 @@ const ProductDetails = () => {
   }
 
   // Get active variant based on current selections
-  const activeVariant = variants.find(v => 
+  const activeVariant = variants.find(v =>
     (!selectedSize || (v.attributes?.size || v.attributes?.Size || v.attributes?.SIZE) === selectedSize) &&
     (!selectedColor || (v.attributes?.color || v.attributes?.Color || v.attributes?.COLOR) === selectedColor)
   );
 
   const activePrice = activeVariant?.price ? Number(activeVariant.price) : product.price;
 
-  const isOutOfStock = activeVariant 
-    ? (activeVariant.inventory?.stockAvailable ?? 0) <= 0 
+  const isOutOfStock = activeVariant
+    ? (activeVariant.inventory?.stockAvailable ?? 0) <= 0
     : (product.totalStockAvailable !== undefined ? product.totalStockAvailable <= 0 : false);
 
   const isSizeDisabled = (sizeOption) => {
@@ -172,8 +174,8 @@ const ProductDetails = () => {
     }
     // If color selected, check if the specific combination variant has stock
     if (selectedColor) {
-      const match = variants.find(v => 
-        (v.attributes?.size || v.attributes?.Size || v.attributes?.SIZE) === sizeOption && 
+      const match = variants.find(v =>
+        (v.attributes?.size || v.attributes?.Size || v.attributes?.SIZE) === sizeOption &&
         (v.attributes?.color || v.attributes?.Color || v.attributes?.COLOR) === selectedColor
       );
       return !match || (match.inventory?.stockAvailable ?? 0) <= 0;
@@ -189,8 +191,8 @@ const ProductDetails = () => {
     }
     // If size selected, check if the specific combination variant has stock
     if (selectedSize) {
-      const match = variants.find(v => 
-        (v.attributes?.size || v.attributes?.Size || v.attributes?.SIZE) === selectedSize && 
+      const match = variants.find(v =>
+        (v.attributes?.size || v.attributes?.Size || v.attributes?.SIZE) === selectedSize &&
         (v.attributes?.color || v.attributes?.Color || v.attributes?.COLOR) === colorOption
       );
       return !match || (match.inventory?.stockAvailable ?? 0) <= 0;
@@ -211,7 +213,7 @@ const ProductDetails = () => {
 
   const handleAddToCart = () => {
     if (isOutOfStock) return;
-    
+
     // Create cart item with selected variant metadata
     const cartItem = {
       ...product,
@@ -222,17 +224,17 @@ const ProductDetails = () => {
       sku: activeVariant?.sku || product.sku || product.id,
     };
 
-    const existing = cartItems.find((item) => 
-      item.id === cartItem.id && 
-      item.size === cartItem.size && 
+    const existing = cartItems.find((item) =>
+      item.id === cartItem.id &&
+      item.size === cartItem.size &&
       item.color === cartItem.color
     );
 
     if (existing) {
       const updated = cartItems.map((item) =>
-        item.id === cartItem.id && 
-        item.size === cartItem.size && 
-        item.color === cartItem.color
+        item.id === cartItem.id &&
+          item.size === cartItem.size &&
+          item.color === cartItem.color
           ? { ...item, quantity: item.quantity + 1 }
           : item,
       );
@@ -243,11 +245,44 @@ const ProductDetails = () => {
     setIsCartOpen(true);
   };
 
+  const handleBuyNow = () => {
+    if (isOutOfStock) return;
+
+    const cartItem = {
+      ...product,
+      price: activePrice,
+      size: selectedSize || "M",
+      color: selectedColor || "Default",
+      variantId: activeVariant?.id || product.id,
+      sku: activeVariant?.sku || product.sku || product.id,
+    };
+
+    const existing = cartItems.find((item) =>
+      item.id === cartItem.id &&
+      item.size === cartItem.size &&
+      item.color === cartItem.color
+    );
+
+    if (existing) {
+      const updated = cartItems.map((item) =>
+        item.id === cartItem.id &&
+          item.size === cartItem.size &&
+          item.color === cartItem.color
+          ? { ...item, quantity: item.quantity + 1 }
+          : item,
+      );
+      setCartItems(updated);
+    } else {
+      setCartItems([...cartItems, { ...cartItem, quantity: 1 }]);
+    }
+    navigate("/checkout");
+  };
+
   return (
     <>
-      <PageMeta 
-        title={product.title} 
-        description={getProductMetaDescription()} 
+      <PageMeta
+        title={product.title}
+        description={getProductMetaDescription()}
         image={product.image}
       />
       <div className="bg-black text-white min-h-screen pt-28">
@@ -309,13 +344,12 @@ const ProductDetails = () => {
                         key={s}
                         disabled={disabled}
                         onClick={() => setSelectedSize(s)}
-                        className={`size-text px-5 py-2 rounded-full border text-sm transition ${
-                          disabled
+                        className={`size-text px-5 py-2 rounded-full border text-sm transition ${disabled
                             ? "border-neutral-800 text-neutral-600 cursor-not-allowed opacity-40 line-through"
                             : selectedSize === s
                               ? "bg-red-600 border-red-600 text-white font-medium"
                               : "border-neutral-700 text-neutral-300 hover:border-red-600"
-                        }`}
+                          }`}
                       >
                         {s}
                       </button>
@@ -337,13 +371,12 @@ const ProductDetails = () => {
                         key={c}
                         disabled={disabled}
                         onClick={() => setSelectedColor(c)}
-                        className={`size-text px-5 py-2 rounded-full border text-sm transition ${
-                          disabled
+                        className={`size-text px-5 py-2 rounded-full border text-sm transition ${disabled
                             ? "border-neutral-800 text-neutral-600 cursor-not-allowed opacity-40 line-through"
                             : selectedColor === c
                               ? "bg-red-600 border-red-600 text-white font-medium"
                               : "border-neutral-700 text-neutral-300 hover:border-red-600"
-                        }`}
+                          }`}
                       >
                         {c}
                       </button>
@@ -357,22 +390,21 @@ const ProductDetails = () => {
               <button
                 disabled={isOutOfStock}
                 onClick={handleAddToCart}
-                className={`addToCart px-10 py-3 rounded-full transition ${
-                  isOutOfStock
+                className={`addToCart px-10 py-3 rounded-full transition ${isOutOfStock
                     ? "bg-neutral-800 text-neutral-500 cursor-not-allowed border border-neutral-700/50"
                     : "bg-red-600 text-white hover:bg-red-700"
-                }`}
+                  }`}
               >
                 {isOutOfStock ? "Sold Out" : "Add To Cart"}
               </button>
 
               <button
                 disabled={isOutOfStock}
-                className={`buyNow px-10 py-3 rounded-full transition ${
-                  isOutOfStock
+                onClick={handleBuyNow}
+                className={`buyNow px-10 py-3 rounded-full transition ${isOutOfStock
                     ? "bg-neutral-800 text-neutral-500 cursor-not-allowed border border-neutral-700/50"
                     : "bg-red-600 text-white hover:bg-red-700"
-                }`}
+                  }`}
               >
                 {isOutOfStock ? "Out of Stock" : "Buy Now"}
               </button>

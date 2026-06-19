@@ -14,13 +14,13 @@ exports.createDrop = async (dropData) => {
   if (existing) throw new AppError('Drop slug already exists', 409);
 
   const drop = await prisma.drop.create({
-    data: { 
-      title, 
-      slug, 
-      description, 
-      startTime: start, 
-      endTime: end, 
-      status: 'SCHEDULED' 
+    data: {
+      title,
+      slug,
+      description,
+      startTime: start,
+      endTime: end,
+      status: 'SCHEDULED'
     }
   });
 
@@ -36,9 +36,9 @@ exports.attachProducts = async (dropId, productAllocations) => {
     const productIds = productAllocations.map(p => p.productId);
     await tx.dropProduct.deleteMany({ where: { dropId, productId: { in: productIds } } });
     const created = await tx.dropProduct.createMany({
-      data: productAllocations.map(p => ({ 
-        dropId, 
-        productId: p.productId, 
+      data: productAllocations.map(p => ({
+        dropId,
+        productId: p.productId,
         variantAllocations: p.variantAllocations || {}
       }))
     });
@@ -63,7 +63,7 @@ exports.attachCollection = async (dropId, collectionId, defaultStock = 100) => {
 
   const allocations = collectionProducts.map(cp => ({
     productId: cp.productId,
-    variantAllocations: {} 
+    variantAllocations: {}
   }));
 
   return await exports.attachProducts(dropId, allocations);
@@ -80,14 +80,14 @@ exports.listDrops = async (statusFilter) => {
   else if (statusFilter === 'ended') where.status = 'ENDED';
 
   const drops = await prisma.drop.findMany({
-    where, 
+    where,
     orderBy: { startTime: 'asc' },
-    select: { 
-      id: true, 
-      title: true, 
-      slug: true, 
-      startTime: true, 
-      endTime: true, 
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      startTime: true,
+      endTime: true,
       status: true,
       media: { include: { media: true } },
       _count: {
@@ -108,7 +108,7 @@ exports.listDrops = async (statusFilter) => {
 
 exports.getDropBySlug = async (slug) => {
   const cacheKey = `drop:${slug}`;
-  
+
   // Try metadata cache
   const cached = await cache.getCache(cacheKey);
   let drop = cached;
@@ -122,7 +122,7 @@ exports.getDropBySlug = async (slug) => {
     });
 
     if (!drop) throw new AppError('Drop not found', 404);
-    
+
     // Only cache metadata if not active (active drops have real-time stock that shouldn't be stale)
     if (drop.status !== 'ACTIVE') {
       await cache.setCache(cacheKey, drop, 120); // 2 mins
