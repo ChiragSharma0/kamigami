@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react";
 import { useForm } from "react-hook-form";
 import "./module.css";
-import { ProductDataContext }  from "../../context/ProductDataContext";
+import { ProductDataContext }  from "../../Context/ProductDataContext";
 import { customAlphabet } from "nanoid";
 import api from "../../services/api";
 import toast from "react-hot-toast";
