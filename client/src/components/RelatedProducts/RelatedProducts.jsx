@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
-import { ProductDataContext } from "../../context/ProductDataContext";
+import { ProductDataContext } from "../../Context/ProductDataContext";
 import ProductCard from '../../components/ProductCards/ProductCards'
 
 
