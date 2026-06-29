@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import PageMeta from '../PageMeta';
-import Hero from "../Hero/hero";
+import Hero from "../Hero/Hero";
 import Product from "../../pages/ProductPages/Product";
 import HeroSlider from '../../pages/HeroSlider/HeroSlider';
 import AboutSection from '../../pages/AboutSection/AboutSection';
-import TestimonialSection from '../../pages/TestimonialSection/testimonialSection';
+import TestimonialSection from '../../pages/TestimonialSection/TestimonialSection';
 import videoSrc from "../../assets/videos/14.mp4";
 import api from "../../services/api";
 import "./MainContainer.css";

@@ -1,7 +1,7 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 
-import Hero from "./components/Hero/hero";
-import Navbar from "./components/Navbar/navbar";
+import Hero from "./components/Hero/Hero";
+import Navbar from "./components/Navbar/Navbar";
 import Footer from "./components/Footer/Footer";
 import CartSidebar from "./components/CartSidebar/CartSidebar";
 
@@ -11,7 +11,7 @@ import Admin from "./pages/Admin/Admin";
 import Login from "./pages/Login/Login";
 import Collections from "./pages/Collections/Collections";
 import CollectionDetail from "./pages/Collections/CollectionDetail";
-import Drops from "./pages/Drops/drops";
+import Drops from "./pages/Drops/Drops";
 import MainContainer from "./components/Main Container/MainContainer";
 import AboutPage from "./pages/About Page/AboutPage";
 import ScrollToTop from "./components/ScrollToTop";
