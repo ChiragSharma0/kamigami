@@ -106,10 +106,15 @@ export const ProductDataProvider = ({ children }) => {
   const [productData, setProductData] = useState(dummyProducts);
 
   const formatServerProduct = (p) => {
-    // 1. Get first image URL or fallback
+    // 1. Get first image URL or fallback (excluding videos)
     let image = SoonImage;
-    if (p.media && p.media.length > 0 && p.media[0].media && p.media[0].media.url) {
-      image = p.media[0].media.url;
+    if (p.media && p.media.length > 0) {
+      const firstImage = p.media.find(m => m.media && m.media.type !== 'video');
+      if (firstImage && firstImage.media.url) {
+        image = firstImage.media.url;
+      } else if (p.media[0].media && p.media[0].media.url) {
+        image = p.media[0].media.url;
+      }
     }
 
     // 2. Parse price

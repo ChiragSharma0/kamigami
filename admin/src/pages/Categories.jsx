@@ -68,7 +68,16 @@ const Categories = () => {
       setIsSubmitting(false);
     }
   };
-
+  const handleDeleteCategory = async (id) => {
+    if (!window.confirm('Are you sure you want to permanently delete this category? Products in this category will be uncategorized.')) return;
+    try {
+      await api.delete(`/admin/categories/${id}`);
+      toast.success('Category deleted successfully');
+      fetchCategories();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete category');
+    }
+  };
   const openEditModal = (category) => {
     setSelectedCategory(category);
     setIsEditModalOpen(true);
@@ -159,7 +168,10 @@ const Categories = () => {
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        <button className="p-2 text-slate-400 hover:text-red-600 transition-colors">
+                        <button 
+                          onClick={() => handleDeleteCategory(cat.id)}
+                          className="p-2 text-slate-400 hover:text-red-600 transition-colors"
+                        >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>

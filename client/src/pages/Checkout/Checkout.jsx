@@ -465,12 +465,12 @@ const Checkout = () => {
                 </div>
                 {discount > 0 && (
                   <div className="calc-row discount">
-                    <span>Initiate Rebate Discount</span>
+                    <span>Discount Applied</span>
                     <span>- ₹{discount.toFixed(0)}</span>
                   </div>
                 )}
                 <div className="calc-row delivery-shipping">
-                  <span>Shiprocket Delivery Fee</span>
+                  <span>Shipping</span>
                   <span className="text-green-500">FREE / COMPLIMENTARY</span>
                 </div>
                 <div className="calc-divider"></div>

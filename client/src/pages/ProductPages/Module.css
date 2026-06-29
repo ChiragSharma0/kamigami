@@ -1021,7 +1021,7 @@
    HOMEPAGE PRODUCT SHOWCASE GRID STYLING
    ======================================================== */
 .homepage-product-section {
-  background: #000;
+  background: transparent;
   padding: 80px 5% 100px 5%;
   color: #f1d6d7;
 }

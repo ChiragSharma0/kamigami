@@ -9,6 +9,12 @@ import { ProductDataContext } from "../../Context/ProductDataContext";
 // --- GENDER DEMOGRAPHIC DETECTOR ---
 const getProductGender = (product) => {
   if (!product) return "unisex";
+  
+  // 0. Database Metadata Gender selection takes precedence
+  if (product.metadata?.gender) {
+    return product.metadata.gender.toLowerCase();
+  }
+
   const cat = product.category?.toLowerCase() || "";
   
   // 1. Direct Category Match

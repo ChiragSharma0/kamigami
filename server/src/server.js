@@ -1,5 +1,5 @@
-const app = require('./app');
 const config = require('./config');
+const app = require('./app');
 const { connectRedis } = require('./db/redis');
 const dropsScheduler = require('./modules/drops/drops.scheduler');
 const reservationWorker = require('./workers/reservation.worker');

@@ -43,6 +43,11 @@ exports.updateCategory = asyncHandler(async (req, res) => {
   res.status(200).json({ status: 'success', data: { category } });
 });
 
+exports.deleteCategory = asyncHandler(async (req, res) => {
+  await adminService.deleteCategory(req.user.userId, req.params.id);
+  res.status(204).json({ status: 'success', data: null });
+});
+
 // DROP MANAGEMENT
 exports.listDrops = asyncHandler(async (req, res) => {
   const drops = await adminService.listDrops(req.query.status);

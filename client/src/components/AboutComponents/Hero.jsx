@@ -190,6 +190,7 @@ const Hero = () => {
               title={aboutPageData.heroBtnText || "EXPLORE COLLECTION"}
               leftIcon={<TiLocationArrow />}
               containerClass="bg-[#F1D6D7] flex-center gap-1"
+              to="/collections"
             />
           </div>
         </div>

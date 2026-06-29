@@ -12,10 +12,10 @@ const Drops = () => {
   const [activeDropProducts, setActiveDropProducts] = useState([]);
   const [upcomingDrop, setUpcomingDrop] = useState(null);
   const [pastDrops, setPastDrops] = useState([]);
-  
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // Timer states
   const [countdownText, setCountdownText] = useState("");
   const [subscriptionEmail, setSubscriptionEmail] = useState("");
@@ -27,15 +27,15 @@ const Drops = () => {
     if (p.media && p.media.length > 0 && p.media[0].media && p.media[0].media.url) {
       image = p.media[0].media.url;
     }
-    
+
     const price = p.basePrice ? Number(p.basePrice) : 0;
-    
+
     let discount = 0;
     if (p.compareAtPrice && Number(p.compareAtPrice) > price) {
       const comparePrice = Number(p.compareAtPrice);
       discount = Math.round(((comparePrice - price) / comparePrice) * 100);
     }
-    
+
     const category = p.category?.name?.toLowerCase() || 'unassigned';
 
     let size = 'M';
@@ -63,17 +63,17 @@ const Drops = () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         // 1. Fetch all drops
         const response = await api.get('/drops');
         const allDrops = response.data?.data?.drops || [];
         setDrops(allDrops);
-        
+
         // 2. Identify active, upcoming, and past drops
         const active = allDrops.find(d => d.status === 'ACTIVE');
         const scheduled = allDrops.find(d => d.status === 'SCHEDULED');
         const past = allDrops.filter(d => d.status === 'ENDED');
-        
+
         setPastDrops(past);
 
         if (active) {
@@ -95,7 +95,7 @@ const Drops = () => {
         setLoading(false);
       }
     };
-    
+
     fetchDropsData();
   }, []);
 
@@ -116,7 +116,7 @@ const Drops = () => {
 
     const interval = setInterval(() => {
       const difference = targetTime - new Date();
-      
+
       if (difference <= 0) {
         setCountdownText(isEndingTimer ? "DROP HAS ENDED" : "LIVE NOW");
         clearInterval(interval);
@@ -130,7 +130,7 @@ const Drops = () => {
       const seconds = Math.floor((difference / 1000) % 60);
 
       // Cyberpunk format
-      const formatted = `${days > 0 ? `${days}d:`: ""}${String(hours).padStart(2, "0")}h:${String(minutes).padStart(2, "0")}m:${String(seconds).padStart(2, "0")}s`;
+      const formatted = `${days > 0 ? `${days}d:` : ""}${String(hours).padStart(2, "0")}h:${String(minutes).padStart(2, "0")}m:${String(seconds).padStart(2, "0")}s`;
       setCountdownText(formatted);
     }, 1000);
 
@@ -146,9 +146,9 @@ const Drops = () => {
 
   return (
     <div id="main" className="drops-page-container">
-      <PageMeta 
-        title="Timed Drops" 
-        description="Sign up and shop real-time, timelocked streetwear capsule drops from Kamigami. Once time runs out, these garments are gone forever." 
+      <PageMeta
+        title="Timed Drops"
+        description="Sign up and shop real-time, timelocked streetwear capsule drops from Kamigami. Once time runs out, these garments are gone forever."
       />
 
       {loading ? (
@@ -191,7 +191,7 @@ const Drops = () => {
                   <h2>SACRED VESTMENTS</h2>
                   <div className="header-bar"></div>
                 </div>
-                
+
                 {activeDropProducts.length === 0 ? (
                   <div className="no-products-drop">
                     <p>No holy garments have descended in this release.</p>
@@ -199,9 +199,9 @@ const Drops = () => {
                 ) : (
                   <div className="drop-products-grid">
                     {activeDropProducts.map(product => (
-                      <ProductCard 
-                        key={product.id} 
-                        product={product} 
+                      <ProductCard
+                        key={product.id}
+                        product={product}
                       />
                     ))}
                   </div>
@@ -236,9 +236,9 @@ const Drops = () => {
                     </div>
                   ) : (
                     <form onSubmit={handleSubscribeSubmit} className="sub-form">
-                      <input 
-                        type="email" 
-                        placeholder="ENTER EMAIL TO SEAL THE PRE-ACCESS PACT" 
+                      <input
+                        type="email"
+                        placeholder="ENTER EMAIL TO SEAL THE PRE-ACCESS PACT"
                         value={subscriptionEmail}
                         onChange={(e) => setSubscriptionEmail(e.target.value)}
                         required
@@ -268,9 +268,9 @@ const Drops = () => {
                     </div>
                   ) : (
                     <form onSubmit={handleSubscribeSubmit} className="sub-form">
-                      <input 
-                        type="email" 
-                        placeholder="SEAL THE INITIATION PACT" 
+                      <input
+                        type="email"
+                        placeholder="SEAL THE INITIATION PACT"
                         value={subscriptionEmail}
                         onChange={(e) => setSubscriptionEmail(e.target.value)}
                         required

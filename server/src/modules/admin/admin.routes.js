@@ -20,6 +20,7 @@ router.delete('/products/:id', adminController.deleteProduct);
 router.get('/categories', adminController.listCategories);
 router.post('/categories', adminController.createCategory);
 router.put('/categories/:id', adminController.updateCategory);
+router.delete('/categories/:id', adminController.deleteCategory);
 
 // Drop Management
 router.get('/drops', adminController.listDrops);

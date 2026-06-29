@@ -8,12 +8,35 @@ const crypto = require('crypto');
 const s3Client = new S3Client({
   region: process.env.AWS_REGION || 'us-east-1',
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'dummy',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'dummy',
+    // Support both legacy lowercase keys and standard uppercase keys
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || process.env.awsaccesskey || 'dummy',
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || process.env.awssecretkey || 'dummy',
   },
 });
 
+// Helper to build a signed URL for a stored object (5‑minute expiry)
+const { GetObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl: getS3SignedUrl } = require('@aws-sdk/s3-request-presigner');
+
+function getSignedUrl(storageKey) {
+  const bucket = process.env.AWS_S3_BUCKET_NAME || 'kamigami-media';
+  const command = new GetObjectCommand({
+    Bucket: bucket,
+    Key: storageKey
+  });
+  // Expires in 300 seconds (5 minutes)
+  return getS3SignedUrl(s3Client, command, { expiresIn: 300 });
+}
+
+// Legacy public URL helper (kept for backward compatibility, but not used for gallery)
+function getPublicUrl(storageKey) {
+  const bucket = process.env.AWS_S3_BUCKET_NAME || 'kamigami-media';
+  const baseUrl = process.env.AWS_S3_PUBLIC_URL || `https://${bucket}.s3.amazonaws.com`;
+  return `${baseUrl}/${storageKey}`;
+}
+
 const upload = multer({
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB limit
   storage: multerS3({
     s3: s3Client,
     bucket: process.env.AWS_S3_BUCKET_NAME || 'kamigami-media',
@@ -29,7 +52,6 @@ const upload = multer({
       cb(null, fullPath);
     }
   }),
-  limits: { fileSize: parseInt(process.env.MAX_FILE_SIZE) || 50 * 1024 * 1024 }, // 50MB
   fileFilter: (req, file, cb) => {
     // Validate mime types
     const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm'];
@@ -75,5 +97,7 @@ module.exports = {
   upload,
   deleteFromS3,
   deleteMultipleFromS3,
-  s3Client
+  s3Client,
+  getPublicUrl,
+  getSignedUrl
 };

@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { ShoppingCart } from "lucide-react";
 import "../ProductCards/module.css";
 import { CartContext } from "../../Context/CartContext";
@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 
 const ProductCard = ({ product }) => {
   const { cartItems, setCartItems, setIsCartOpen } = useContext(CartContext);
+  const [imgLoading, setImgLoading] = useState(true);
 
   if (!product) return null;
 
@@ -31,12 +32,19 @@ const ProductCard = ({ product }) => {
   className="product-link"
 >
 
-  <div className="card">
+  <div className="card relative bg-neutral-900">
+
+    {/* Product Image Loading Skeleton */}
+    {imgLoading && (
+      <div className="absolute inset-0 bg-neutral-800 animate-pulse" />
+    )}
 
     {/* Product Image */}
     <img
       src={product.image}
       alt={product.title}
+      onLoad={() => setImgLoading(false)}
+      className={`w-full h-full object-cover transition-opacity duration-300 ${imgLoading ? 'opacity-0' : 'opacity-100'}`}
     />
 
     {/* Bottom Content */}

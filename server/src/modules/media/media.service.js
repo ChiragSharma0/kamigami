@@ -1,17 +1,17 @@
 const prisma = require('../../db/prisma');
-const { deleteFromS3, deleteMultipleFromS3 } = require('./media.utils');
+const { deleteFromS3, deleteMultipleFromS3, getSignedUrl } = require('./media.utils');
 
 class MediaService {
   async saveMedia(fileData, uploadedBy) {
     const type = fileData.mimetype.startsWith('video/') ? 'video' : 'image';
-    
+
     return prisma.media.create({
       data: {
         fileName: fileData.key.split('/').pop(),
         originalName: fileData.originalname,
         mimeType: fileData.mimetype,
         fileSize: fileData.size,
-        url: fileData.location,
+        url: await getSignedUrl(fileData.key),
         storageKey: fileData.key,
         type,
         folder: fileData.folder || 'misc',
@@ -51,16 +51,24 @@ class MediaService {
       })
     ]);
 
+    // Attach fresh signed URLs (expire after 5 min)
+    const dataWithUrls = await Promise.all(
+      data.map(async (item) => ({
+        ...item,
+        url: await getSignedUrl(item.storageKey)
+      }))
+    );
+
     return {
       total,
       page: parseInt(page),
       totalPages: Math.ceil(total / limit),
-      data
-    };
+      data: dataWithUrls
+    }
   }
 
   async getMediaById(id) {
-    const media = await prisma.media.findUnique({ 
+    const media = await prisma.media.findUnique({
       where: { id },
       include: {
         uploadedBy: {
@@ -69,7 +77,27 @@ class MediaService {
       }
     });
     if (!media) throw new Error('Media not found');
-    return media;
+    // Refresh signed URL (5 min expiry)
+    const freshUrl = await getSignedUrl(media.storageKey);
+    return { ...media, url: freshUrl };
+  }
+
+  async updateMedia(id, updateData) {
+    const { originalName, altText } = updateData;
+    const media = await prisma.media.findUnique({ where: { id } });
+    if (!media) throw new Error('Media not found');
+
+    const updated = await prisma.media.update({
+      where: { id },
+      data: {
+        originalName: originalName !== undefined ? originalName : media.originalName,
+        altText: altText !== undefined ? altText : media.altText
+      }
+    });
+
+    const freshUrl = await getSignedUrl(updated.storageKey);
+    console.log('🔧 [Server] Updated media ID', id, 'with fresh signed URL:', freshUrl);
+    return { ...updated, url: freshUrl };
   }
 
   async deleteMedia(id) {

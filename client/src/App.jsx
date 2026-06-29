@@ -17,13 +17,14 @@ import AboutPage from "./pages/About Page/AboutPage";
 import ScrollToTop from "./components/ScrollToTop";
 import ProductSection from "./pages/ProductPages/Product";
 import AllProductsPage from "./pages/ProductPages/AllProductsPage";
+import ContactUs from "./pages/ContactUs/ContactUs";
 
 const App = () => {
 
   const location = useLocation();
 
   // Jis route pe Navbar/Footer hide karna hai
-  const hideLayoutRoutes = ["/sign-up","/about-us"];
+  const hideLayoutRoutes = ["/sign-up", "/about-us"];
 
   const shouldHideLayout =
     hideLayoutRoutes.includes(location.pathname);
@@ -32,13 +33,13 @@ const App = () => {
     <>
 
       {/* Navbar */}
-      {!shouldHideLayout && <Navbar /> }
+      {!shouldHideLayout && <Navbar />}
 
-      <ScrollToTop/>
+      <ScrollToTop />
 
       <Routes>
-        <Route path="/" element={<MainContainer/>} />
-        <Route path="/about-us" element={<AboutPage/>} />
+        <Route path="/" element={<MainContainer />} />
+        <Route path="/about-us" element={<AboutPage />} />
 
         <Route path="/userprofile" element={<AccountDashboard />} />
         <Route path="/admin" element={<Admin />} />
@@ -50,6 +51,7 @@ const App = () => {
         <Route path="/collections" element={<Collections />} />
         <Route path="/collections/:slug" element={<CollectionDetail />} />
         <Route path="/drops" element={<Drops />} />
+        <Route path="/contact-us" element={<ContactUs />} />
       </Routes>
 
       {/* Footer */}

@@ -300,6 +300,28 @@ exports.updateCategory = async (adminId, categoryId, updateData) => {
   });
 };
 
+exports.deleteCategory = async (adminId, categoryId) => {
+  const result = await prisma.$transaction(async (tx) => {
+    const category = await tx.category.findUnique({ where: { id: categoryId } });
+    if (!category) throw new AppError('Category not found', 404);
+
+    await tx.category.delete({ where: { id: categoryId } });
+
+    await logAction(tx, adminId, 'deleted_category', categoryId, { name: category.name });
+    return category;
+  });
+
+  // Invalidate product list cache since products in this category had their category set to null
+  try {
+    const cache = require('../../common/utils/cache');
+    await cache.deleteByPattern('products:list:*');
+  } catch (err) {
+    console.warn('[AdminService] Cache invalidation failed:', err.message);
+  }
+
+  return result;
+};
+
 // 3. DROP MANAGEMENT
 exports.listDrops = async (status) => {
   return await dropsService.listDrops(status);

@@ -1,7 +1,7 @@
 import { MapPin, Pencil, Trash2 } from "lucide-react";
 import "./module.css";
 
-const AddressCard = ({ label, address, isDefault }) => {
+const AddressCard = ({ id, label, address, isDefault, onDelete, onEdit }) => {
   return (
     <div className={`address-card ${isDefault ? "default" : ""}`}>
       <div className="address-card-header">
@@ -15,11 +15,11 @@ const AddressCard = ({ label, address, isDefault }) => {
       <p className="address-text">{address}</p>
 
       <div className="address-actions">
-        <button className="address-btn edit">
+        <button className="address-btn edit" onClick={() => onEdit && onEdit(id)}>
           <Pencil size={14} />
           Edit
         </button>
-        <button className="address-btn delete">
+        <button className="address-btn delete" onClick={() => onDelete && onDelete(id)}>
           <Trash2 size={14} />
           Delete
         </button>

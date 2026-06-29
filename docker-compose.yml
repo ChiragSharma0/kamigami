@@ -1,18 +1,46 @@
 services:
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: kamigami_client
+    ports:
+      - "6000:6000"
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - kamigami_network
+
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: kamigami_admin
+    ports:
+      - "6500:6500"
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - kamigami_network
+
   backend:
-    build: .
+    build:
+      context: ./server
+      dockerfile: Dockerfile
     container_name: kamigami_backend
     ports:
       - "7000:7000"
     volumes:
-      - .:/app
+      - ./server:/app
       - /app/node_modules
     environment:
       - PORT=7000
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/kamigami
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - NODE_ENV=development
+      - NODE_ENV=production
     depends_on:
       postgres:
         condition: service_healthy
@@ -66,6 +94,3 @@ networks:
 volumes:
   postgres_data:
   redis_data:
-
-
-

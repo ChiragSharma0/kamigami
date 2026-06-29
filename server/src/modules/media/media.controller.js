@@ -60,6 +60,15 @@ exports.getMediaById = asyncHandler(async (req, res) => {
   });
 });
 
+exports.updateMedia = asyncHandler(async (req, res) => {
+  const { originalName, altText } = req.body;
+  const updatedMedia = await mediaService.updateMedia(req.params.id, { originalName, altText });
+  res.status(200).json({
+    status: 'success',
+    data: updatedMedia
+  });
+});
+
 exports.deleteMedia = asyncHandler(async (req, res) => {
   await mediaService.deleteMedia(req.params.id);
   res.status(200).json({

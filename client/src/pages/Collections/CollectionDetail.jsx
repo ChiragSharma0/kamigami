@@ -19,15 +19,15 @@ const CollectionDetail = () => {
     if (p.media && p.media.length > 0 && p.media[0].media && p.media[0].media.url) {
       image = p.media[0].media.url;
     }
-    
+
     const price = p.basePrice ? Number(p.basePrice) : 0;
-    
+
     let discount = 0;
     if (p.compareAtPrice && Number(p.compareAtPrice) > price) {
       const comparePrice = Number(p.compareAtPrice);
       discount = Math.round(((comparePrice - price) / comparePrice) * 100);
     }
-    
+
     const category = p.category?.name?.toLowerCase() || 'unassigned';
 
     let size = 'M';
@@ -57,7 +57,7 @@ const CollectionDetail = () => {
         setError(null);
         const response = await api.get(`/collections/${slug}`);
         const collectionData = response.data?.data?.collection;
-        
+
         if (collectionData) {
           setCollection(collectionData);
           // Format the products that were returned inside the collection
@@ -79,9 +79,9 @@ const CollectionDetail = () => {
 
   return (
     <div id="main" className="collection-detail-container">
-      <PageMeta 
-        title={collection ? `${collection.name} Capsule` : 'Streetwear Capsule'} 
-        description={collection?.description || "Shop the latest exclusive street streetwear capsule release from Kamigami."} 
+      <PageMeta
+        title={collection ? `${collection.name} Capsule` : 'Streetwear Capsule'}
+        description={collection?.description || "Shop the latest exclusive street streetwear capsule release from Kamigami."}
       />
 
       {loading ? (
@@ -135,9 +135,9 @@ const CollectionDetail = () => {
           // Renders the real product grid using premium ProductCard components
           <div className="products-grid">
             {products.map((product) => (
-              <ProductCard 
-                key={product.id} 
-                product={product} 
+              <ProductCard
+                key={product.id}
+                product={product}
               />
             ))}
           </div>

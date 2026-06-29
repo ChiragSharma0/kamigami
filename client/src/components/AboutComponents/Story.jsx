@@ -142,6 +142,7 @@ const FloatingImage = () => {
               id="realm-btn"
               title={aboutPageData.storyBtnText || "UNLOCK THE ORIGIN"}
               containerClass="mt-5"
+              to="/all-products"
             />
           </div>
         </div>

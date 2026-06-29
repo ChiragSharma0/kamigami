@@ -17,6 +17,11 @@ import {
 } from 'lucide-react';
 import MediaGalleryModal from '../components/MediaGalleryModal';
 
+const cleanUrl = (url) => {
+  if (typeof url !== 'string') return '';
+  return url.split('?')[0];
+};
+
 const DEFAULT_SETTINGS = {
   slider: [
     {
@@ -85,7 +90,8 @@ const DEFAULT_SETTINGS = {
       rating: 4,
       text: "Great attention to detail. The stitching, the tags, the overall vibe — everything screams quality. Will definitely order again.",
     }
-  ]
+  ],
+  backgroundVideo: ""
 };
 
 const DEFAULT_POLICY = {
@@ -171,6 +177,11 @@ const CmsSettings = () => {
       updateTestimonialField(index, field, url);
     } else if (type === 'aboutStory') {
       updateAboutPageField(field, url);
+    } else if (type === 'homepageBg') {
+      setSettings(prev => ({
+        ...prev,
+        backgroundVideo: url
+      }));
     }
   };
 
@@ -555,6 +566,40 @@ const CmsSettings = () => {
               <span>Modify the carousel sliders mapped below. You can now add a **Redirection Link** for each slide banner. When a customer clicks on the slide banner image in your storefront, they will be redirected to that specified link dynamically (e.g. <code>/collections/hoodies</code> or <code>/drops</code>).</span>
             </div>
 
+            {/* Immersive Video Background Card */}
+            <div className="p-6 border border-slate-200 rounded-xl bg-slate-50 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center text-primary-600">
+                  <Info className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">IMMERSIVE VIDEO BACKGROUND</h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Set the global ambient video background for your homepage storefront</p>
+                </div>
+              </div>
+
+              <div className="space-y-1.5 max-w-2xl">
+                <label className="text-xxs font-bold text-slate-400 uppercase tracking-wider">Background Video URL / Asset</label>
+                <div className="flex gap-2">
+                  <input 
+                    type="text"
+                    className="flex-1 text-xs px-3 py-2 border border-slate-200 rounded-md focus:border-primary-500 outline-none font-mono"
+                    value={settings.backgroundVideo || ''}
+                    onChange={(e) => setSettings(prev => ({ ...prev, backgroundVideo: e.target.value }))}
+                    placeholder="e.g. https://domain.com/path/to/video.mp4 (Leave empty for default 14.mp4)"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => openGalleryFor('homepageBg', null, 'backgroundVideo')}
+                    className="px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-xs font-bold transition-colors"
+                  >
+                    Select Video
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-400">Specify any direct MP4 video link or upload one to your media library and select it. If empty, the default storefront video asset (<code>14.mp4</code>) will be played.</p>
+              </div>
+            </div>
+
             <div className="grid md:grid-cols-3 gap-6">
               {settings.slider.map((slide, i) => (
                 <div key={slide.id} className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50 flex flex-col">
@@ -579,7 +624,7 @@ const CmsSettings = () => {
                         <input 
                           type="url"
                           className="flex-1 text-xs px-3 py-2 border border-slate-200 rounded-md focus:border-primary-500 outline-none font-medium"
-                          value={slide.image}
+                          value={cleanUrl(slide.image)}
                           onChange={(e) => updateSliderField(i, 'image', e.target.value)}
                           placeholder="Image URL"
                         />
@@ -674,7 +719,7 @@ const CmsSettings = () => {
                     <input 
                       type="url"
                       className="flex-1 text-xs px-3 py-2 border border-slate-200 rounded-md focus:border-primary-500 outline-none"
-                      value={settings.about.rightImage}
+                      value={cleanUrl(settings.about.rightImage)}
                       onChange={(e) => updateAboutField('rightImage', e.target.value)}
                     />
                     <button
@@ -743,7 +788,7 @@ const CmsSettings = () => {
                             <input 
                               type="url"
                               className="flex-1 text-xxs px-2 py-1.5 border border-slate-200 rounded focus:border-primary-500 outline-none"
-                              value={card.img}
+                              value={cleanUrl(card.img)}
                               onChange={(e) => updateAboutCardField(i, 'img', e.target.value)}
                             />
                             <button
@@ -839,7 +884,7 @@ const CmsSettings = () => {
                       <input 
                         type="url"
                         className="flex-1 text-xs px-3 py-1.5 border border-slate-200 rounded-md focus:border-primary-500 outline-none text-slate-500 font-mono"
-                        value={t.avatar}
+                        value={cleanUrl(t.avatar)}
                         onChange={(e) => updateTestimonialField(i, 'avatar', e.target.value)}
                       />
                       <button
@@ -951,7 +996,7 @@ const CmsSettings = () => {
                       <input 
                         type="url"
                         className="flex-1 text-xs px-3 py-2 border border-slate-200 rounded-md focus:border-primary-500 outline-none text-slate-500 font-mono"
-                        value={aboutPageData.storyImage || ''}
+                        value={cleanUrl(aboutPageData.storyImage)}
                         onChange={(e) => updateAboutPageField('storyImage', e.target.value)}
                       />
                       <button
@@ -1005,7 +1050,7 @@ const CmsSettings = () => {
                           <input 
                             type="text"
                             className="flex-1 text-xs px-3 py-2 border border-slate-200 rounded-md focus:border-primary-500 outline-none text-slate-600 font-mono"
-                            value={aboutPageData[`heroVideo${idx}`] || ''}
+                            value={cleanUrl(aboutPageData[`heroVideo${idx}`])}
                             onChange={(e) => updateAboutPageField(`heroVideo${idx}`, e.target.value)}
                             placeholder={`e.g. videos/hero-${idx}.mp4`}
                           />
@@ -1032,7 +1077,7 @@ const CmsSettings = () => {
                           <input 
                             type="text"
                             className="flex-1 text-xs px-3 py-2 border border-slate-200 rounded-md focus:border-primary-500 outline-none text-slate-600 font-mono"
-                            value={aboutPageData[`featureVideo${idx}`] || ''}
+                            value={cleanUrl(aboutPageData[`featureVideo${idx}`])}
                             onChange={(e) => updateAboutPageField(`featureVideo${idx}`, e.target.value)}
                             placeholder={`e.g. videos/feature-${idx}.mp4`}
                           />
@@ -1249,6 +1294,7 @@ const CmsSettings = () => {
           isOpen={isGalleryOpen} 
           onClose={() => setIsGalleryOpen(false)} 
           onSelect={handleGallerySelect} 
+          allowedTypes={galleryTarget.type === 'homepageBg' ? ['video'] : ['image', 'video']}
         />
       </div>
     </div>

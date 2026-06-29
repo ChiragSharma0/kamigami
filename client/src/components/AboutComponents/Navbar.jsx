@@ -3,10 +3,16 @@ import gsap from "gsap";
 import { useWindowScroll } from "react-use";
 import { useEffect, useRef, useState } from "react";
 import { TiLocationArrow } from "react-icons/ti";
+import { Link } from "react-router-dom";
 
 import Button from "./Button";
 
-const navItems = ["Home", "Store", "Prologue", "Contact"];
+const navItems = [
+  { name: "Home", path: "/" },
+  { name: "Store", path: "/all-products" },
+  { name: "Prologue", path: "/about-us" },
+  { name: "Contact", path: "/contact-us" }
+];
 
 const NavBar = () => {
   // State for toggling audio and visual indicator
@@ -77,13 +83,16 @@ const NavBar = () => {
         <nav className="flex size-full items-center justify-between p-4">
           {/* Logo and Product button */}
           <div className="flex items-center gap-7">
-            <img src="/img/logo.png" alt="logo" className="w-10" />
+            <Link to="/">
+              <img src="/img/logo.png" alt="logo" className="w-10" />
+            </Link>
 
             <Button
               id="product-button"
               title="Products"
               rightIcon={<TiLocationArrow />}
               containerClass="bg-[#F1D6D7] md:flex hidden items-center justify-center gap-1"
+              to="/all-products"
             />
           </div>
 
@@ -91,13 +100,13 @@ const NavBar = () => {
           <div className="flex h-full items-center">
             <div className="hidden md:block">
               {navItems.map((item, index) => (
-                <a
+                <Link
                   key={index}
-                  href={`#${item.toLowerCase()}`}
+                  to={item.path}
                   className="nav-hover-btn"
                 >
-                  {item}
-                </a>
+                  {item.name}
+                </Link>
               ))}
             </div>
 

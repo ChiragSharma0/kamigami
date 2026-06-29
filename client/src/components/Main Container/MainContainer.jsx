@@ -1,19 +1,52 @@
-import React from 'react'
-import PageMeta from '../PageMeta'
-import Hero from "../Hero/Hero"
-import Product from "../../pages/ProductPages/Product"
-import HeroSlider from '../../pages/HeroSlider/HeroSlider'
-import AboutSection from '../../pages/AboutSection/AboutSection'
-import TestimonialSection from '../../pages/TestimonialSection/TestimonialSection'
-
+import React, { useState, useEffect } from 'react';
+import PageMeta from '../PageMeta';
+import Hero from "../Hero/Hero";
+import Product from "../../pages/ProductPages/Product";
+import HeroSlider from '../../pages/HeroSlider/HeroSlider';
+import AboutSection from '../../pages/AboutSection/AboutSection';
+import TestimonialSection from '../../pages/TestimonialSection/TestimonialSection';
+import videoSrc from "../../assets/videos/14.mp4";
+import api from "../../services/api";
+import "./MainContainer.css";
 
 const MainContainer = () => {
+  const [bgVideo, setBgVideo] = useState("");
+
+  useEffect(() => {
+    const fetchCmsSettings = async () => {
+      try {
+        const res = await api.get('/settings/homepage_cms');
+        if (res.data?.data?.value?.backgroundVideo) {
+          setBgVideo(res.data.data.value.backgroundVideo);
+        }
+      } catch (err) {
+        console.warn('[CMS-BgVideo] Failed to fetch homepage settings, using local fallback video.');
+      }
+    };
+    fetchCmsSettings();
+  }, []);
+
   return (
-    <div>
+    <div className="relative min-h-screen text-white">
       <PageMeta 
         title="Home" 
         description="Shop Kamigami for premium Japanese streetwear & luxury fashion. Explore our limited graphic hoodies, oversized t-shirts, and exclusive seasonal apparel drops." 
       />
+      
+      {/* Dynamic fixed video background */}
+      <div className="homepage-bg-video-container">
+        <video 
+          key={bgVideo}
+          src={bgVideo || videoSrc} 
+          autoPlay 
+          muted 
+          loop 
+          playsInline 
+          className="homepage-bg-video" 
+        />
+        <div className="homepage-bg-overlay" />
+      </div>
+
       <div className="hide-on-mobile">
         <Hero/>
       </div>
@@ -22,7 +55,7 @@ const MainContainer = () => {
       <TestimonialSection/>
       <AboutSection/>
     </div>
-  )
-}
+  );
+};
 
-export default MainContainer
+export default MainContainer;

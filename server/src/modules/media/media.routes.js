@@ -16,6 +16,7 @@ router.use(verifyJWT, requireAdmin);
 router.post('/upload', upload.array('files', 20), mediaController.uploadMedia);
 router.get('/', mediaController.getAllMedia);
 router.get('/:id', mediaController.getMediaById);
+router.put('/:id', mediaController.updateMedia);
 router.delete('/:id', mediaController.deleteMedia);
 
 module.exports = router;

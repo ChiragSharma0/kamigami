@@ -18,7 +18,8 @@ import {
   Palette,
   Maximize2,
   Zap,
-  Flame
+  Flame,
+  Video
 } from 'lucide-react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
@@ -175,6 +176,73 @@ const BulkGenerator = ({ onGenerate, baseSku, basePrice }) => {
     </div>
   );
 };
+const parseVariantsToColorGroups = (variants, metadata, productMedia) => {
+  if (!variants || variants.length === 0) {
+    return [
+      {
+        color: 'Ebony',
+        colorHex: '#28282B',
+        media: [],
+        sizes: [
+          { size: 'XS', price: '', initialStock: 0, enabled: false },
+          { size: 'S', price: '', initialStock: 0, enabled: true },
+          { size: 'M', price: '', initialStock: 0, enabled: true },
+          { size: 'L', price: '', initialStock: 0, enabled: true },
+          { size: 'XL', price: '', initialStock: 0, enabled: true },
+          { size: 'XXL', price: '', initialStock: 0, enabled: false }
+        ]
+      }
+    ];
+  }
+
+  const groups = {};
+  const allMedia = (productMedia || []).map(pm => pm.media || pm).filter(Boolean);
+
+  variants.forEach(v => {
+    const color = v.attributes?.color || 'Default';
+    const colorHex = v.attributes?.colorHex || '#000000';
+    const size = v.attributes?.size || 'M';
+
+    if (!groups[color]) {
+      const colorMediaIds = metadata?.colorMedia?.[color] || [];
+      const colorMedia = allMedia.filter(m => colorMediaIds.includes(m.id));
+
+      groups[color] = {
+        color,
+        colorHex,
+        media: colorMedia,
+        sizes: []
+      };
+    }
+
+    groups[color].sizes.push({
+      id: v.id,
+      size,
+      price: v.price || '',
+      initialStock: v.inventory?.stockTotal || 0,
+      enabled: true
+    });
+  });
+
+  const defaultSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+  
+  Object.values(groups).forEach(g => {
+    defaultSizes.forEach(ds => {
+      const exists = g.sizes.find(sz => sz.size === ds);
+      if (!exists) {
+        g.sizes.push({
+          size: ds,
+          price: '',
+          initialStock: 0,
+          enabled: false
+        });
+      }
+    });
+    g.sizes.sort((a, b) => defaultSizes.indexOf(a.size) - defaultSizes.indexOf(b.size));
+  });
+
+  return Object.values(groups);
+};
 
 const ProductForm = ({ onSubmit, isLoading, initialData }) => {
   const [categories, setCategories] = useState([]);
@@ -188,17 +256,57 @@ const ProductForm = ({ onSubmit, isLoading, initialData }) => {
     categoryId: initialData?.categoryId || '',
     status: initialData?.status || 'PUBLISHED',
     isDrop: initialData?.isDrop || false,
-    media: initialData?.media?.map(m => m.media) || [],
-    metadata: initialData?.metadata || { gender: 'UNISEX' },
-    variants: initialData?.variants || [
-      { sku: '', attributes: { size: 'M', color: 'Ebony', colorHex: '#28282B' }, price: '', initialStock: 0 }
-    ]
+    media: initialData?.media?.map(m => m.media).filter(m => m && m.type !== 'video') || [],
+    video: initialData?.media?.map(m => m.media).find(m => m && m.type === 'video') || null,
+    metadata: initialData?.metadata || { gender: 'UNISEX' }
   });
 
+  const [colorGroups, setColorGroups] = useState([
+    {
+      color: 'Ebony',
+      colorHex: '#28282B',
+      media: [],
+      sizes: [
+        { size: 'XS', price: '', initialStock: 0, enabled: false },
+        { size: 'S', price: '', initialStock: 0, enabled: true },
+        { size: 'M', price: '', initialStock: 0, enabled: true },
+        { size: 'L', price: '', initialStock: 0, enabled: true },
+        { size: 'XL', price: '', initialStock: 0, enabled: true },
+        { size: 'XXL', price: '', initialStock: 0, enabled: false }
+      ]
+    }
+  ]);
+
   const [errors, setErrors] = useState({});
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [galleryColorIndex, setGalleryColorIndex] = useState(null);
+  const [gallerySelectTarget, setGallerySelectTarget] = useState('images'); // 'images', 'video'
+  const [isBulkOpen, setIsBulkOpen] = useState(false);
+
+  const [specsList, setSpecsList] = useState(() => {
+    const raw = initialData?.metadata?.specifications;
+    if (Array.isArray(raw)) return raw;
+    if (raw && typeof raw === 'object') {
+      return [
+        { label: 'FIT TYPE', value: raw.fit || '' },
+        { label: 'FABRIC TYPE', value: raw.fabric || '' },
+        { label: 'PRINT TECHNIQUE', value: raw.print || '' },
+        { label: 'COLLECTION ORIGIN', value: raw.origin || '' },
+        { label: 'CARE INSTRUCTION', value: raw.care || '' }
+      ].filter(item => item.value);
+    }
+    return [
+      { label: '', value: '' },
+      { label: '', value: '' }
+    ];
+  });
 
   useEffect(() => {
     if (initialData) {
+      const allMedia = initialData.media?.map(m => m.media).filter(Boolean) || [];
+      const imagesOnly = allMedia.filter(m => m.type !== 'video');
+      const videoOnly = allMedia.find(m => m.type === 'video') || null;
+
       setFormData({
         name: initialData.name || '',
         slug: initialData.slug || '',
@@ -208,23 +316,51 @@ const ProductForm = ({ onSubmit, isLoading, initialData }) => {
         categoryId: initialData.categoryId || '',
         status: initialData.status || 'PUBLISHED',
         isDrop: initialData.isDrop || false,
-        media: initialData.media?.map(m => m.media) || [],
-        metadata: initialData.metadata || { gender: 'UNISEX' },
-        variants: initialData.variants && initialData.variants.length > 0 ? initialData.variants.map(v => ({
-          ...v,
-          price: v.price || '',
-          initialStock: v.inventory?.stockTotal || 0,
-          attributes: {
-            size: v.attributes?.size || 'M',
-            color: v.attributes?.color || 'Ebony',
-            colorHex: v.attributes?.colorHex || '#28282B'
-          }
-        })) : [
-          { sku: '', attributes: { size: 'M', color: 'Ebony', colorHex: '#28282B' }, price: '', initialStock: 0 }
-        ]
+        media: imagesOnly,
+        video: videoOnly,
+        metadata: initialData.metadata || { gender: 'UNISEX' }
       });
+
+      const parsedGroups = parseVariantsToColorGroups(
+        initialData.variants,
+        initialData.metadata,
+        initialData.media
+      );
+      setColorGroups(parsedGroups);
+
+      const raw = initialData.metadata?.specifications;
+      let parsedSpecs = [
+        { label: '', value: '' },
+        { label: '', value: '' }
+      ];
+      if (Array.isArray(raw)) {
+        parsedSpecs = raw;
+      } else if (raw && typeof raw === 'object') {
+        parsedSpecs = [
+          { label: 'FIT TYPE', value: raw.fit || '' },
+          { label: 'FABRIC TYPE', value: raw.fabric || '' },
+          { label: 'PRINT TECHNIQUE', value: raw.print || '' },
+          { label: 'COLLECTION ORIGIN', value: raw.origin || '' },
+          { label: 'CARE INSTRUCTION', value: raw.care || '' }
+        ].filter(item => item.value);
+      }
+      setSpecsList(parsedSpecs);
     }
   }, [initialData]);
+
+  const handleSpecChange = (index, field, value) => {
+    setSpecsList(prev => prev.map((spec, i) => i === index ? { ...spec, [field]: value } : spec));
+  };
+
+  const addSpecRow = () => {
+    if (specsList.length < 10) {
+      setSpecsList(prev => [...prev, { label: '', value: '' }]);
+    }
+  };
+
+  const removeSpecRow = (index) => {
+    setSpecsList(prev => prev.filter((_, i) => i !== index));
+  };
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -247,8 +383,8 @@ const ProductForm = ({ onSubmit, isLoading, initialData }) => {
   const generateVariantSKU = (baseSku, size, color) => {
     if (!baseSku) return '';
     const cleanSize = (size || '').toUpperCase();
-    const cleanColor = (color || '').toUpperCase().substring(0, 3);
-    return `${formatSKU(baseSku)}-${cleanSize}-${cleanColor}`;
+    const colorPrefix = (color || '').toUpperCase().substring(0, 3).replace(/[^A-Z0-9]/g, '');
+    return `${formatSKU(baseSku)}-${cleanSize}-${colorPrefix}`;
   };
 
   const handleChange = (e) => {
@@ -258,15 +394,6 @@ const ProductForm = ({ onSubmit, isLoading, initialData }) => {
     if (name === 'slug') finalValue = formatSlug(value);
     if (name === 'sku') {
       finalValue = formatSKU(value);
-      // Auto-update all variant SKUs if base SKU changes
-      setFormData(prev => {
-        const newVariants = prev.variants.map(v => ({
-          ...v,
-          sku: generateVariantSKU(finalValue, v.attributes.size, v.attributes.color)
-        }));
-        return { ...prev, sku: finalValue, variants: newVariants };
-      });
-      return;
     }
 
     if (name === 'name' && !initialData) {
@@ -295,119 +422,150 @@ const ProductForm = ({ onSubmit, isLoading, initialData }) => {
     if (!formData.basePrice || isNaN(formData.basePrice)) newErrors.basePrice = 'Valid price required';
     if (!formData.categoryId) newErrors.categoryId = 'Select a category';
 
-    formData.variants.forEach((v, i) => {
-      if (!v.sku.trim()) newErrors[`variant_${i}_sku`] = 'Required';
+    let hasEnabledVariant = false;
+    colorGroups.forEach(g => {
+      g.sizes.forEach(sz => {
+        if (sz.enabled) hasEnabledVariant = true;
+      });
     });
+
+    if (!hasEnabledVariant) {
+      toast.error('You must enable at least one size variant');
+      return false;
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
-
   const handleMediaSelect = (selectedMedia) => {
-    setFormData(prev => {
-      // Append only new ones
-      const existingIds = prev.media.map(m => m.id);
-      const newMedia = selectedMedia.filter(m => !existingIds.includes(m.id));
-      return { ...prev, media: [...prev.media, ...newMedia] };
-    });
+    const selectedList = Array.isArray(selectedMedia) ? selectedMedia : [selectedMedia];
+    
+    if (galleryColorIndex !== null) {
+      setColorGroups(prev => {
+        const next = [...prev];
+        const currentMedia = next[galleryColorIndex].media || [];
+        const existingIds = currentMedia.map(m => m.id);
+        const newMedia = selectedList.filter(m => !existingIds.includes(m.id));
+        next[galleryColorIndex] = {
+          ...next[galleryColorIndex],
+          media: [...currentMedia, ...newMedia]
+        };
+        return next;
+      });
+      setGalleryColorIndex(null);
+    } else if (gallerySelectTarget === 'video') {
+      setFormData(prev => ({ ...prev, video: selectedList[0] || null }));
+    } else {
+      setFormData(prev => {
+        const existingIds = prev.media.map(m => m.id);
+        const newMedia = selectedList.filter(m => !existingIds.includes(m.id));
+        return { ...prev, media: [...prev.media, ...newMedia] };
+      });
+    }
   };
 
   const removeMedia = (id) => {
     setFormData(prev => ({ ...prev, media: prev.media.filter(m => m.id !== id) }));
   };
 
-  // Variant Helpers
-  const handleVariantChange = (index, field, value, isAttribute = false) => {
-    setFormData(prev => {
-      const newVariants = [...prev.variants];
-      const variant = { ...newVariants[index] };
-
-      if (isAttribute) {
-        const newAttributes = {
-          ...(variant.attributes || {}),
-          [field]: value
-        };
-
-        // If color selection, maybe auto-set hex if from presets
-        if (field === 'color') {
-          const preset = COMMON_COLORS.find(c => c.name === value);
-          if (preset) newAttributes.colorHex = preset.hex;
-        }
-
-        variant.attributes = newAttributes;
-        // Auto-generate SKU based on new attributes
-        variant.sku = generateVariantSKU(prev.sku, newAttributes.size, newAttributes.color);
-      } else {
-        variant[field] = value;
-      }
-
-      newVariants[index] = variant;
-      return { ...prev, variants: newVariants };
+  const removeColorMedia = (colorIndex, mediaId) => {
+    setColorGroups(prev => {
+      const next = [...prev];
+      next[colorIndex] = {
+        ...next[colorIndex],
+        media: next[colorIndex].media.filter(m => m.id !== mediaId)
+      };
+      return next;
     });
   };
 
-  const addVariant = () => {
-    setFormData(prev => ({
+  const addColorGroup = () => {
+    setColorGroups(prev => [
       ...prev,
-      variants: [
-        ...prev.variants,
-        {
-          sku: generateVariantSKU(prev.sku, 'M', 'Ebony'),
-          attributes: { size: 'M', color: 'Ebony', colorHex: '#28282B' },
-          price: '',
-          initialStock: 0
-        }
-      ]
-    }));
-    toast.success('Added variant with auto-SKU');
+      {
+        color: `New Color ${prev.length + 1}`,
+        colorHex: '#000000',
+        media: [],
+        sizes: [
+          { size: 'XS', price: '', initialStock: 0, enabled: false },
+          { size: 'S', price: '', initialStock: 0, enabled: true },
+          { size: 'M', price: '', initialStock: 0, enabled: true },
+          { size: 'L', price: '', initialStock: 0, enabled: true },
+          { size: 'XL', price: '', initialStock: 0, enabled: true },
+          { size: 'XXL', price: '', initialStock: 0, enabled: false }
+        ]
+      }
+    ]);
+  };
+
+  const removeColorGroup = (index) => {
+    setColorGroups(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateColorGroupField = (index, field, value) => {
+    setColorGroups(prev => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+      return next;
+    });
+  };
+
+  const updateSizeField = (colorIndex, sizeIndex, field, value) => {
+    setColorGroups(prev => {
+      const next = [...prev];
+      const sizes = [...next[colorIndex].sizes];
+      sizes[sizeIndex] = { ...sizes[sizeIndex], [field]: value };
+      next[colorIndex] = { ...next[colorIndex], sizes };
+      return next;
+    });
   };
 
   const generateBulkVariants = (sizes, colors) => {
-    setFormData(prev => {
-      const newVariants = [...prev.variants];
-      let addedCount = 0;
+    setColorGroups(prev => {
+      const next = [...prev];
 
-      sizes.forEach(size => {
-        colors.forEach(color => {
-          // Check if already exists
-          const exists = newVariants.find(v =>
-            v.attributes.size === size && v.attributes.color === color.name
-          );
+      colors.forEach(color => {
+        let group = next.find(g => g.color.toLowerCase() === color.name.toLowerCase());
 
-          if (!exists) {
-            newVariants.push({
-              sku: generateVariantSKU(prev.sku, size, color.name),
-              attributes: {
-                size: size,
-                color: color.name,
-                colorHex: color.hex
-              },
+        if (!group) {
+          group = {
+            color: color.name,
+            colorHex: color.hex,
+            media: [],
+            sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(sz => ({
+              size: sz,
               price: '',
-              initialStock: 0
+              initialStock: 0,
+              enabled: false
+            }))
+          };
+          next.push(group);
+        } else {
+          group.colorHex = color.hex;
+        }
+
+        sizes.forEach(sz => {
+          const sizeItem = group.sizes.find(s => s.size === sz);
+          if (sizeItem) {
+            sizeItem.enabled = true;
+          } else {
+            group.sizes.push({
+              size: sz,
+              price: '',
+              initialStock: 0,
+              enabled: true
             });
-            addedCount++;
           }
         });
+
+        const defaultSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+        group.sizes.sort((a, b) => defaultSizes.indexOf(a.size) - defaultSizes.indexOf(b.size));
       });
 
-      // Filter out the initial empty variant if it's the only one and untouched
-      const finalVariants = newVariants.filter(v => {
-        if (newVariants.length > 1 && v.sku === '' && v.initialStock === 0) return false;
-        return true;
-      });
-
-      toast.success(`Generated ${addedCount} new combinations`);
-      return { ...prev, variants: finalVariants };
+      toast.success(`Generated/updated ${colors.length} color groups`);
+      return next;
     });
-  };
-
-  const removeVariant = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      variants: prev.variants.filter((_, i) => i !== index)
-    }));
   };
 
   const handleSubmit = (e) => {
@@ -417,23 +575,55 @@ const ProductForm = ({ onSubmit, isLoading, initialData }) => {
       return;
     }
 
+    const flatVariants = [];
+    const colorMedia = {};
+    const allMediaMap = new Map();
+
+    formData.media.forEach(m => allMediaMap.set(m.id, m));
+    if (formData.video) {
+      allMediaMap.set(formData.video.id, formData.video);
+    }
+
+    colorGroups.forEach(group => {
+      const mediaIds = group.media.map(m => m.id);
+      colorMedia[group.color] = mediaIds;
+
+      group.media.forEach(m => allMediaMap.set(m.id, m));
+
+      group.sizes.forEach(sz => {
+        if (sz.enabled) {
+          flatVariants.push({
+            id: sz.id,
+            sku: generateVariantSKU(formData.sku, sz.size, group.color),
+            price: sz.price ? parseFloat(sz.price) : parseFloat(formData.basePrice),
+            initialStock: parseInt(sz.initialStock) || 0,
+            attributes: {
+              size: sz.size,
+              color: group.color,
+              colorHex: group.colorHex
+            }
+          });
+        }
+      });
+    });
+
+    const { video, ...sanitizedFormData } = formData;
+    const sanitizedSpecs = specsList.filter(s => s.label.trim() || s.value.trim());
+
     const payload = {
-      ...formData,
+      ...sanitizedFormData,
       basePrice: parseFloat(formData.basePrice),
-      mediaIds: formData.media.map(m => m.id),
-      variants: formData.variants.map(v => ({
-        ...v,
-        sku: v.sku || generateVariantSKU(formData.sku, v.attributes.size, v.attributes.color),
-        price: v.price ? parseFloat(v.price) : parseFloat(formData.basePrice),
-        initialStock: parseInt(v.initialStock) || 0,
-        attributes: v.attributes
-      }))
+      mediaIds: Array.from(allMediaMap.keys()),
+      variants: flatVariants,
+      metadata: {
+        ...(formData.metadata || {}),
+        specifications: sanitizedSpecs,
+        colorMedia
+      }
     };
 
     onSubmit(payload);
   };
-
-  const [isBulkOpen, setIsBulkOpen] = useState(false);
 
   return (
     <form onSubmit={handleSubmit} className="max-w-5xl mx-auto space-y-12 pb-20">
@@ -568,49 +758,166 @@ const ProductForm = ({ onSubmit, isLoading, initialData }) => {
         </div>
       </section>
 
+      {/* 1.5 Garment Specifications */}
+      <section className="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white">
+            <Settings className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-xl font-black text-slate-900 tracking-tight">Garment Specifications</h2>
+            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Garment fit, fabric, print type, and care details</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {specsList.map((spec, index) => (
+            <div key={index} className="flex flex-col md:flex-row gap-4 items-end md:items-center bg-slate-50/50 p-4 rounded-2xl border border-slate-100 md:border-none md:p-0 md:bg-transparent">
+              <div className="w-full md:w-1/3 space-y-1">
+                <label className="text-[9px] font-black uppercase text-slate-400 ml-1 md:hidden">Specification Label</label>
+                <input
+                  type="text"
+                  placeholder="e.g. FIT TYPE"
+                  className="w-full px-5 py-3 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-primary-500 font-bold text-sm uppercase placeholder:normal-case"
+                  value={spec.label}
+                  onChange={(e) => handleSpecChange(index, 'label', e.target.value)}
+                />
+              </div>
+              <div className="w-full md:flex-1 space-y-1">
+                <label className="text-[9px] font-black uppercase text-slate-400 ml-1 md:hidden">Details</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Modern Relaxed / Oversized Silhouette"
+                  className="w-full px-5 py-3 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-primary-500 font-bold text-sm"
+                  value={spec.value}
+                  onChange={(e) => handleSpecChange(index, 'value', e.target.value)}
+                />
+              </div>
+              {specsList.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeSpecRow(index)}
+                  className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors self-end md:self-auto"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          ))}
+
+          {specsList.length < 10 && (
+            <button
+              type="button"
+              onClick={addSpecRow}
+              className="flex items-center gap-2 px-5 py-2.5 bg-slate-100 text-slate-700 font-black text-xs uppercase rounded-xl hover:bg-slate-200 transition-all mt-4"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add Specification Row ({specsList.length}/10)
+            </button>
+          )}
+        </div>
+      </section>
+      
       {/* 2. Media Section */}
-      <section className="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
-        <div className="flex items-center justify-between">
+      <section className="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
+        <div className="flex items-center justify-between border-b pb-4 border-slate-50">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-primary-50 rounded-2xl flex items-center justify-center text-primary-600">
               <ImageIcon className="w-6 h-6" />
             </div>
             <div>
               <h2 className="text-xl font-black text-slate-900 tracking-tight">Media Assets</h2>
-              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Global product gallery</p>
+              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Global product media catalog</p>
             </div>
           </div>
-          <button type="button" onClick={() => setIsGalleryOpen(true)} className="px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors text-xs font-black uppercase tracking-widest flex items-center gap-2">
-            <PlusCircle className="w-4 h-4" />
-            Add Media
-          </button>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {formData.media.map((item, idx) => (
-            <div key={item.id || idx} className="relative aspect-square rounded-2xl border-2 border-slate-100 overflow-hidden group">
-              {item.type === 'video' ? (
-                <video src={item.url} className="w-full h-full object-cover" />
-              ) : (
-                <img src={item.url} alt="Product media" className="w-full h-full object-cover" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column (2/3): Image Gallery Grid */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider">Product Gallery Images</h4>
+              <button
+                type="button"
+                onClick={() => {
+                  setGallerySelectTarget('images');
+                  setGalleryColorIndex(null);
+                  setIsGalleryOpen(true);
+                }}
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2"
+              >
+                <PlusCircle className="w-4 h-4" />
+                Add Images
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {formData.media.map((item, idx) => (
+                <div key={item.id || idx} className="relative aspect-square rounded-2xl border-2 border-slate-100 overflow-hidden group">
+                  <img src={item.url} alt="Product media" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
+                    <button
+                      type="button"
+                      onClick={() => removeMedia(item.id)}
+                      className="p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 shadow-sm"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {formData.media.length === 0 && (
+                <div className="col-span-full py-12 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50">
+                  <ImageIcon className="w-8 h-8 text-slate-300 mb-1" />
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">No images selected</p>
+                </div>
               )}
-              <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/40 transition-all">
+            </div>
+          </div>
+
+          {/* Right Column (1/3): Dedicated Showcase Video Slot */}
+          <div className="space-y-4 border-t lg:border-t-0 lg:border-l border-slate-100 lg:pl-8">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider">Product Showcase Video</h4>
+              {!formData.video && (
                 <button
                   type="button"
-                  onClick={() => removeMedia(item.id)}
-                  className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-sm"
+                  onClick={() => {
+                    setGallerySelectTarget('video');
+                    setGalleryColorIndex(null);
+                    setIsGalleryOpen(true);
+                  }}
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Video className="w-4 h-4 text-primary-400" />
+                  Select Video
                 </button>
+              )}
+            </div>
+
+            {formData.video ? (
+              <div className="relative aspect-video rounded-2xl border border-slate-200 overflow-hidden group bg-slate-950">
+                <video src={formData.video.url} controls className="w-full h-full object-cover" />
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, video: null }))}
+                    className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 shadow-sm"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
-          {formData.media.length === 0 && (
-            <div className="col-span-full py-12 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50">
-              <ImageIcon className="w-10 h-10 text-slate-300 mb-2" />
-              <p className="text-sm font-bold text-slate-400">No media assets selected</p>
-            </div>
-          )}
+            ) : (
+              <div className="aspect-video flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50 text-slate-400 p-6 text-center">
+                <Video className="w-8 h-8 text-slate-300 mb-2 animate-bounce-subtle" />
+                <p className="text-[10px] font-bold uppercase text-slate-400">No Showcase Video</p>
+                <p className="text-[8px] text-slate-400 mt-1 max-w-xs leading-normal">
+                  Add an optional video to display as the main feature element in storefront carousels.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
@@ -623,7 +930,9 @@ const ProductForm = ({ onSubmit, isLoading, initialData }) => {
             </div>
             <div>
               <h2 className="text-xl font-black text-slate-900 tracking-tight">Inventory Variations</h2>
-              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">{formData.variants.length} SKU Lineup</p>
+              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+                {colorGroups.reduce((acc, g) => acc + g.sizes.filter(s => s.enabled).length, 0)} SKU Lineup ({colorGroups.length} Colors)
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -634,8 +943,8 @@ const ProductForm = ({ onSubmit, isLoading, initialData }) => {
             >
               {isBulkOpen ? 'Hide Bulk Tool' : 'Bulk Generator'}
             </button>
-            <button type="button" onClick={addVariant} className="px-5 py-2.5 bg-primary-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary-100">
-              Add Single
+            <button type="button" onClick={addColorGroup} className="px-5 py-2.5 bg-primary-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary-100">
+              Add Color Group
             </button>
           </div>
         </div>
@@ -646,85 +955,134 @@ const ProductForm = ({ onSubmit, isLoading, initialData }) => {
           </div>
         )}
 
-        <div className="space-y-4">
-          {formData.variants.map((v, idx) => (
-            <div key={idx} className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm hover:border-primary-100 transition-all group relative">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-                {/* Size/Color */}
-                <div className="lg:col-span-3 grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[8px] font-black uppercase text-slate-400">Size</label>
-                    <select
-                      className="w-full px-3 py-2 bg-slate-50 rounded-lg text-xs font-bold outline-none"
-                      value={v.attributes?.size}
-                      onChange={(e) => handleVariantChange(idx, 'size', e.target.value, true)}
-                    >
-                      {STANDARD_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[8px] font-black uppercase text-slate-400">Color</label>
+        <div className="space-y-6">
+          {colorGroups.map((group, colorIdx) => (
+            <div key={colorIdx} className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm hover:border-primary-100 transition-all relative space-y-6">
+              {/* Header section with Color Name and Hex and Delete button */}
+              <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                <div className="flex items-center gap-4 flex-1 min-w-[240px]">
+                  <div className="space-y-1.5 flex-1">
+                    <label className="text-[10px] font-black uppercase text-slate-400">Color Name</label>
                     <input
                       type="text"
-                      className="w-full px-3 py-2 bg-slate-50 rounded-lg text-xs font-bold outline-none"
-                      value={v.attributes?.color}
-                      onChange={(e) => handleVariantChange(idx, 'color', e.target.value, true)}
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-primary-500 font-bold text-sm"
+                      placeholder="e.g. Off-White"
+                      value={group.color}
+                      onChange={(e) => updateColorGroupField(colorIdx, 'color', e.target.value)}
                     />
                   </div>
-                </div>
-
-                {/* SKU/Price */}
-                <div className="lg:col-span-4 grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[8px] font-black uppercase text-slate-400">SKU Code</label>
-                    <input
-                      type="text"
-                      className="w-full px-3 py-2 bg-slate-100 rounded-lg text-[10px] font-black text-slate-500 uppercase"
-                      value={v.sku}
-                      readOnly
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[8px] font-black uppercase text-slate-400">Price ($)</label>
-                    <input
-                      type="number"
-                      className="w-full px-3 py-2 bg-slate-50 rounded-lg text-xs font-bold"
-                      value={v.price}
-                      placeholder={formData.basePrice}
-                      onChange={(e) => handleVariantChange(idx, 'price', e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                {/* Stock & Hex */}
-                <div className="lg:col-span-4 grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[8px] font-black uppercase text-primary-500">Warehouse Stock</label>
-                    <input
-                      type="number"
-                      className="w-full px-3 py-2 bg-primary-50 text-primary-600 rounded-lg text-xs font-black outline-none"
-                      value={v.initialStock}
-                      onChange={(e) => handleVariantChange(idx, 'initialStock', e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[8px] font-black uppercase text-slate-400">Visual Hex</label>
+                  
+                  <div className="space-y-1.5 w-32">
+                    <label className="text-[10px] font-black uppercase text-slate-400">Visual Hex</label>
                     <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 rounded-full border border-slate-200" style={{ backgroundColor: v.attributes?.colorHex }} />
+                      <div className="w-8 h-8 rounded-full border border-slate-200 shrink-0" style={{ backgroundColor: group.colorHex }} />
                       <input
                         type="text"
-                        className="w-full px-2 py-2 bg-slate-50 rounded-lg text-[10px] font-mono font-bold"
-                        value={v.attributes?.colorHex}
-                        onChange={(e) => handleVariantChange(idx, 'colorHex', e.target.value, true)}
+                        className="w-full px-2 py-2 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-mono font-bold"
+                        value={group.colorHex}
+                        onChange={(e) => updateColorGroupField(colorIdx, 'colorHex', e.target.value)}
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="lg:col-span-1 flex justify-end pt-4 lg:pt-0">
-                  <button onClick={() => removeVariant(idx)} type="button" className="p-2 text-slate-200 hover:text-red-500 transition-colors">
-                    <Trash2 className="w-5 h-5" />
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setGalleryColorIndex(colorIdx);
+                      setIsGalleryOpen(true);
+                    }}
+                    className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2"
+                  >
+                    <ImageIcon className="w-4 h-4 text-primary-400" />
+                    <span>Choose Color Images</span>
                   </button>
+                  
+                  {colorGroups.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeColorGroup(colorIdx)}
+                      className="p-2.5 bg-red-50 text-red-500 hover:bg-red-100 rounded-xl transition-colors"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Color Specific Images Display */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-400">Color-Specific Images ({group.media?.length || 0})</label>
+                <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-8 gap-3">
+                  {group.media?.map((item, mIdx) => (
+                    <div key={item.id || mIdx} className="relative aspect-square rounded-xl border border-slate-100 overflow-hidden group">
+                      <img src={item.url} alt="Color variant media" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <button
+                          type="button"
+                          onClick={() => removeColorMedia(colorIdx, item.id)}
+                          className="p-1 bg-red-500 text-white rounded-md hover:bg-red-600 shadow-sm"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {(!group.media || group.media.length === 0) && (
+                    <div className="col-span-full py-4 text-center border border-dashed border-slate-200 rounded-xl bg-slate-50/55 text-[10px] font-bold text-slate-400">
+                      No color-specific images selected. (Will fallback to general lookup/default images)
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Sizes Matrices: Grid representing XS, S, M, L, XL, XXL */}
+              <div className="space-y-3 pt-2">
+                <label className="text-[10px] font-black uppercase text-slate-400">Sizes & Warehouse Inventory</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {group.sizes.map((sz, szIdx) => (
+                    <div key={szIdx} className={`border rounded-2xl p-4 transition-all flex items-center justify-between gap-4 ${sz.enabled ? 'border-primary-100 bg-primary-50/10' : 'border-slate-100 bg-slate-50/30'}`}>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => updateSizeField(colorIdx, szIdx, 'enabled', !sz.enabled)}
+                          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${sz.enabled ? 'bg-primary-500' : 'bg-slate-200'}`}
+                        >
+                          <span className={`relative inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${sz.enabled ? 'translate-x-4.5' : 'translate-x-1'}`} />
+                        </button>
+                        <div>
+                          <span className="text-xs font-black text-slate-900">{sz.size}</span>
+                          <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{sz.enabled ? 'Enabled' : 'Disabled'}</p>
+                        </div>
+                      </div>
+
+                      {sz.enabled && (
+                        <div className="flex items-center gap-2 flex-1 max-w-[180px]">
+                          <div className="space-y-0.5 flex-1">
+                            <label className="text-[7px] font-black uppercase text-slate-400">Stock</label>
+                            <input
+                              type="number"
+                              className="w-full px-2 py-1 bg-white border border-slate-200 rounded text-xxs font-bold outline-none text-primary-600 focus:border-primary-500"
+                              placeholder="0"
+                              value={sz.initialStock}
+                              onChange={(e) => updateSizeField(colorIdx, szIdx, 'initialStock', e.target.value)}
+                            />
+                          </div>
+                          <div className="space-y-0.5 flex-1">
+                            <label className="text-[7px] font-black uppercase text-slate-400">Price ($)</label>
+                            <input
+                              type="number"
+                              className="w-full px-2 py-1 bg-white border border-slate-200 rounded text-xxs font-bold outline-none focus:border-primary-500"
+                              placeholder={formData.basePrice || "0.00"}
+                              value={sz.price}
+                              onChange={(e) => updateSizeField(colorIdx, szIdx, 'price', e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -736,7 +1094,7 @@ const ProductForm = ({ onSubmit, isLoading, initialData }) => {
       <div className="fixed bottom-0 left-0 right-0 lg:left-64 bg-white/80 backdrop-blur-md border-t border-slate-100 p-6 z-50 flex justify-center">
         <button
           type="submit"
-          disabled={isLoading}
+          disabled={onSubmit === undefined || isLoading}
           className="w-full max-w-lg py-5 bg-slate-900 text-white font-black rounded-2xl shadow-2xl shadow-slate-200 hover:bg-slate-800 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
         >
           {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Package className="w-5 h-5 text-primary-400" />}
@@ -746,9 +1104,13 @@ const ProductForm = ({ onSubmit, isLoading, initialData }) => {
       {/* Media Gallery Modal */}
       <MediaGalleryModal
         isOpen={isGalleryOpen}
-        onClose={() => setIsGalleryOpen(false)}
+        onClose={() => {
+          setIsGalleryOpen(false);
+          setGalleryColorIndex(null);
+        }}
         onSelect={handleMediaSelect}
-        multiple={true}
+        multiple={galleryColorIndex === null && gallerySelectTarget === 'video' ? false : true}
+        allowedTypes={galleryColorIndex === null && gallerySelectTarget === 'video' ? ['video'] : ['image']}
       />
     </form>
   );

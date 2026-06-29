@@ -10,7 +10,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  background: #0a0a0a;
+  background: transparent;
   overflow: visible;
 }
 
