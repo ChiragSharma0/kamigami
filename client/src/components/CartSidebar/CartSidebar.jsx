@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import "../CartSidebar/module.css";
+import "../CartSidebar/Module.css";
 import { CartContext } from "../../Context/CartContext";
 
 const CartSidebar = () => {
