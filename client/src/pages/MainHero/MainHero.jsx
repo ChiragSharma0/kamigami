@@ -1,8 +1,8 @@
 import React from 'react'
-import Hero from "../../components/Hero/Hero"
+import Hero from "../../components/Hero/hero"
 import HeroSlider from '../HeroSlider/HeroSlider'
 import AboutSection from '../AboutSection/AboutSection'
-import TestimonialSection from '../TestimonialSection/TestimonialSection'
+import TestimonialSection from '../TestimonialSection/testimonialSection'
 import Product from "../../pages/ProductPages/Product"
 
 const MainHero = () => {

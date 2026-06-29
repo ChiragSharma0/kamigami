@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "../HeroSlider/module.css";
+import "../HeroSlider/Module.css";
 import api from "../../services/api";
 
 const DEFAULT_SLIDES = [

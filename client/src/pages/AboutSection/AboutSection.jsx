@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../../services/api";
-import "./module.css";
+import "./Module.css";
 
 const DEFAULT_ABOUT = {
   heroTitle: "Uncover Your \n Stylish Identity",
