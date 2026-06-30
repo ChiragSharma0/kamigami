@@ -1,0 +1,18 @@
+{
+  "name": "kamigami-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Kamigami E-Commerce Workspace Root",
+  "scripts": {
+    "install-all": "npm install && npm run install-client && npm run install-admin && npm run install-server",
+    "install-client": "cd client && npm install --legacy-peer-deps && cd ..",
+    "install-admin": "cd admin && npm install --legacy-peer-deps && cd ..",
+    "install-server": "cd server && npm install && cd ..",
+    "dev": "concurrently --kill-others-on-fail \"npm run dev --prefix client\" \"npm run dev --prefix admin\" \"npm run dev --prefix server\"",
+    "db-migrate": "cd server && npx prisma migrate dev && cd ..",
+    "db-studio": "cd server && npx prisma studio && cd .."
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
