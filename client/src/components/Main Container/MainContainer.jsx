@@ -28,32 +28,32 @@ const MainContainer = () => {
 
   return (
     <div className="relative min-h-screen text-white">
-      <PageMeta 
-        title="Home" 
-        description="Shop Kamigami for premium Japanese streetwear & luxury fashion. Explore our limited graphic hoodies, oversized t-shirts, and exclusive seasonal apparel drops." 
+      <PageMeta
+        title="Home"
+        description="Shop Kamigami for premium Japanese streetwear & luxury fashion. Explore our limited graphic hoodies, oversized t-shirts, and exclusive seasonal apparel drops."
       />
-      
+
       {/* Dynamic fixed video background */}
       <div className="homepage-bg-video-container">
-        <video 
+        <video
           key={bgVideo}
-          src={bgVideo || videoSrc} 
-          autoPlay 
-          muted 
-          loop 
-          playsInline 
-          className="homepage-bg-video" 
+          src={bgVideo || videoSrc}
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="homepage-bg-video"
         />
         <div className="homepage-bg-overlay" />
       </div>
 
       <div className="hide-on-mobile">
-        <Hero/>
+        <Hero />
       </div>
-      <HeroSlider/>
-      <Product/>
-      <TestimonialSection/>
-      <AboutSection/>
+      <HeroSlider />
+      <Product />
+      <TestimonialSection />
+      <AboutSection />
     </div>
   );
 };

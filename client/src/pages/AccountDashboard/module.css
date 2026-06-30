@@ -8,7 +8,7 @@
 .dashboard-page {
   background: #000000;
   min-height: 100vh;
-  padding: 100px 0 60px;
+  padding: 140px 0 60px;
   font-family: "bytes";
 }
 
@@ -544,6 +544,9 @@
 }
 
 @media (max-width: 600px) {
+  .dashboard-page {
+    padding-top: 110px;
+  }
   .dashboard-modal-box {
     padding: 24px;
   }

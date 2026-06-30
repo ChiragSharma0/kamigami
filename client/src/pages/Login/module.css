@@ -8,22 +8,26 @@
 /* Page Background */
 
 .login-page {
-    height: 100vh;
+    min-height: 100vh;
     background-color: black;
 
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
+    padding: 60px 20px;
+    box-sizing: border-box;
 }
 
 /* Card */
 
 .login-card {
     background-color: #020202;
-    width: 360px;
+    width: 100%;
+    max-width: 380px;
     padding: 30px 25px;
     border-radius: 12px;
+    box-sizing: border-box;
 
     border: 1px solid #222;
 }
@@ -216,4 +220,34 @@
     cursor: pointer;
 
     font-family: "bytes", sans-serif;
+}
+
+.login-back-btn {
+    position: absolute;
+    top: 30px;
+    left: 40px;
+    background: transparent;
+    border: 1px solid #333;
+    border-radius: 50%;
+    color: white;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.login-back-btn:hover {
+    border-color: red;
+    color: red;
+    transform: translateX(-3px);
+}
+
+@media (max-width: 600px) {
+    .login-back-btn {
+        top: 20px;
+        left: 20px;
+    }
 }

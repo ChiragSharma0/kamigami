@@ -3,6 +3,7 @@ import PageMeta from "../../components/PageMeta";
 import { GoogleLogin } from "@react-oauth/google";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../Context/AuthContext";
+import { ArrowLeft } from "lucide-react";
 import "./module.css";
 
 const Login = () => {
@@ -42,6 +43,11 @@ const Login = () => {
 
   return (
     <div className="login-page">
+      {/* Back button */}
+      <button className="login-back-btn" onClick={() => navigate(-1)} aria-label="Go back">
+        <ArrowLeft size={20} />
+      </button>
+
       <PageMeta 
         title={isRegister ? "Create Account" : "Sign In"} 
         description={

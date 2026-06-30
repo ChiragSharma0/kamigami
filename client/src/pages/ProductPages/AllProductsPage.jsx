@@ -48,9 +48,9 @@ const AllProductsPage = () => {
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [selectedPriceRanges, setSelectedPriceRanges] = useState([]);
   const [sliderPrice, setSliderPrice] = useState(2000);
-  const [selectedDiscount, setSelectedDiscount] = useState(0);
   const [sortBy, setSortBy] = useState("default");
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(12);
 
   // --- DYNAMIC PRICE BOUNDARIES ---
   const priceBoundaries = useMemo(() => {
@@ -170,12 +170,7 @@ const AllProductsPage = () => {
     // 6. Custom Slider Price (Max Price Limit)
     result = result.filter((p) => p.price <= sliderPrice);
 
-    // 7. Discount Tier
-    if (selectedDiscount > 0) {
-      result = result.filter((p) => p.discount >= selectedDiscount);
-    }
-
-    // 8. Sorting
+    // 7. Sorting
     if (sortBy === "price-asc") {
       result.sort((a, b) => a.price - b.price);
     } else if (sortBy === "price-desc") {
@@ -195,7 +190,6 @@ const AllProductsPage = () => {
     selectedSizes,
     selectedPriceRanges,
     sliderPrice,
-    selectedDiscount,
     sortBy,
   ]);
 
@@ -234,7 +228,6 @@ const AllProductsPage = () => {
     setSelectedSizes([]);
     setSelectedPriceRanges([]);
     setSliderPrice(priceBoundaries.max);
-    setSelectedDiscount(0);
     setSortBy("default");
   };
 
@@ -246,8 +239,7 @@ const AllProductsPage = () => {
       selectedCategories.length > 0 ||
       selectedSizes.length > 0 ||
       selectedPriceRanges.length > 0 ||
-      sliderPrice < priceBoundaries.max ||
-      selectedDiscount > 0
+      sliderPrice < priceBoundaries.max
     );
   }, [
     search,
@@ -257,7 +249,6 @@ const AllProductsPage = () => {
     selectedPriceRanges,
     sliderPrice,
     priceBoundaries.max,
-    selectedDiscount,
   ]);
 
   // Dynamic label helpers for active tags
@@ -306,13 +297,6 @@ const AllProductsPage = () => {
         clear: () => handleSizeToggle(sz),
       });
     });
-    if (selectedDiscount > 0) {
-      tags.push({
-        id: "discount",
-        label: `${selectedDiscount}%+ Off`,
-        clear: () => setSelectedDiscount(0),
-      });
-    }
     return tags;
   }, [
     search,
@@ -322,8 +306,43 @@ const AllProductsPage = () => {
     sliderPrice,
     priceBoundaries.max,
     selectedSizes,
-    selectedDiscount,
   ]);
+
+  // Reset visible items when filter variables update
+  useEffect(() => {
+    setVisibleCount(12);
+  }, [
+    search,
+    selectedGenders,
+    selectedCategories,
+    selectedSizes,
+    selectedPriceRanges,
+    sliderPrice,
+    sortBy,
+  ]);
+
+  // Set up IntersectionObserver to trigger infinite loading batches of 12
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + 12, filteredProducts.length));
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const trigger = document.getElementById("infinite-scroll-trigger");
+    if (trigger) observer.observe(trigger);
+
+    return () => {
+      if (trigger) observer.unobserve(trigger);
+    };
+  }, [filteredProducts]);
+
+  const visibleProducts = useMemo(() => {
+    return filteredProducts.slice(0, visibleCount);
+  }, [filteredProducts, visibleCount]);
 
   // Sidebar Refinement component (to share between desktop sidebar and mobile drawer)
   const RefinementsContent = () => (
@@ -465,31 +484,6 @@ const AllProductsPage = () => {
         </div>
       </div>
 
-      {/* Discount Tiers */}
-      <div className="refinement-group">
-        <h4>MINIMUM DISCOUNT</h4>
-        <div className="discount-list">
-          {[
-            { val: 0, label: "All Items" },
-            { val: 10, label: "10% Off or more" },
-            { val: 15, label: "15% Off or more" },
-            { val: 20, label: "20% Off or more" },
-          ].map((opt) => (
-            <label key={opt.val} className={`radio-item ${selectedDiscount === opt.val ? "active" : ""}`}>
-              <input
-                type="radio"
-                name="discount-refine"
-                checked={selectedDiscount === opt.val}
-                onChange={() => setSelectedDiscount(opt.val)}
-              />
-              <div className="radio-custom">
-                <div className="radio-inner" />
-              </div>
-              <span className="radio-label">{opt.label}</span>
-            </label>
-          ))}
-        </div>
-      </div>
     </div>
   );
 
@@ -661,11 +655,21 @@ const AllProductsPage = () => {
                 </button>
               </div>
             ) : (
-              <div className="product-grid">
-                {filteredProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
+              <>
+                <div className="product-grid">
+                  {visibleProducts.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+                
+                {visibleCount < filteredProducts.length && (
+                  <div id="infinite-scroll-trigger" className="infinite-scroll-loader">
+                    <div className="loader-dots">
+                      <span></span><span></span><span></span>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
 

@@ -9,7 +9,7 @@ import api from "../../services/api";
 gsap.registerPlugin(Draggable);
 
 const boxes = [
-  { width: "60vw", height: "35vw", top: "10vh", left: "10vw" },
+  { width: "50vw", height: "30vw", top: "10vh", left: "10vw" },
   { width: "17vw", height: "9vw", top: "5vh", left: "5vw" },
   { width: "35vw", height: "19vw", top: "5vh", right: "5vw" },
   { width: "38vw", height: "22vw", top: "50vh", left: "5vw" },
@@ -308,7 +308,7 @@ export default function MaskVideo() {
           <div className="coord-grab">Grab</div>
         </div>
       </div>
-    
+
     </>
   );
 }

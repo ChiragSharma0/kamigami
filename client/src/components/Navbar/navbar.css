@@ -234,133 +234,74 @@
 }
 
 .overlay-link {
-  font-family: "bytes", sans-serif;
-  font-size: 20px;
-  font-weight: 700;
+  font-family: "bytes", "circular-web", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
   color: #dfdff2;
+  text-transform: uppercase;
   text-decoration: none;
-  letter-spacing: 1px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 16px 0;
+  letter-spacing: 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 20px 0;
   display: block;
-  transition: color 0.2s;
+  transition: color 0.3s ease, padding-left 0.3s ease;
 }
 
 .overlay-link:hover {
   color: #E71E22;
-}
-
-.overlay-dropdown {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.overlay-dropdown-trigger {
-  width: 100%;
-  background: none;
-  border: none;
-  padding: 16px 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-
-  font-family: "bytes", sans-serif;
-  font-size: 20px;
-  font-weight: 700;
-  color: #dfdff2;
-  letter-spacing: 1px;
-  text-align: left;
-  transition: color 0.2s;
-}
-
-.overlay-dropdown-trigger:hover {
-  color: #E71E22;
-}
-
-.dropdown-arrow {
-  font-size: 16px;
-  transition: transform 0.3s ease;
-  color: #E71E22;
-}
-
-.dropdown-arrow.open {
-  transform: rotate(180deg);
-}
-
-.overlay-dropdown-menu {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  max-height: 0;
-  transition: max-height 0.35s ease, opacity 0.25s ease;
-  opacity: 0;
-}
-
-.overlay-dropdown-menu.open {
-  max-height: 250px;
-  opacity: 1;
-}
-
-.overlay-dropdown-menu a {
-  font-family: sans-serif;
-  font-size: 14px;
-  color: #8a8a9a;
-  text-decoration: none;
-  padding: 8px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-  transition: color 0.2s;
-}
-
-.overlay-dropdown-menu a:last-child {
-  border-bottom: none;
-  margin-bottom: 8px;
-}
-
-.overlay-dropdown-menu a:hover {
-  color: #E71E22;
+  padding-left: 10px;
 }
 
 .mobile-overlay-top {
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
 
 .mobile-overlay-divider {
   height: 1px;
-  background: rgba(255, 255, 255, 0.1);
-  margin: 32px 0;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 24px 0;
 }
 
 .mobile-overlay-secondary {
   display: flex;
   flex-direction: column;
+  margin-bottom: 32px;
 }
 
-.mobile-overlay-secondary a {
-  font-family: sans-serif;
-  font-size: 14px;
+.overlay-link-secondary {
+  font-family: "circular-web", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
   color: #8a8a9a;
   text-decoration: none;
-  padding: 4px 0;
+  padding: 12px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-  transition: color 0.2s;
+  display: block;
+  transition: color 0.2s, padding-left 0.2s;
 }
 
-.mobile-overlay-secondary a:hover {
+.overlay-link-secondary:hover {
   color: #E71E22;
+  padding-left: 5px;
 }
 
 .mobile-logout-btn {
   background: none;
   border: none;
-  padding: 14px 0;
-  font-family: sans-serif;
-  font-size: 14px;
+  padding: 12px 0;
+  font-family: "circular-web", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
   color: #E71E22;
-  text-decoration: underline;
+  text-decoration: none;
   text-align: left;
   cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
   transition: opacity 0.2s;
 }
 
@@ -368,29 +309,38 @@
   opacity: 0.8;
 }
 
-/* Icons row at bottom of overlay */
+/* Premium bottom action buttons */
 .mobile-overlay-icons {
   display: flex;
-  gap: 24px;
+  gap: 16px;
   margin-top: auto;
-  padding-top: 32px;
-  color: #dfdff2;
-  font-family: "bytes", sans-serif;
+  padding-top: 24px;
 }
 
-.mobile-overlay-icons button {
-  background: none;
-  border: none;
-  padding: 0;
-  color: #E71E22;
+.mobile-action-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 99px;
+  padding: 14px 24px;
+  color: #dfdff2;
+  font-family: "circular-web", sans-serif;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  transition: color 0.2s;
+  justify-content: center;
+  flex: 1;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.mobile-overlay-icons button:hover {
+.mobile-action-btn:hover {
+  background: rgba(231, 30, 34, 0.08);
+  border-color: rgba(231, 30, 34, 0.4);
   color: #E71E22;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(231, 30, 34, 0.15);
 }
 
 .mobile-overlay-close {

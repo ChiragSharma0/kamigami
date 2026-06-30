@@ -25,13 +25,8 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const [openDropdown, setOpenDropdown] = useState(null);
   const [isNavVisible, setIsNavVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-
-  const toggleDropdown = (name) => {
-    setOpenDropdown(openDropdown === name ? null : name);
-  };
 
   const handleLogout = () => {
     logout();
@@ -66,7 +61,7 @@ export default function Navbar() {
           <div className="nav-left">
             <Link to="/drops">Drops</Link>
             <Link to="/collections">Collections</Link>
-            <Link to="/about-us">About Us</Link>
+            <Link to="/all-products">Shop</Link>
           </div>
 
           <div className="nav-center">
@@ -76,11 +71,8 @@ export default function Navbar() {
           </div>
 
           <div className="nav-right">
-            <Link to="/stories">
+            <Link to="/about-us">
               <StoryIcon />
-            </Link>
-            <Link to="/location">
-              <MapPin size={18} />
             </Link>
             <button onClick={() => setSearchOpen(true)}>
               <Search size={18} />
@@ -123,136 +115,72 @@ export default function Navbar() {
       {/* Full-page mobile overlay */}
       <div className={`mobile-overlay ${open ? "active" : ""}`}>
         <div className="mobile-overlay-inner">
-          {/* Top section — primary nav links */}
+          {/* Top section — primary nav links matching PC navbar */}
           <div className="mobile-overlay-top">
             <Link
               to="/drops"
               className="overlay-link"
               onClick={() => setOpen(false)}
             >
-              Timed Drops
+              Drops
             </Link>
 
-            {/* Collections — dropdown */}
-            <div className="overlay-dropdown">
-              <button
-                className="overlay-dropdown-trigger"
-                onClick={() => toggleDropdown("collections")}
-              >
-                Shop by collection
-                <span
-                  className={`dropdown-arrow ${openDropdown === "collections" ? "open" : ""}`}
-                >
-                  ▾
-                </span>
-              </button>
-              <div
-                className={`overlay-dropdown-menu ${openDropdown === "collections" ? "open" : ""}`}
-              >
-                <Link to="/collections/men" onClick={() => setOpen(false)}>
-                  Men
-                </Link>
-                <Link to="/collections/women" onClick={() => setOpen(false)}>
-                  Women
-                </Link>
-                <Link to="/collections/unisex" onClick={() => setOpen(false)}>
-                  Unisex
-                </Link>
-                <Link to="/collections/limited" onClick={() => setOpen(false)}>
-                  Limited Edition
-                </Link>
-              </div>
-            </div>
+            <Link
+              to="/collections"
+              className="overlay-link"
+              onClick={() => setOpen(false)}
+            >
+              Collections
+            </Link>
 
-            {/* Iconics — dropdown */}
-            <div className="overlay-dropdown">
-              <button
-                className="overlay-dropdown-trigger"
-                onClick={() => toggleDropdown("iconics")}
-              >
-                Shop by category
-                <span
-                  className={`dropdown-arrow ${openDropdown === "iconics" ? "open" : ""}`}
-                >
-                  ▾
-                </span>
-              </button>
-              <div
-                className={`overlay-dropdown-menu ${openDropdown === "iconics" ? "open" : ""}`}
-              >
-                <Link to="/iconics/tshirts" onClick={() => setOpen(false)}>
-                  The Awakening
-                </Link>
-              </div>
-            </div>
+            <Link
+              to="/all-products"
+              className="overlay-link"
+              onClick={() => setOpen(false)}
+            >
+              Shop
+            </Link>
 
-            {/* Summer Collection — dropdown */}
-            <div className="overlay-dropdown">
-              <button
-                className="overlay-dropdown-trigger"
-                onClick={() => toggleDropdown("summer")}
-              >
-                Summer Collection
-                <span
-                  className={`dropdown-arrow ${openDropdown === "summer" ? "open" : ""}`}
-                >
-                  ▾
-                </span>
-              </button>
-              <div
-                className={`overlay-dropdown-menu ${openDropdown === "summer" ? "open" : ""}`}
-              >
-                <Link to="/summer/tops" onClick={() => setOpen(false)}>
-                  Tops
-                </Link>
-                <Link to="/summer/shorts" onClick={() => setOpen(false)}>
-                  Shorts
-                </Link>
-                <Link to="/summer/accessories" onClick={() => setOpen(false)}>
-                  Accessories
-                </Link>
-              </div>
-            </div>
+            <Link
+              to="/about-us"
+              className="overlay-link"
+              onClick={() => setOpen(false)}
+            >
+              About Us
+            </Link>
           </div>
 
           {/* Divider */}
           <div className="mobile-overlay-divider" />
 
-          {/* Secondary links */}
+          {/* Secondary links / User group */}
           <div className="mobile-overlay-secondary">
             {user ? (
               <>
-                <Link to="/userprofile" onClick={() => setOpen(false)}>
-                  User Profile ({user.email})
+                <Link to="/userprofile" className="overlay-link-secondary" onClick={() => setOpen(false)}>
+                  My Account ({user.email})
                 </Link>
-                <button onClick={handleLogout} className="mobile-logout-btn">
+                <button onClick={() => { handleLogout(); setOpen(false); }} className="mobile-logout-btn">
                   Logout
                 </button>
               </>
             ) : (
-              <Link to="/sign-up" onClick={() => setOpen(false)}>
-                Sign Up / Login
+              <Link to="/sign-up" className="overlay-link-secondary" onClick={() => setOpen(false)}>
+                Login / Register
               </Link>
             )}
-            <Link to="/userprofile" onClick={() => setOpen(false)}>
-              Accessories
-            </Link>
-            <Link to="/wishlist" onClick={() => setOpen(false)}>
-              Shop by color
-            </Link>
-            <Link to="/wishlist" onClick={() => setOpen(false)}>
-              Support
-            </Link>
           </div>
 
-          {/* Bottom icons row */}
+          {/* Bottom actions row */}
           <div className="mobile-overlay-icons">
             <button
               onClick={() => {
                 setSearchOpen(true);
                 setOpen(false);
               }}
+              className="mobile-action-btn"
             >
+              <Search size={18} style={{ marginRight: '8px' }} />
               Search
             </button>
             <button
@@ -260,7 +188,9 @@ export default function Navbar() {
                 setIsCartOpen(true);
                 setOpen(false);
               }}
+              className="mobile-action-btn"
             >
+              <ShoppingCart size={18} style={{ marginRight: '8px' }} />
               Cart
             </button>
           </div>

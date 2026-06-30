@@ -348,7 +348,7 @@ const ProductDetails = () => {
         description={getProductMetaDescription()}
         image={product.image}
       />
-      <div className="bg-black text-white min-h-screen pt-28">
+      <div className="bg-black text-white min-h-screen pt-36">
         <div className="breadcrumb max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12 py-6 text-gray-400 text-sm">
           Home • {product.title}
         </div>
