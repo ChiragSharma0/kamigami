@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: kamigami_client
     ports:
-      - "6000:6000"
+      - "3006:3006"
     restart: unless-stopped
     depends_on:
       - backend
@@ -18,7 +18,7 @@ services:
       dockerfile: Dockerfile
     container_name: kamigami_admin
     ports:
-      - "6500:6500"
+      - "3007:3007"
     restart: unless-stopped
     depends_on:
       - backend
