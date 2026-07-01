@@ -10,7 +10,7 @@ import Button from "./Button";
 const navItems = [
   { name: "Home", path: "/" },
   { name: "Store", path: "/all-products" },
-  { name: "Prologue", path: "/about-us" },
+  { name: "Collections", path: "/collections" },
   { name: "Contact", path: "/contact-us" }
 ];
 

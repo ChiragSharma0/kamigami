@@ -24,10 +24,9 @@ const Hero = () => {
   const [loading, setLoading] = useState(true);
   const [loadedVideos, setLoadedVideos] = useState(0);
 
+  const [aboutPageData, setAboutPageData] = useState(DEFAULT_ABOUT_PAGE);
   const totalVideos = aboutPageData.heroVideoCount || 4;
   const nextVdRef = useRef(null);
-
-  const [aboutPageData, setAboutPageData] = useState(DEFAULT_ABOUT_PAGE);
 
   const handleVideoLoad = () => {
     setLoadedVideos((prev) => prev + 1);
