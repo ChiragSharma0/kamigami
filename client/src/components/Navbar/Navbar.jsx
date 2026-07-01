@@ -6,7 +6,8 @@ import {
   User,
   ShoppingCart,
   LogOut,
-  Compass
+  ShoppingBag,
+  Home
 } from "lucide-react";
 
 import { Sling as Hamburger } from 'hamburger-react';
@@ -216,11 +217,11 @@ export default function Navbar() {
       {/* Bottom Navigation — Mobile Only */}
       <div className="bottom-nav">
         <div className="bottom-nav-pill">
-          <Link to="/all-products" className="bottom-nav-item">
-            <Compass size={22} />
+          <Link to="/" className="bottom-nav-item">
+            <Home size={22} />
           </Link>
-          <Link to={user ? "/userprofile" : "/sign-up"} className="bottom-nav-item">
-            <User size={22} />
+          <Link to="/all-products" className="bottom-nav-item">
+            <ShoppingBag size={22} />
           </Link>
           <Link className="bottom-nav-item" onClick={() => setSearchOpen(true)}>
             <Search size={22} />

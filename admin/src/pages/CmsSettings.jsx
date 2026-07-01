@@ -47,8 +47,8 @@ const DEFAULT_SETTINGS = {
     }
   ],
   about: {
-    heroTitle: "Uncover Your \n Stylish Identity",
-    heroText: "Step into a World of High-Quality, Fashion-forward Design. From Casual Chic to Elevated Elegance.",
+    heroTitle: "Forge Your \n Sacred Identity",
+    heroText: "Step into a world of high-quality, dark streetwear and shadow-infused aesthetics. From daily statement wear to exclusive drops, find your place in the Kamigami bloodline.",
     rightImage: "https://i5.walmartimages.com/seo/Cute-Hoodies-for-Teen-Girls-Trendy-Waffle-Hooded-Sweatshirts-Oversized-Long-Sleeve-Sweater-Tween-Girl-Clothes-With-Pocket_f5eaaedd-a0b2-4298-ad86-ecb4e60e4665.3f912967cc120203881ec023922d10b1.jpeg",
     cards: [
       {
@@ -110,6 +110,7 @@ const DEFAULT_ABOUT_PAGE = {
   heroTitle: "reawaken",
   heroText: "Enter the Realm of Shadows \n Unleash Your Dark Identity",
   heroBtnText: "EXPLORE COLLECTION",
+  heroVideoCount: 4,
   heroVideo1: "videos/hero-1.mp4",
   heroVideo2: "videos/hero-2.mp4",
   heroVideo3: "videos/hero-3.mp4",
@@ -1041,10 +1042,24 @@ const CmsSettings = () => {
                 <div className="grid md:grid-cols-2 gap-8">
                   {/* Hero Videos Settings */}
                   <div className="space-y-4 bg-slate-50 p-5 rounded-xl border border-slate-200">
-                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide border-b pb-2">Hero Video Rotator (4 Videos)</h4>
+                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide border-b pb-2">Hero Video Rotator</h4>
                     
-                    {[1, 2, 3, 4].map(idx => (
-                      <div key={idx} className="space-y-1.5">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Number of Hero Videos</label>
+                      <select 
+                        className="w-full text-xs px-3 py-2 border border-slate-200 rounded-md focus:border-primary-500 outline-none bg-white font-medium text-slate-700"
+                        value={aboutPageData.heroVideoCount || 4}
+                        onChange={(e) => updateAboutPageField('heroVideoCount', Number(e.target.value))}
+                      >
+                        <option value="1">1 Video</option>
+                        <option value="2">2 Videos</option>
+                        <option value="3">3 Videos</option>
+                        <option value="4">4 Videos</option>
+                      </select>
+                    </div>
+
+                    {Array.from({ length: aboutPageData.heroVideoCount || 4 }, (_, i) => i + 1).map(idx => (
+                      <div key={idx} className="space-y-1.5 mt-3">
                         <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Hero Video {idx}</label>
                         <div className="flex gap-2">
                           <input 

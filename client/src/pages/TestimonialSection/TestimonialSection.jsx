@@ -87,76 +87,79 @@ const TestimonialSection = () => {
   };
 
   useEffect(() => {
-    const cards = cardRefs.current;
-    const total = cards.length;
-    if (!total) return;
+    let ctx;
 
-    // Set initial stacked positions — first card on top, rest behind
-    cards.forEach((card, i) => {
-      gsap.set(card, {
-        y: i * 30,
-        scale: 1 - i * 0.05,
-        zIndex: total - i,
-        opacity: 1,
-      });
-    });
+    const initTimeout = setTimeout(() => {
+      ctx = gsap.context(() => {
+        const cards = cardRefs.current;
+        const total = cards.length;
+        if (!total) return;
 
-    // Build scroll-linked timeline
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top top",
-        end: `+=${total * 600}`,
-        pin: true,
-        scrub: 1,
-        anticipatePin: 1,
-      },
-    });
+        // Ensure initial offset is applied by GSAP
+        cards.forEach((card, i) => {
+          gsap.set(card, {
+            y: i * 30,
+            scale: 1 - i * 0.05,
+            zIndex: total - i,
+            opacity: 1,
+          });
+        });
 
-    // Animate each card (skip the first — it's already in position)
-    for (let i = 1; i < total; i++) {
-      const card = cards[i];
-      const timelinePos = (i - 1) * 1; // each card gets its own segment
-
-      // Push all previous cards slightly downward and scale down
-      // so the new card visually rises above them
-      for (let j = 0; j < i; j++) {
-        tl.to(
-          cards[j],
-          {
-            y: (i - j) * 30,
-            scale: 1 - (i - j) * 0.05,
-            zIndex: total - (i - j),
-            duration: 1,
-            ease: "power2.inOut",
+        // Build scroll-linked timeline
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top top",
+            end: `+=${total * 500}`,
+            pin: true,
+            scrub: 1,
+            anticipatePin: 1,
+            invalidateOnRefresh: true,
           },
-          timelinePos
-        );
-      }
+        });
 
-      // Animate the active card to the top
-      tl.to(
-        card,
-        {
-          y: 0,
-          scale: 1,
-          zIndex: total + i, // highest z-index
-          duration: 1,
-          ease: "power2.inOut",
-        },
-        timelinePos
-      );
-    }
+        // Animate each card (skip the first)
+        for (let i = 1; i < total; i++) {
+          const card = cards[i];
+          const timelinePos = (i - 1) * 1;
 
-    ScrollTrigger.refresh();
+          // Push previous cards slightly down
+          for (let j = 0; j < i; j++) {
+            tl.to(
+              cards[j],
+              {
+                y: (i - j) * 30,
+                scale: 1 - (i - j) * 0.05,
+                duration: 1,
+                ease: "power2.inOut",
+              },
+              timelinePos
+            );
+          }
+
+          // Active card moves to top position
+          tl.to(
+            card,
+            {
+              y: 0,
+              scale: 1,
+              zIndex: total + i,
+              duration: 1,
+              ease: "power2.inOut",
+            },
+            timelinePos
+          );
+        }
+
+        ScrollTrigger.refresh();
+      }, sectionRef);
+    }, 100);
 
     return () => {
-      tl.kill();
-      ScrollTrigger.getAll().forEach((st) => {
-        if (st.trigger === sectionRef.current) st.kill();
-      });
+      clearTimeout(initTimeout);
+      if (ctx) ctx.revert();
     };
-  }, [testimonials]); // React on testimonies update
+  }, [testimonials]);
 
   return (
     <section className="testimonial-section" ref={sectionRef}>
@@ -172,27 +175,36 @@ const TestimonialSection = () => {
 
         {/* Card Stack */}
         <div className="testimonial-stack">
-          {testimonials.map((t, i) => (
-            <div
-              key={t.id}
-              ref={addCardRef}
-              className="testimonial-card"
-            >
-              <div className="testimonial-card-header">
-                <img
-                  className="testimonial-avatar"
-                  src={t.avatar}
-                  alt={t.name}
-                  loading="lazy"
-                />
-                <div className="testimonial-user-info">
-                  <p className="testimonial-user-name">{t.name}</p>
-                  <Stars count={t.rating} />
+          {testimonials.map((t, i) => {
+            const initialY = i * 30;
+            const initialScale = 1 - i * 0.05;
+            const initialZIndex = testimonials.length - i;
+            return (
+              <div
+                key={t.id}
+                ref={addCardRef}
+                className="testimonial-card"
+                style={{
+                  transform: `translate3d(0px, ${initialY}px, 0px) scale(${initialScale})`,
+                  zIndex: initialZIndex,
+                }}
+              >
+                <div className="testimonial-card-header">
+                  <img
+                    className="testimonial-avatar"
+                    src={t.avatar}
+                    alt={t.name}
+                    loading="lazy"
+                  />
+                  <div className="testimonial-user-info">
+                    <p className="testimonial-user-name">{t.name}</p>
+                    <Stars count={t.rating} />
+                  </div>
                 </div>
+                <p className="testimonial-text">{t.text}</p>
               </div>
-              <p className="testimonial-text">{t.text}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

@@ -49,3 +49,5 @@ scratch/
 artifacts/
 *.bak
 *.tmp
+setup_dev.bat
+

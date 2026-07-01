@@ -5,8 +5,8 @@ import api from "../../services/api";
 import "./Module.css";
 
 const DEFAULT_ABOUT = {
-  heroTitle: "Uncover Your \n Stylish Identity",
-  heroText: "Step into a World of High-Quality, Fashion-forward Design. From Casual Chic to Elevated Elegance.",
+  heroTitle: "Forge Your \n Sacred Identity",
+  heroText: "Step into a world of high-quality, dark streetwear and shadow-infused aesthetics. From daily statement wear to exclusive drops, find your place in the Kamigami bloodline.",
   rightImage: "https://i5.walmartimages.com/seo/Cute-Hoodies-for-Teen-Girls-Trendy-Waffle-Hooded-Sweatshirts-Oversized-Long-Sleeve-Sweater-Tween-Girl-Clothes-With-Pocket_f5eaaedd-a0b2-4298-ad86-ecb4e60e4665.3f912967cc120203881ec023922d10b1.jpeg",
   cards: [
     {
@@ -74,8 +74,8 @@ const AboutSection = () => {
             </div>
 
             <div className="shop-btn">
-              <Link to="/about-us">
-                SHOP <br /> NOW
+              <Link to="/about-us" style={{ textAlign: "center", textDecoration: "none", color: "inherit" }}>
+                ABOUT <br /> US
               </Link>
             </div>
           </div>

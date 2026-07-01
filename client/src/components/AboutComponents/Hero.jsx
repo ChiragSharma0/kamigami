@@ -11,7 +11,8 @@ import VideoPreview from "./VideoPreview";
 const DEFAULT_ABOUT_PAGE = {
   heroTitle: "reawak<b>e</b>n",
   heroText: "Enter the Realm of Shadows <br /> Unleash Your Dark Identity",
-  heroBtnText: "EXPLORE COLLECTION"
+  heroBtnText: "EXPLORE COLLECTION",
+  heroVideoCount: 4
 };
 
 gsap.registerPlugin(ScrollTrigger);
@@ -23,7 +24,7 @@ const Hero = () => {
   const [loading, setLoading] = useState(true);
   const [loadedVideos, setLoadedVideos] = useState(0);
 
-  const totalVideos = 4;
+  const totalVideos = aboutPageData.heroVideoCount || 4;
   const nextVdRef = useRef(null);
 
   const [aboutPageData, setAboutPageData] = useState(DEFAULT_ABOUT_PAGE);
@@ -47,7 +48,7 @@ const Hero = () => {
   }, []);
 
   useEffect(() => {
-    if (loadedVideos === totalVideos - 1) {
+    if (loadedVideos >= 1) {
       setLoading(false);
     }
   }, [loadedVideos]);
@@ -126,37 +127,40 @@ const Hero = () => {
         className="relative z-10 h-dvh w-full overflow-hidden rounded-lg bg-blue-75"
       >
         <div>
-          <div className="mask-clip-path absolute-center absolute z-50 size-64 cursor-pointer overflow-hidden rounded-lg">
-            <VideoPreview>
-              <div
-                onClick={handleMiniVdClick}
-                className="origin-center scale-50 opacity-0 transition-all duration-500 ease-in hover:scale-100 hover:opacity-100"
-              >
-                <video
-                  ref={nextVdRef}
-                  src={getVideoSrc((currentIndex % totalVideos) + 1)}
-                  loop
-                  muted
-                  id="current-video"
-                  className="size-64 origin-center scale-150 object-cover object-center"
-                  onLoadedData={handleVideoLoad}
-                />
-              </div>
-            </VideoPreview>
-          </div>
+          {totalVideos > 1 && (
+            <div className="mask-clip-path absolute-center absolute z-50 size-64 cursor-pointer overflow-hidden rounded-lg">
+              <VideoPreview>
+                <div
+                  onClick={handleMiniVdClick}
+                  className="origin-center scale-50 opacity-0 transition-all duration-500 ease-in hover:scale-100 hover:opacity-100"
+                >
+                  <video
+                    src={getVideoSrc((currentIndex % totalVideos) + 1)}
+                    loop
+                    muted
+                    id="current-video"
+                    className="size-64 origin-center scale-150 object-cover object-center"
+                    onLoadedData={handleVideoLoad}
+                  />
+                </div>
+              </VideoPreview>
+            </div>
+          )}
 
-          <video
-            ref={nextVdRef}
-            src={getVideoSrc(currentIndex)}
-            loop
-            muted
-            id="next-video"
-            className="absolute-center invisible absolute z-20 size-64 object-cover object-center"
-            onLoadedData={handleVideoLoad}
-          />
+          {totalVideos > 1 && (
+            <video
+              ref={nextVdRef}
+              src={getVideoSrc(currentIndex)}
+              loop
+              muted
+              id="next-video"
+              className="absolute-center invisible absolute z-20 size-64 object-cover object-center"
+              onLoadedData={handleVideoLoad}
+            />
+          )}
           <video
             src={getVideoSrc(
-              currentIndex === totalVideos - 1 ? 1 : currentIndex
+              totalVideos === 1 ? 1 : (currentIndex === totalVideos - 1 ? 1 : currentIndex)
             )}
             autoPlay
             loop

@@ -31,20 +31,22 @@ const Type = ({ className }) => (
   </svg>
 );
 
-const STANDARD_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', 'FREE SIZE', 'ONE SIZE'];
+const STANDARD_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
 const COMMON_COLORS = [
-  { name: 'Red', hex: '#FF0000' },
-  { name: 'Blue', hex: '#0000FF' },
-  { name: 'Green', hex: '#008000' },
   { name: 'White', hex: '#FFFFFF' },
   { name: 'Black', hex: '#000000' },
-  { name: 'Yellow', hex: '#FFFF00' }
+  { name: 'Red', hex: '#e71e22' },
+  { name: 'Green', hex: '#22c55e' },
+  { name: 'Blue', hex: '#3b82f6' },
+  { name: 'Purple', hex: '#a855f7' },
+  { name: 'Neutrals', hex: '#71717a' },
+  { name: 'Yellow', hex: '#eab308' },
+  { name: 'Brown', hex: '#78350f' }
 ];
 
 const BulkGenerator = ({ onGenerate, baseSku, basePrice }) => {
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [selectedColors, setSelectedColors] = useState([]);
-  const [customColor, setCustomColor] = useState({ name: '', hex: '#000000', active: false });
 
   const toggleSize = (size) => {
     setSelectedSizes(prev =>
@@ -67,23 +69,15 @@ const BulkGenerator = ({ onGenerate, baseSku, basePrice }) => {
     }
 
     let colorsToUse = [...selectedColors];
-    if (customColor.active) {
-      if (!customColor.name) {
-        toast.error('Custom color needs a name');
-        return;
-      }
-      colorsToUse.push({ name: customColor.name, hex: customColor.hex });
-    }
 
     if (colorsToUse.length === 0) {
-      toast.error('Select at least one color or define a custom one');
+      toast.error('Select at least one color');
       return;
     }
 
     onGenerate(selectedSizes, colorsToUse);
     setSelectedSizes([]);
     setSelectedColors([]);
-    setCustomColor({ name: '', hex: '#000000', active: false });
   };
 
   return (
@@ -130,40 +124,7 @@ const BulkGenerator = ({ onGenerate, baseSku, basePrice }) => {
           </div>
         </div>
 
-        <div className="space-y-4 pt-4 border-t border-white/5">
-          <div className="flex items-center justify-between">
-            <label className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30 ml-1">3. Custom Definition</label>
-            <button
-              type="button"
-              onClick={() => setCustomColor(prev => ({ ...prev, active: !prev.active }))}
-              className={`text-[8px] font-black uppercase px-2 py-1 rounded-md transition-all ${customColor.active ? 'bg-primary-500 text-white' : 'bg-white/10 text-white/40'}`}
-            >
-              {customColor.active ? 'Active' : 'Enable'}
-            </button>
-          </div>
-
-          {customColor.active && (
-            <div className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-2">
-              <input
-                type="text"
-                placeholder="Color Name"
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-[10px] font-bold text-white outline-none focus:border-white/30"
-                value={customColor.name}
-                onChange={(e) => setCustomColor(prev => ({ ...prev, name: e.target.value }))}
-              />
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="#HEX"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-[10px] font-mono font-bold text-white outline-none focus:border-white/30"
-                  value={customColor.hex}
-                  onChange={(e) => setCustomColor(prev => ({ ...prev, hex: e.target.value }))}
-                />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border border-white/20" style={{ backgroundColor: customColor.hex }} />
-              </div>
-            </div>
-          )}
-        </div>
+        {/* Custom Definition block removed to restrict colors to standard list */}
       </div>
 
       <button
@@ -184,12 +145,11 @@ const parseVariantsToColorGroups = (variants, metadata, productMedia) => {
         colorHex: '#28282B',
         media: [],
         sizes: [
-          { size: 'XS', price: '', initialStock: 0, enabled: false },
           { size: 'S', price: '', initialStock: 0, enabled: true },
           { size: 'M', price: '', initialStock: 0, enabled: true },
           { size: 'L', price: '', initialStock: 0, enabled: true },
           { size: 'XL', price: '', initialStock: 0, enabled: true },
-          { size: 'XXL', price: '', initialStock: 0, enabled: false }
+          { size: 'XXL', price: '', initialStock: 0, enabled: true }
         ]
       }
     ];
@@ -224,7 +184,7 @@ const parseVariantsToColorGroups = (variants, metadata, productMedia) => {
     });
   });
 
-  const defaultSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+  const defaultSizes = ['S', 'M', 'L', 'XL', 'XXL'];
   
   Object.values(groups).forEach(g => {
     defaultSizes.forEach(ds => {
@@ -263,16 +223,15 @@ const ProductForm = ({ onSubmit, isLoading, initialData }) => {
 
   const [colorGroups, setColorGroups] = useState([
     {
-      color: 'Ebony',
-      colorHex: '#28282B',
+      color: 'Black',
+      colorHex: '#000000',
       media: [],
       sizes: [
-        { size: 'XS', price: '', initialStock: 0, enabled: false },
         { size: 'S', price: '', initialStock: 0, enabled: true },
         { size: 'M', price: '', initialStock: 0, enabled: true },
         { size: 'L', price: '', initialStock: 0, enabled: true },
         { size: 'XL', price: '', initialStock: 0, enabled: true },
-        { size: 'XXL', price: '', initialStock: 0, enabled: false }
+        { size: 'XXL', price: '', initialStock: 0, enabled: true }
       ]
     }
   ]);
@@ -481,19 +440,22 @@ const ProductForm = ({ onSubmit, isLoading, initialData }) => {
   };
 
   const addColorGroup = () => {
+    // Default to the first color in standard list that isn't already created if possible, or fallback to White
+    const existingColors = new Set(colorGroups.map(g => g.color.toLowerCase()));
+    const nextAvailableColor = COMMON_COLORS.find(c => !existingColors.has(c.name.toLowerCase())) || COMMON_COLORS[0];
+    
     setColorGroups(prev => [
       ...prev,
       {
-        color: `New Color ${prev.length + 1}`,
-        colorHex: '#000000',
+        color: nextAvailableColor.name,
+        colorHex: nextAvailableColor.hex,
         media: [],
         sizes: [
-          { size: 'XS', price: '', initialStock: 0, enabled: false },
           { size: 'S', price: '', initialStock: 0, enabled: true },
           { size: 'M', price: '', initialStock: 0, enabled: true },
           { size: 'L', price: '', initialStock: 0, enabled: true },
           { size: 'XL', price: '', initialStock: 0, enabled: true },
-          { size: 'XXL', price: '', initialStock: 0, enabled: false }
+          { size: 'XXL', price: '', initialStock: 0, enabled: true }
         ]
       }
     ]);
@@ -533,7 +495,7 @@ const ProductForm = ({ onSubmit, isLoading, initialData }) => {
             color: color.name,
             colorHex: color.hex,
             media: [],
-            sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(sz => ({
+            sizes: ['S', 'M', 'L', 'XL', 'XXL'].map(sz => ({
               size: sz,
               price: '',
               initialStock: 0,
@@ -559,7 +521,7 @@ const ProductForm = ({ onSubmit, isLoading, initialData }) => {
           }
         });
 
-        const defaultSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+        const defaultSizes = ['S', 'M', 'L', 'XL', 'XXL'];
         group.sizes.sort((a, b) => defaultSizes.indexOf(a.size) - defaultSizes.indexOf(b.size));
       });
 
@@ -963,13 +925,22 @@ const ProductForm = ({ onSubmit, isLoading, initialData }) => {
                 <div className="flex items-center gap-4 flex-1 min-w-[240px]">
                   <div className="space-y-1.5 flex-1">
                     <label className="text-[10px] font-black uppercase text-slate-400">Color Name</label>
-                    <input
-                      type="text"
+                    <select
                       className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-primary-500 font-bold text-sm"
-                      placeholder="e.g. Off-White"
                       value={group.color}
-                      onChange={(e) => updateColorGroupField(colorIdx, 'color', e.target.value)}
-                    />
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const matching = COMMON_COLORS.find(cc => cc.name.toLowerCase() === val.toLowerCase());
+                        updateColorGroupField(colorIdx, 'color', val);
+                        if (matching) {
+                          updateColorGroupField(colorIdx, 'colorHex', matching.hex);
+                        }
+                      }}
+                    >
+                      {COMMON_COLORS.map(cc => (
+                        <option key={cc.name} value={cc.name}>{cc.name}</option>
+                      ))}
+                    </select>
                   </div>
                   
                   <div className="space-y-1.5 w-32">
@@ -978,7 +949,8 @@ const ProductForm = ({ onSubmit, isLoading, initialData }) => {
                       <div className="w-8 h-8 rounded-full border border-slate-200 shrink-0" style={{ backgroundColor: group.colorHex }} />
                       <input
                         type="text"
-                        className="w-full px-2 py-2 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-mono font-bold"
+                        disabled
+                        className="w-full px-2 py-2 bg-slate-100 border border-slate-100 rounded-lg text-[10px] font-mono font-bold text-slate-400 cursor-not-allowed"
                         value={group.colorHex}
                         onChange={(e) => updateColorGroupField(colorIdx, 'colorHex', e.target.value)}
                       />

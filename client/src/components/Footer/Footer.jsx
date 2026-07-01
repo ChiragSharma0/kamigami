@@ -16,7 +16,7 @@ const LINKS = {
     { label: "Make a return/Exchange", href: "#" },
     { label: "Refund/Exchange policy", href: "/refund-policy" },
     { label: "Track your order", href: "#" },
-    { label: "Shipping policy", href: "#" },
+    { label: "Shipping policy", href: "/shipping-policy" },
     { label: "FAQ's", href: "#" },
     { label: "Terms & Conditions", href: "/terms-and-conditions" },
     { label: "Privacy Policy", href: "/privacy-policy" },

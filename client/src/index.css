@@ -6,7 +6,7 @@
 
 
 
-body{
+body {
   overflow-x: hidden;
 }
 
@@ -175,10 +175,12 @@ body {
     height: 4px;
     transform: translateY(-0px);
   }
+
   50% {
     height: 16px;
     transform: translateY(-4px);
   }
+
   100% {
     height: 4px;
     transform: translateY(-0px);
@@ -238,8 +240,7 @@ body {
 .three-body__dot:nth-child(2)::after {
   bottom: 0;
   left: 0;
-  animation: wobble1 var(--uib-speed) infinite calc(var(--uib-speed) * -0.15)
-    ease-in-out;
+  animation: wobble1 var(--uib-speed) infinite calc(var(--uib-speed) * -0.15) ease-in-out;
 }
 
 .three-body__dot:nth-child(3) {
@@ -265,6 +266,7 @@ body {
 }
 
 @keyframes wobble1 {
+
   0%,
   100% {
     transform: translateY(0%) scale(1);
@@ -277,7 +279,15 @@ body {
   }
 }
 
+@media (max-width: 350px) {
+  .about-subtext {
+    bottom: auto;
+    top: calc(100% + 68dvh);
+  }
+}
+
 @keyframes wobble2 {
+
   0%,
   100% {
     transform: translateY(0%) scale(1);

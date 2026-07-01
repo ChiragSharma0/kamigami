@@ -18,6 +18,10 @@ import ScrollToTop from "./components/ScrollToTop";
 import ProductSection from "./pages/ProductPages/Product";
 import AllProductsPage from "./pages/ProductPages/AllProductsPage";
 import ContactUs from "./pages/ContactUs/ContactUs";
+import PrivacyPolicy from "./pages/PrivacyPolicy/PrivacyPolicy";
+import RefundPolicy from "./pages/RefundPolicy/RefundPolicy";
+import TermsAndConditions from "./pages/TermsAndConditions/TermsAndConditions";
+import ShippingPolicy from "./pages/ShippingPolicy/ShippingPolicy";
 
 const App = () => {
 
@@ -52,6 +56,10 @@ const App = () => {
         <Route path="/collections/:slug" element={<CollectionDetail />} />
         <Route path="/drops" element={<Drops />} />
         <Route path="/contact-us" element={<ContactUs />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/refund-policy" element={<RefundPolicy />} />
+        <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+        <Route path="/shipping-policy" element={<ShippingPolicy />} />
       </Routes>
 
       {/* Footer */}

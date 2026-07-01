@@ -7,9 +7,7 @@
   width: 100%;
   min-width: 100vw;
   box-sizing: border-box;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  display: block;
   background: transparent;
   overflow: visible;
 }
@@ -74,9 +72,8 @@
   border-radius: 22px;
 
   /* Glassmorphism */
-  background: rgba(255, 255, 255, 0.07);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  background: rgba(15, 15, 15, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
 
   /* Shadow layers */

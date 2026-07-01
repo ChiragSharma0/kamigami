@@ -38,6 +38,62 @@ const getProductGender = (product) => {
   return "unisex"; // Fallback default
 };
 
+// --- COLOR EXTRACTOR ---
+const getProductColors = (product) => {
+  if (!product) return [];
+  const colors = new Set();
+
+  // 1. Check direct product color fields
+  if (product.color) {
+    colors.add(product.color.toLowerCase().trim());
+  }
+  if (product.colour) {
+    colors.add(product.colour.toLowerCase().trim());
+  }
+
+  // 2. Check metadata
+  if (product.metadata?.color) {
+    colors.add(product.metadata.color.toLowerCase().trim());
+  }
+  if (product.metadata?.colors && Array.isArray(product.metadata.colors)) {
+    product.metadata.colors.forEach(c => colors.add(c.toLowerCase().trim()));
+  }
+
+  // 3. Check variants
+  if (product.variants && Array.isArray(product.variants)) {
+    product.variants.forEach((v) => {
+      const col = v.attributes?.color || v.attributes?.Color;
+      if (col) {
+        colors.add(col.toLowerCase().trim());
+      }
+    });
+  }
+
+  // 4. Fallback: Keyword search in title/description
+  const title = product.title?.toLowerCase() || "";
+  const desc = product.description?.toLowerCase() || "";
+  const standardColors = ["white", "black", "red", "green", "blue", "purple", "neutrals", "yellow", "brown"];
+  standardColors.forEach((color) => {
+    if (title.includes(color) || desc.includes(color)) {
+      colors.add(color);
+    }
+  });
+
+  return Array.from(colors);
+};
+
+const colorStyleMap = {
+  white: "#ffffff",
+  black: "#000000",
+  red: "#e71e22",
+  green: "#22c55e",
+  blue: "#3b82f6",
+  purple: "#a855f7",
+  neutrals: "#71717a",
+  yellow: "#eab308",
+  brown: "#78350f",
+};
+
 const AllProductsPage = () => {
   const { productData } = useContext(ProductDataContext);
 
@@ -46,28 +102,10 @@ const AllProductsPage = () => {
   const [selectedGenders, setSelectedGenders] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedSizes, setSelectedSizes] = useState([]);
-  const [selectedPriceRanges, setSelectedPriceRanges] = useState([]);
-  const [sliderPrice, setSliderPrice] = useState(2000);
+  const [selectedColors, setSelectedColors] = useState([]);
   const [sortBy, setSortBy] = useState("default");
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(12);
-
-  // --- DYNAMIC PRICE BOUNDARIES ---
-  const priceBoundaries = useMemo(() => {
-    if (!productData || productData.length === 0) return { min: 0, max: 2000 };
-    const prices = productData.map((p) => p.price);
-    return {
-      min: Math.min(...prices),
-      max: Math.max(...prices),
-    };
-  }, [productData]);
-
-  // Set initial slider price when productData is loaded
-  useEffect(() => {
-    if (productData && productData.length > 0) {
-      setSliderPrice(priceBoundaries.max);
-    }
-  }, [productData, priceBoundaries.max]);
 
   // --- AVAILABLE FILTER OPTIONS DYNAMICALLY ---
   const availableCategories = useMemo(() => {
@@ -84,10 +122,7 @@ const AllProductsPage = () => {
     ];
   }, [productData]);
 
-  const availableSizes = useMemo(() => {
-    if (!productData) return [];
-    return [...new Set(productData.map((p) => p.size?.toLowerCase()).filter(Boolean))];
-  }, [productData]);
+  const availableSizes = ["s", "m", "l", "xl", "xxl"];
 
   // --- REAL-TIME MATCHING COUNTS ---
   const genderCounts = useMemo(() => {
@@ -116,6 +151,33 @@ const AllProductsPage = () => {
     productData.forEach((p) => {
       const sz = p.size?.toLowerCase();
       if (sz) counts[sz] = (counts[sz] || 0) + 1;
+    });
+    return counts;
+  }, [productData]);
+
+  const colorCounts = useMemo(() => {
+    const counts = {
+      white: 0,
+      black: 0,
+      red: 0,
+      green: 0,
+      blue: 0,
+      purple: 0,
+      neutrals: 0,
+      yellow: 0,
+      brown: 0
+    };
+    if (!productData) return counts;
+    productData.forEach((p) => {
+      const colors = getProductColors(p);
+      colors.forEach((c) => {
+        const normalised = c.toLowerCase().trim();
+        if (counts[normalised] !== undefined) {
+          counts[normalised]++;
+        } else if (normalised === "gray" || normalised === "grey" || normalised === "neutral") {
+          counts.neutrals++;
+        }
+      });
     });
     return counts;
   }, [productData]);
@@ -154,21 +216,19 @@ const AllProductsPage = () => {
       result = result.filter((p) => selectedSizes.includes(p.size?.toLowerCase()));
     }
 
-    // 5. Price Tiers (Checkboxes)
-    if (selectedPriceRanges.length > 0) {
+    // 5. Colors Swatch Group
+    if (selectedColors.length > 0) {
       result = result.filter((p) => {
-        return selectedPriceRanges.some((range) => {
-          if (range === "under-500") return p.price < 500;
-          if (range === "500-1000") return p.price >= 500 && p.price <= 1000;
-          if (range === "1000-1500") return p.price >= 1000 && p.price <= 1500;
-          if (range === "1500-plus") return p.price > 1500;
-          return false;
+        const productColors = getProductColors(p).map(c => {
+          const norm = c.toLowerCase().trim();
+          if (norm === "gray" || norm === "grey" || norm === "neutral") return "neutrals";
+          return norm;
         });
+        return selectedColors.some(c => productColors.includes(c));
       });
     }
 
-    // 6. Custom Slider Price (Max Price Limit)
-    result = result.filter((p) => p.price <= sliderPrice);
+    // (Price filters removed)
 
     // 7. Sorting
     if (sortBy === "price-asc") {
@@ -188,8 +248,7 @@ const AllProductsPage = () => {
     selectedGenders,
     selectedCategories,
     selectedSizes,
-    selectedPriceRanges,
-    sliderPrice,
+    selectedColors,
     sortBy,
   ]);
 
@@ -215,9 +274,10 @@ const AllProductsPage = () => {
     );
   };
 
-  const handlePriceRangeToggle = (range) => {
-    setSelectedPriceRanges((prev) =>
-      prev.includes(range) ? prev.filter((r) => r !== range) : [...prev, range]
+  const handleColorToggle = (color) => {
+    const c = color.toLowerCase();
+    setSelectedColors((prev) =>
+      prev.includes(c) ? prev.filter((item) => item !== c) : [...prev, c]
     );
   };
 
@@ -226,8 +286,7 @@ const AllProductsPage = () => {
     setSelectedGenders([]);
     setSelectedCategories([]);
     setSelectedSizes([]);
-    setSelectedPriceRanges([]);
-    setSliderPrice(priceBoundaries.max);
+    setSelectedColors([]);
     setSortBy("default");
   };
 
@@ -238,17 +297,14 @@ const AllProductsPage = () => {
       selectedGenders.length > 0 ||
       selectedCategories.length > 0 ||
       selectedSizes.length > 0 ||
-      selectedPriceRanges.length > 0 ||
-      sliderPrice < priceBoundaries.max
+      selectedColors.length > 0
     );
   }, [
     search,
     selectedGenders,
     selectedCategories,
     selectedSizes,
-    selectedPriceRanges,
-    sliderPrice,
-    priceBoundaries.max,
+    selectedColors,
   ]);
 
   // Dynamic label helpers for active tags
@@ -271,25 +327,7 @@ const AllProductsPage = () => {
         clear: () => handleCategoryToggle(cat),
       });
     });
-    selectedPriceRanges.forEach((range) => {
-      let label = "";
-      if (range === "under-500") label = "Under ₹500";
-      if (range === "500-1000") label = "₹500 - ₹1000";
-      if (range === "1000-1500") label = "₹1000 - ₹1500";
-      if (range === "1500-plus") label = "₹1500+";
-      tags.push({
-        id: `price-${range}`,
-        label: `Price: ${label}`,
-        clear: () => handlePriceRangeToggle(range),
-      });
-    });
-    if (sliderPrice < priceBoundaries.max) {
-      tags.push({
-        id: "slider-price",
-        label: `Max Price: ₹${sliderPrice}`,
-        clear: () => setSliderPrice(priceBoundaries.max),
-      });
-    }
+    // Price tags removed
     selectedSizes.forEach((sz) => {
       tags.push({
         id: `size-${sz}`,
@@ -297,15 +335,20 @@ const AllProductsPage = () => {
         clear: () => handleSizeToggle(sz),
       });
     });
+    selectedColors.forEach((color) => {
+      tags.push({
+        id: `color-${color}`,
+        label: `Color: ${color.toUpperCase()}`,
+        clear: () => handleColorToggle(color),
+      });
+    });
     return tags;
   }, [
     search,
     selectedGenders,
     selectedCategories,
-    selectedPriceRanges,
-    sliderPrice,
-    priceBoundaries.max,
     selectedSizes,
+    selectedColors,
   ]);
 
   // Reset visible items when filter variables update
@@ -316,8 +359,7 @@ const AllProductsPage = () => {
     selectedGenders,
     selectedCategories,
     selectedSizes,
-    selectedPriceRanges,
-    sliderPrice,
+    selectedColors,
     sortBy,
   ]);
 
@@ -416,53 +458,7 @@ const AllProductsPage = () => {
         </div>
       </div>
 
-      {/* Price Filters */}
-      <div className="refinement-group">
-        <h4>PRICE RANGE</h4>
-        
-        {/* Predefined ranges */}
-        <div className="checkbox-list price-tiers">
-          {[
-            { id: "under-500", label: "Under ₹500" },
-            { id: "500-1000", label: "₹500 - ₹1000" },
-            { id: "1000-1500", label: "₹1000 - ₹1500" },
-            { id: "1500-plus", label: "₹1500 & Above" },
-          ].map((tier) => {
-            const isChecked = selectedPriceRanges.includes(tier.id);
-            return (
-              <label key={tier.id} className={`checkbox-item ${isChecked ? "active" : ""}`}>
-                <div className="checkbox-box">
-                  <input
-                    type="checkbox"
-                    checked={isChecked}
-                    onChange={() => handlePriceRangeToggle(tier.id)}
-                  />
-                  <div className="checkbox-custom">
-                    <Check size={10} className="check-icon" />
-                  </div>
-                </div>
-                <span className="checkbox-label">{tier.label}</span>
-              </label>
-            );
-          })}
-        </div>
-
-        {/* Dynamic price slider */}
-        <div className="price-slider-container">
-          <div className="slider-labels">
-            <span>₹{priceBoundaries.min}</span>
-            <span className="current-max">Limit: ₹{sliderPrice}</span>
-          </div>
-          <input
-            type="range"
-            min={priceBoundaries.min}
-            max={priceBoundaries.max}
-            value={sliderPrice}
-            onChange={(e) => setSliderPrice(Number(e.target.value))}
-            className="custom-range-slider"
-          />
-        </div>
-      </div>
+      {/* Price Filters Removed */}
 
       {/* Sizes Section */}
       <div className="refinement-group">
@@ -478,6 +474,28 @@ const AllProductsPage = () => {
               >
                 <span className="size-name">{sz.toUpperCase()}</span>
                 <span className="size-count">{sizeCounts[sz] || 0}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Colors Section */}
+      <div className="refinement-group">
+        <h4>COLORS</h4>
+        <div className="color-swatch-grid">
+          {["white", "black", "red", "green", "blue", "purple", "neutrals", "yellow", "brown"].map((color) => {
+            const isSelected = selectedColors.includes(color);
+            const count = colorCounts[color] || 0;
+            return (
+              <button
+                key={color}
+                onClick={() => handleColorToggle(color)}
+                className={`color-swatch-btn color-${color} ${isSelected ? "selected" : ""}`}
+                style={{ backgroundColor: colorStyleMap[color] }}
+                title={`${color.toUpperCase()} (${count})`}
+              >
+                {isSelected && <Check size={14} className="swatch-check" />}
               </button>
             );
           })}
