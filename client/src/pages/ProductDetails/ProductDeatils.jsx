@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from "react"; // ← add useEffect
+import React, { useState, useContext, useEffect, useRef } from "react"; // ← add useEffect & useRef
 import PageMeta from "../../components/PageMeta";
 import api from "../../services/api";
 import SoonImage from "../../assets/images/soon.png";
@@ -13,9 +13,12 @@ import RelatedProducts from "../../components/RelatedProducts/RelatedProducts";
 import { ProductDataContext } from "../../Context/ProductDataContext";
 import "./module.css";
 import { CartContext } from "../../Context/CartContext";
+import { useAuth } from "../../Context/AuthContext";
+import toast from "react-hot-toast";
 
 const ProductDetails = () => {
   const { cartItems, setCartItems, setIsCartOpen } = useContext(CartContext);
+  const { user } = useAuth();
   const { id } = useParams();
   const { productData } = useContext(ProductDataContext);
   const navigate = useNavigate();
@@ -79,7 +82,7 @@ const ProductDetails = () => {
             metadata: p.metadata || {},
           };
           setProduct(formatted);
-          if (!mainImage) setMainImage(image);
+          setMainImage(image);
         }
       } catch (error) {
         console.error("Error fetching product details directly:", error);
@@ -107,9 +110,16 @@ const ProductDetails = () => {
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
   const [imageLoading, setImageLoading] = useState(true);
+  const mainImageRef = useRef(null);
 
   useEffect(() => {
-    setImageLoading(true);
+    if (mainImageRef.current) {
+      if (mainImageRef.current.complete) {
+        setImageLoading(false);
+      } else {
+        setImageLoading(true);
+      }
+    }
   }, [mainImage]);
 
   // Set default selection on load (first in-stock variant)
@@ -275,6 +285,10 @@ const ProductDetails = () => {
 
 
   const handleAddToCart = () => {
+    if (!user) {
+      toast.error("Please login to add items to cart");
+      return;
+    }
     if (isOutOfStock) return;
 
     // Create cart item with selected variant metadata
@@ -309,6 +323,10 @@ const ProductDetails = () => {
   };
 
   const handleBuyNow = () => {
+    if (!user) {
+      toast.error("Please login to check out");
+      return;
+    }
     if (isOutOfStock) return;
 
     const cartItem = {
@@ -360,9 +378,10 @@ const ProductDetails = () => {
                 <div className="absolute inset-0 shimmer-pulse" />
               )}
               <img
+                ref={mainImageRef}
                 src={mainImage || product.image}
                 onLoad={() => setImageLoading(false)}
-                className={`w-full h-full object-cover transition-opacity duration-300 ${imageLoading ? 'opacity-0' : 'opacity-100'}`}
+                className="w-full h-full object-cover"
                 alt={product.title}
               />
             </div>

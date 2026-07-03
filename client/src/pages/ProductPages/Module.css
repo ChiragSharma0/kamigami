@@ -1156,53 +1156,56 @@
    ======================================================== */
 .color-swatch-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(3, auto);
+  gap: 12px;
 }
 
-.color-swatch-btn {
+.color-pill {
   position: relative;
-  width: 34px;
+  width: 72px;
   height: 34px;
-  border-radius: 50%;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.15);
+  background: #1b1b1b;
   cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-  padding: 0;
-  outline: none;
+  transition: .25s;
+  padding: 0 8px;
 }
 
-.color-swatch-btn:hover {
-  transform: scale(1.15);
-  border-color: rgba(255, 255, 255, 0.4);
-}
-
-.color-swatch-btn.selected {
-  border-color: #e71e22;
-  box-shadow: 0 0 12px rgba(231, 30, 34, 0.6);
+.color-pill:hover {
   transform: scale(1.05);
+  border-color: rgba(255,255,255,.4);
 }
 
-.color-swatch-btn .swatch-check {
-  color: #fff;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
-}
-
-/* White color custom drop shadow and dark checkmark for readability */
-.color-swatch-btn.color-white {
-  box-shadow: 0 4px 10px rgba(255, 255, 255, 0.1), inset 0 1px 2px rgba(0, 0, 0, 0.1);
-  border-color: rgba(255, 255, 255, 0.3);
-}
-
-.color-swatch-btn.color-white .swatch-check {
-  color: #000;
-  filter: none;
-}
-
-.color-swatch-btn.color-white.selected {
+.color-pill.selected {
   border-color: #e71e22;
+  box-shadow: 0 0 12px rgba(231,30,34,.5);
+}
+
+.pill-colors {
+  display: flex;
+  gap: 3px;
+}
+
+.shade-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.25);
+  flex-shrink: 0;
+}
+
+.swatch-check {
+  position: absolute;
+  right: -4px;
+  top: -4px;
+  width: 16px;
+  height: 16px;
+  color: white;
+  background: #e71e22;
+  border-radius: 50%;
+  padding: 2px;
 }

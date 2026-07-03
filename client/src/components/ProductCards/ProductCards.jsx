@@ -3,14 +3,21 @@ import { ShoppingCart } from "lucide-react";
 import "../ProductCards/Module.css";
 import { CartContext } from "../../Context/CartContext";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../Context/AuthContext";
+import toast from "react-hot-toast";
 
 const ProductCard = ({ product }) => {
   const { cartItems, setCartItems, setIsCartOpen } = useContext(CartContext);
   const [imgLoading, setImgLoading] = useState(true);
+  const { user } = useAuth();
 
   if (!product) return null;
 
   const handleAddToCart = () => {
+    if (!user) {
+      toast.error("Please login to add items to cart");
+      return;
+    }
     const existing = cartItems.find((item) => item.id === product.id);
     if (existing) {
       const updated = cartItems.map((item) =>
@@ -57,16 +64,11 @@ const ProductCard = ({ product }) => {
           {product.title}
         </h1>
 
-        {/* Category / Description */}
-        <p>
-          {product.category}
-        </p>
-
-        {/* Price + Button Row */}
+        {/* Price/Category + Button Row */}
         <div className="price-cart">
 
-          <p className="product-price">
-            ₹{product.price}
+          <p className="product-card-category">
+            {product.category}
           </p>
 
           <button
@@ -78,7 +80,10 @@ const ProductCard = ({ product }) => {
               // yaha addToCart(product) call kar sakte ho
             }}
           >
-            Add To Cart
+            <span className="add-cart-text">Add To Cart</span>
+            <span className="add-cart-icon-mobile">
+              <ShoppingCart size={14} style={{ display: "inline-block", verticalAlign: "middle", marginLeft: "2px" }} />
+            </span>
           </button>
 
         </div>

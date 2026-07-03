@@ -29,6 +29,7 @@ const DEFAULT_SETTINGS = {
       title: "Hoodies",
       subtitle: "Shop Now",
       image: "https://i.pinimg.com/736x/81/cf/0a/81cf0ae5207c5af67de47a418b1fe6ef.jpg",
+      imageMobile: "https://i.pinimg.com/736x/81/cf/0a/81cf0ae5207c5af67de47a418b1fe6ef.jpg",
       redirectUrl: "/collections/hoodies"
     },
     {
@@ -36,6 +37,7 @@ const DEFAULT_SETTINGS = {
       title: "New Collection",
       subtitle: "Discover",
       image: "https://i.pinimg.com/736x/b0/df/44/b0df44b19351f3e5ea54f6d82c7e0f21.jpg",
+      imageMobile: "https://i.pinimg.com/736x/b0/df/44/b0df44b19351f3e5ea54f6d82c7e0f21.jpg",
       redirectUrl: "/collections"
     },
     {
@@ -43,6 +45,7 @@ const DEFAULT_SETTINGS = {
       title: "Street Wear",
       subtitle: "Shop Now",
       image: "https://i.pinimg.com/1200x/77/07/c7/7707c7bc64430185043adc06d26a09b7.jpg",
+      imageMobile: "https://i.pinimg.com/1200x/77/07/c7/7707c7bc64430185043adc06d26a09b7.jpg",
       redirectUrl: "/drops"
     }
   ],
@@ -620,7 +623,7 @@ const CmsSettings = () => {
                   
                   <div className="p-5 flex-1 space-y-4">
                     <div className="space-y-1.5">
-                      <label className="text-xxs font-bold text-slate-400 uppercase tracking-wider">Slide Image Link</label>
+                      <label className="text-xxs font-bold text-slate-400 uppercase tracking-wider">Slide Image Link (Desktop)</label>
                       <div className="flex gap-2">
                         <input 
                           type="url"
@@ -632,6 +635,26 @@ const CmsSettings = () => {
                         <button
                           type="button"
                           onClick={() => openGalleryFor('slider', i, 'image')}
+                          className="px-3 bg-slate-900 text-white rounded-md text-xs font-bold hover:bg-slate-800 transition-colors"
+                        >
+                          Choose
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-1.5">
+                      <label className="text-xxs font-bold text-slate-400 uppercase tracking-wider">Slide Image Link (Mobile Portrait)</label>
+                      <div className="flex gap-2">
+                        <input 
+                          type="url"
+                          className="flex-1 text-xs px-3 py-2 border border-slate-200 rounded-md focus:border-primary-500 outline-none font-medium"
+                          value={cleanUrl(slide.imageMobile || '')}
+                          onChange={(e) => updateSliderField(i, 'imageMobile', e.target.value)}
+                          placeholder="Mobile Image URL"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => openGalleryFor('slider', i, 'imageMobile')}
                           className="px-3 bg-slate-900 text-white rounded-md text-xs font-bold hover:bg-slate-800 transition-colors"
                         >
                           Choose

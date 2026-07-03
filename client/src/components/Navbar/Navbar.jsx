@@ -5,7 +5,6 @@ import {
   Search,
   User,
   ShoppingCart,
-  LogOut,
   ShoppingBag,
   Home
 } from "lucide-react";
@@ -84,9 +83,6 @@ export default function Navbar() {
                 <Link to="/userprofile">
                   <User size={18} />
                 </Link>
-                <button onClick={handleLogout} className="logout-btn-nav">
-                  <LogOut size={16} />
-                </button>
               </div>
             ) : (
               <Link to="/sign-up" className="login-link-nav">
@@ -161,9 +157,6 @@ export default function Navbar() {
                 <Link to="/userprofile" className="overlay-link-secondary" onClick={() => setOpen(false)}>
                   My Account ({user.email})
                 </Link>
-                <button onClick={() => { handleLogout(); setOpen(false); }} className="mobile-logout-btn">
-                  Logout
-                </button>
               </>
             ) : (
               <Link to="/sign-up" className="overlay-link-secondary" onClick={() => setOpen(false)}>

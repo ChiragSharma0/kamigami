@@ -24,7 +24,7 @@
   
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 999px;
-  z-index: 10000;
+  z-index: 9999;
   box-shadow: 
     0 10px 40px rgba(0, 0, 0, 0.6), 
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
@@ -385,10 +385,13 @@
     width: 100%;
     height: 72px;
     border-radius: 0;
-    border-left: none;
-    border-right: none;
-    border-top: none;
-    background: rgba(10, 10, 10, 0.9);
+    border:none;
+
+    background: rgba(10, 10, 10, 0);
+    backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+
+  box-shadow: none;
   }
   
   .navbar-container.hidden {
@@ -454,8 +457,8 @@
       inset 2px 2px 0px -2px rgba(231, 30, 34, 0.9),
       inset 0 0 4px 1px rgba(231, 30, 34, 0.6),
       inset 0 0 20px rgba(231, 30, 34, 0.15);
-    background-color: rgba(10, 10, 10, 0.85);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: rgba(10, 10, 10, 0.052);
+    border: 1px solid rgba(255, 255, 255, 0.215);
   }
 
   .bottom-nav-pill::after {
@@ -465,8 +468,8 @@
     inset: 0;
     border-radius: 9999px;
     pointer-events: none;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     overflow: hidden;
   }
 

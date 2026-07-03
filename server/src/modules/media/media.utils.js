@@ -24,8 +24,8 @@ function getSignedUrl(storageKey) {
     Bucket: bucket,
     Key: storageKey
   });
-  // Expires in 300 seconds (5 minutes)
-  return getS3SignedUrl(s3Client, command, { expiresIn: 300 });
+  // Expires in 7200 seconds (2 hours) to outlive Redis cache TTL
+  return getS3SignedUrl(s3Client, command, { expiresIn: 7200 });
 }
 
 // Legacy public URL helper (kept for backward compatibility, but not used for gallery)

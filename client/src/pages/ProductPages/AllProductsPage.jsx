@@ -82,16 +82,16 @@ const getProductColors = (product) => {
   return Array.from(colors);
 };
 
-const colorStyleMap = {
-  white: "#ffffff",
-  black: "#000000",
-  red: "#e71e22",
-  green: "#22c55e",
-  blue: "#3b82f6",
-  purple: "#a855f7",
-  neutrals: "#71717a",
-  yellow: "#eab308",
-  brown: "#78350f",
+const colorShadeMap = {
+  white: ["#ffffff", "#f3f3f3", "#e5e5e5", "#d6d6d6", "#c8c8c8"],
+  black: ["#000000", "#222222", "#444444", "#666666", "#888888"],
+  red: ["#7f0000", "#b71c1c", "#e53935", "#ef5350", "#ffcdd2"],
+  green: ["#1b5e20", "#2e7d32", "#43a047", "#66bb6a", "#c8e6c9"],
+  blue: ["#0d47a1", "#1565c0", "#1e88e5", "#64b5f6", "#bbdefb"],
+  purple: ["#4a148c", "#6a1b9a", "#8e24aa", "#ba68c8", "#e1bee7"],
+  yellow: ["#f57f17", "#f9a825", "#fdd835", "#ffee58", "#fff9c4"],
+  brown: ["#3e2723", "#5d4037", "#795548", "#a1887f", "#d7ccc8"],
+  neutrals: ["#111827", "#4b5563", "#9ca3af", "#d1d5db", "#f3f4f6"],
 };
 
 const AllProductsPage = () => {
@@ -483,23 +483,32 @@ const AllProductsPage = () => {
       {/* Colors Section */}
       <div className="refinement-group">
         <h4>COLORS</h4>
-        <div className="color-swatch-grid">
-          {["white", "black", "red", "green", "blue", "purple", "neutrals", "yellow", "brown"].map((color) => {
-            const isSelected = selectedColors.includes(color);
-            const count = colorCounts[color] || 0;
-            return (
-              <button
-                key={color}
-                onClick={() => handleColorToggle(color)}
-                className={`color-swatch-btn color-${color} ${isSelected ? "selected" : ""}`}
-                style={{ backgroundColor: colorStyleMap[color] }}
-                title={`${color.toUpperCase()} (${count})`}
-              >
-                {isSelected && <Check size={14} className="swatch-check" />}
-              </button>
-            );
-          })}
+       <div className="color-swatch-grid">
+  {Object.keys(colorShadeMap).map((color) => {
+    const isSelected = selectedColors.includes(color);
+
+    return (
+      <button
+        key={color}
+        onClick={() => handleColorToggle(color)}
+        className={`color-pill ${isSelected ? "selected" : ""}`}
+        title={color}
+      >
+        <div className="pill-colors">
+          {colorShadeMap[color].map((shade, index) => (
+            <span
+              key={index}
+              className="shade-dot"
+              style={{ background: shade }}
+            />
+          ))}
         </div>
+
+        {isSelected && <Check size={14} className="swatch-check" />}
+      </button>
+    );
+  })}
+</div>
       </div>
 
     </div>

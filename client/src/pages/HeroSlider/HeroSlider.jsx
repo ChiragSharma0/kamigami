@@ -8,24 +8,24 @@ const DEFAULT_SLIDES = [
     id: 1,
     title: "Hoodies",
     subtitle: "Shop Now",
-    image:
-      "https://i.pinimg.com/736x/81/cf/0a/81cf0ae5207c5af67de47a418b1fe6ef.jpg",
+    image: "https://i.pinimg.com/736x/81/cf/0a/81cf0ae5207c5af67de47a418b1fe6ef.jpg",
+    imageMobile: "https://i.pinimg.com/736x/81/cf/0a/81cf0ae5207c5af67de47a418b1fe6ef.jpg",
     redirectUrl: "/collections/hoodies"
   },
   {
     id: 2,
     title: "New Collection",
     subtitle: "Discover",
-    image:
-      "https://i.pinimg.com/736x/b0/df/44/b0df44b19351f3e5ea54f6d82c7e0f21.jpg",
+    image: "https://i.pinimg.com/736x/b0/df/44/b0df44b19351f3e5ea54f6d82c7e0f21.jpg",
+    imageMobile: "https://i.pinimg.com/736x/b0/df/44/b0df44b19351f3e5ea54f6d82c7e0f21.jpg",
     redirectUrl: "/collections"
   },
   {
     id: 3,
     title: "Street Wear",
     subtitle: "Shop Now",
-    image:
-      "https://i.pinimg.com/1200x/77/07/c7/7707c7bc64430185043adc06d26a09b7.jpg",
+    image: "https://i.pinimg.com/1200x/77/07/c7/7707c7bc64430185043adc06d26a09b7.jpg",
+    imageMobile: "https://i.pinimg.com/1200x/77/07/c7/7707c7bc64430185043adc06d26a09b7.jpg",
     redirectUrl: "/drops"
   },
 ];
@@ -33,7 +33,16 @@ const DEFAULT_SLIDES = [
 const HeroSlider = () => {
   const [slides, setSlides] = useState(DEFAULT_SLIDES);
   const [current, setCurrent] = useState(0);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchSliderCms = async () => {
@@ -55,7 +64,7 @@ const HeroSlider = () => {
     }, 4000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [slides.length]);
  
   return (
     <section className="hero-slider">
@@ -68,7 +77,7 @@ const HeroSlider = () => {
           style={{ cursor: slide.redirectUrl ? 'pointer' : 'default' }}
         >
 
-          <img src={slide.image} alt="slider" className="slide-image" />
+          <img src={(isMobile && slide.imageMobile) ? slide.imageMobile : slide.image} alt="slider" className="slide-image" />
 
           <div className="overlay"></div>
 

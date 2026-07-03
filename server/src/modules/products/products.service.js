@@ -1,6 +1,7 @@
 const prisma = require('../../db/prisma');
 const AppError = require('../../common/errors/AppError');
 const cache = require('../../common/utils/cache');
+const { getSignedUrl } = require('../media/media.utils');
 
 exports.createProduct = async (productData) => {
   const { name, slug, description, basePrice, categoryId, variants, mediaIds, isDrop, status } = productData;
@@ -143,8 +144,25 @@ exports.listProducts = async (filters) => {
     prisma.product.count({ where })
   ]);
 
+  // Resign S3 URLs dynamically for all products
+  const productsWithSignedUrls = await Promise.all(
+    products.map(async (p) => {
+      if (p.media && p.media.length > 0) {
+        p.media = await Promise.all(
+          p.media.map(async (pm) => {
+            if (pm.media) {
+              pm.media.url = await getSignedUrl(pm.media.storageKey);
+            }
+            return pm;
+          })
+        );
+      }
+      return p;
+    })
+  );
+
   const result = {
-    products,
+    products: productsWithSignedUrls,
     pagination: { total, page: parseInt(page), limit: parseInt(limit), totalPages: Math.ceil(total / limit) }
   };
 
@@ -174,6 +192,18 @@ exports.getProductBySlug = async (slugOrId) => {
 
   if (!product || product.isDrop || product.status !== 'PUBLISHED' || product.deletedAt) {
     throw new AppError('Product not found', 404);
+  }
+
+  // Resign S3 URLs dynamically
+  if (product.media && product.media.length > 0) {
+    product.media = await Promise.all(
+      product.media.map(async (pm) => {
+        if (pm.media) {
+          pm.media.url = await getSignedUrl(pm.media.storageKey);
+        }
+        return pm;
+      })
+    );
   }
 
   const totalStockAvailable = product.variants.reduce((sum, v) => sum + (v.inventory?.stockAvailable || 0), 0);
