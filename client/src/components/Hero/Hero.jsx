@@ -9,11 +9,42 @@ import api from "../../services/api";
 gsap.registerPlugin(Draggable);
 
 const boxes = [
-  { width: "50vw", height: "30vw", top: "10vh", left: "10vw" },
-  { width: "17vw", height: "9vw", top: "5vh", left: "5vw" },
-  { width: "35vw", height: "19vw", top: "5vh", right: "5vw" },
-  { width: "38vw", height: "22vw", top: "50vh", left: "5vw" },
-  { width: "12vw", height: "10vw", top: "50vh", left: "25vw" },
+  {
+    width: "calc(0.6 * (100vw - 40px) - 2.5px)",
+    height: "calc(0.55 * (100vh - 88px) - 2.5px)",
+    left: "20px",
+    top: "68px"
+  },
+  {
+    width: "calc(0.2 * (100vw - 40px) - 2.5px)",
+    height: "calc(0.65 * (100vh - 88px) - 2.5px)",
+    left: "calc(20px + 0.6 * (100vw - 40px) + 2.5px)",
+    top: "68px"
+  },
+  {
+    width: "calc(0.2 * (100vw - 40px) - 2.5px)",
+    height: "calc(0.65 * (100vh - 88px) - 2.5px)",
+    left: "calc(20px + 0.8 * (100vw - 40px) + 2.5px)",
+    top: "68px"
+  },
+  {
+    width: "calc(0.45 * (100vw - 40px) - 2.5px)",
+    height: "calc(0.45 * (100vh - 88px) - 2.5px)",
+    left: "20px",
+    top: "calc(68px + 0.55 * (100vh - 88px) + 2.5px)"
+  },
+  {
+    width: "calc(0.15 * (100vw - 40px) - 2.5px)",
+    height: "calc(0.45 * (100vh - 88px) - 2.5px)",
+    left: "calc(20px + 0.45 * (100vw - 40px) + 2.5px)",
+    top: "calc(68px + 0.55 * (100vh - 88px) + 2.5px)"
+  },
+  {
+    width: "calc(0.4 * (100vw - 40px) - 2.5px)",
+    height: "calc(0.35 * (100vh - 88px) - 2.5px)",
+    left: "calc(20px + 0.6 * (100vw - 40px) + 2.5px)",
+    top: "calc(68px + 0.65 * (100vh - 88px) + 2.5px)"
+  }
 ];
 
 export default function MaskVideo() {
@@ -81,51 +112,6 @@ export default function MaskVideo() {
 
     let isDragging = false;
 
-    const coords = document.querySelector(".cursor-coords");
-    const xLabel = document.querySelector(".coord-x");
-    const yLabel = document.querySelector(".coord-y");
-
-    const grabText = document.querySelector(".coord-grab");
-
-    maskRefs.current.forEach((mask) => {
-      mask.addEventListener("mouseenter", () => {
-        if (!isDragging) {
-          grabText.style.display = "block";
-          xLabel.style.display = "none";
-          yLabel.style.display = "none";
-        }
-      });
-
-      mask.addEventListener("mouseleave", () => {
-        if (!isDragging) {
-          grabText.style.display = "none";
-          xLabel.style.display = "block";
-          yLabel.style.display = "block";
-        }
-      });
-    });
-
-    function handleMouseMove(e) {
-      const heroRefCurrent = heroRef.current;
-      if (!heroRefCurrent) return;
-      const heroRect = heroRefCurrent.getBoundingClientRect();
-
-      // check if cursor inside hero + navbar area
-      if (e.clientY < heroRect.bottom) {
-        coords.style.display = "block";
-
-        coords.style.left = e.clientX + 12 + "px";
-        coords.style.top = e.clientY + 12 + "px";
-
-        xLabel.textContent = "X: " + Math.round(e.clientX) + "px";
-        yLabel.textContent = "Y: " + Math.round(e.clientY) + "px";
-      } else {
-        coords.style.display = "none";
-      }
-    }
-
-    window.addEventListener("mousemove", handleMouseMove);
-
     let animationFrameId;
 
     function drawClipped(ctx, video, rect) {
@@ -192,25 +178,6 @@ export default function MaskVideo() {
       video.play();
       render();
 
-      const navbarHeight = 80;
-
-      masks.forEach((mask) => {
-        const rect = mask.getBoundingClientRect();
-
-        const maxX = window.innerWidth - rect.width;
-        const maxY = window.innerHeight - rect.height - navbarHeight;
-
-        const randomX = Math.random() * maxX;
-
-        // navbar ke niche spawn
-        const randomY = Math.random() * maxY + navbarHeight;
-
-        gsap.set(mask, {
-          x: randomX,
-          y: randomY,
-        });
-      });
-
       Draggable.create(masks, {
         type: "x,y",
         bounds: heroRef.current,
@@ -219,28 +186,38 @@ export default function MaskVideo() {
 
         onPress() {
           isDragging = true;
-
-          xLabel.style.display = "none";
-          yLabel.style.display = "none";
-          grabText.style.display = "block";
         },
 
         onRelease() {
           isDragging = false;
-
-          grabText.style.display = "none";
-          xLabel.style.display = "block";
-          yLabel.style.display = "block";
         },
 
         onDrag() {
-          if (this.y < navbarHeight) {
-            this.y = navbarHeight;
-            gsap.set(this.target, { y: navbarHeight });
+          const rect = this.target.getBoundingClientRect();
+          const boxStyle = window.getComputedStyle(this.target);
+          const initialLeft = parseFloat(boxStyle.left);
+          const initialTop = parseFloat(boxStyle.top);
+
+          const minX = 20 - initialLeft;
+          const maxX = window.innerWidth - 20 - initialLeft - rect.width;
+          const minY = 68 - initialTop;
+          const maxY = window.innerHeight - 20 - initialTop - rect.height;
+
+          if (this.x < minX) {
+            this.x = minX;
+            gsap.set(this.target, { x: minX });
+          } else if (this.x > maxX) {
+            this.x = maxX;
+            gsap.set(this.target, { x: maxX });
           }
 
-          const label = this.target.querySelector(".coord-label");
-          label.textContent = `X: ${Math.round(this.x)}  Y: ${Math.round(this.y)}`;
+          if (this.y < minY) {
+            this.y = minY;
+            gsap.set(this.target, { y: minY });
+          } else if (this.y > maxY) {
+            this.y = maxY;
+            gsap.set(this.target, { y: maxY });
+          }
         },
       });
     }
@@ -253,7 +230,6 @@ export default function MaskVideo() {
 
     return () => {
       cancelAnimationFrame(animationFrameId);
-      window.removeEventListener("mousemove", handleMouseMove);
     };
   }, [featuredDrop]);
 
@@ -284,10 +260,11 @@ export default function MaskVideo() {
             style={{
               width: box.width,
               height: box.height,
+              top: box.top,
+              left: box.left,
             }}
           >
             <div className="corners"></div>
-            <div className="coord-label">X: 0 Y: 0</div>
             <canvas />
           </div>
         ))}
@@ -301,12 +278,6 @@ export default function MaskVideo() {
             <span className="btn-timer">{timeLeft}</span>
           </Link>
         )}
-
-        <div className="cursor-coords">
-          <div className="coord-x">X: 0px</div>
-          <div className="coord-y">Y: 0px</div>
-          <div className="coord-grab">Grab</div>
-        </div>
       </div>
 
     </>

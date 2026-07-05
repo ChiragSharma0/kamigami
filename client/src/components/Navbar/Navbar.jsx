@@ -208,7 +208,7 @@ export default function Navbar() {
       <SearchOverlay isOpen={searchOpen} setIsOpen={setSearchOpen} />
 
       {/* Bottom Navigation — Mobile Only */}
-      <div className="bottom-nav">
+      <div className={`bottom-nav ${isNavVisible ? "visible" : "hidden"}`}>
         <div className="bottom-nav-pill">
           <Link to="/" className="bottom-nav-item">
             <Home size={22} />

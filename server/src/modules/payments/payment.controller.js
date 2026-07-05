@@ -49,3 +49,24 @@ exports.handleMockPaymentSuccess = async (req, res) => {
   }
 };
 
+exports.verifyPayment = async (req, res) => {
+  try {
+    const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body;
+    if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
+      return res.status(400).json({ status: 'fail', message: 'Missing required signature verification fields' });
+    }
+    const result = await paymentService.verifyPaymentSignature(req.user.userId, {
+      razorpay_payment_id,
+      razorpay_order_id,
+      razorpay_signature
+    });
+    return res.status(200).json({ status: 'success', data: result });
+  } catch (err) {
+    console.error('[PaymentVerification] Verification failed:', err);
+    return res.status(err.statusCode || 500).json({
+      status: 'error',
+      message: err.message || 'Payment verification failed'
+    });
+  }
+};
+

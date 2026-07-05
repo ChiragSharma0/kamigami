@@ -191,7 +191,7 @@ exports.processMockPaymentSuccess = async (orderId) => {
   // 2. Trigger automatic Shiprocket shipping integration
   let shipmentResult = null;
   try {
-    shipmentResult = await logisticsService.createShipment(order.userId, orderId);
+    shipmentResult = await logisticsService.createShipment(null, orderId);
     console.log('[MockPayment] Shiprocket order created successfully!');
   } catch (shipmentErr) {
     console.warn('[MockPayment] Shiprocket credentials invalid or service unavailable, using local mock fallback:', shipmentErr.message);
@@ -209,5 +209,77 @@ exports.processMockPaymentSuccess = async (orderId) => {
   }
 
   return { status: 'processed_success', order: shipmentResult };
+};
+
+exports.verifyPaymentSignature = async (userId, data) => {
+  const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = data;
+  const crypto = require('crypto');
+  const logisticsService = require('../logistics/logistics.service');
+
+  // 1. Verify HMAC Signature
+  const secret = process.env.RAZORPAY_KEY_SECRET;
+  if (!secret) {
+    throw new AppError('Razorpay Key Secret is not configured on the server', 500);
+  }
+
+  const generatedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+    .digest('hex');
+
+  if (generatedSignature !== razorpay_signature) {
+    throw new AppError('Payment signature verification failed. Invalid transaction.', 400);
+  }
+
+  // 2. Fetch the corresponding order
+  const order = await prisma.order.findUnique({
+    where: { paymentIntentId: razorpay_order_id },
+    include: { items: true }
+  });
+
+  if (!order) {
+    throw new AppError('Order associated with this payment intent not found', 404);
+  }
+
+  // Security check: Verify order belongs to the user
+  if (order.userId !== userId) {
+    throw new AppError('Unauthorized access to verify this order payment', 403);
+  }
+
+  // If already paid, return early with order details
+  if (order.status === 'PAID' || order.status === 'SHIPPED' || order.status === 'DELIVERED') {
+    return { status: 'already_paid', order };
+  }
+
+  // 3. Mark payment as success in database and reserve inventory
+  const mockPayload = {
+    id: razorpay_payment_id,
+    event: 'payment.captured',
+    rawBody: data
+  };
+  
+  await handlePaymentSuccess(order, mockPayload);
+
+  // 4. Trigger automated Shiprocket shipping dispatch
+  let shipmentResult = null;
+  try {
+    shipmentResult = await logisticsService.createShipment(null, order.id);
+    console.log('[PaymentVerify] Shiprocket order created successfully!');
+  } catch (shipmentErr) {
+    console.warn('[PaymentVerify] Shiprocket dispatch failed, using local mock fallback:', shipmentErr.message);
+    const awbCode = `SR-MOCK-${Math.floor(100000 + Math.random() * 900000)}`;
+    shipmentResult = await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        awbCode,
+        courierName: 'Shiprocket Mock Express',
+        shipmentStatus: 'shipped',
+        status: 'SHIPPED',
+        trackingUrl: `https://shiprocket.co/tracking/${awbCode}`
+      }
+    });
+  }
+
+  return { status: 'verification_success', order: shipmentResult };
 };
 

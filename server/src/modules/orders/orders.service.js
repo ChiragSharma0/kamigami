@@ -2,6 +2,12 @@ const prisma = require('../../db/prisma');
 const { redisClient } = require('../../db/redis');
 const AppError = require('../../common/errors/AppError');
 const ordersUtils = require('./orders.utils');
+const Razorpay = require('razorpay');
+
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET
+});
 
 exports.createCheckoutIntent = async (userId, payload, idempotencyKey) => {
   const { shippingAddressId, billingAddressId, items } = payload;
@@ -120,22 +126,39 @@ exports.createCheckoutIntent = async (userId, payload, idempotencyKey) => {
   const taxAmount = 0; // Placeholder
   const totalAmount = subtotal + shippingAmount + taxAmount;
 
-  // 5. Simulate Payment Intent
-  const paymentIntent = await ordersUtils.createSimulatedPaymentIntent(totalAmount);
+  // 5. Generate Order Number and Create Razorpay Order
+  const orderNumber = ordersUtils.generateOrderNumber();
+  const amountPaise = Math.round(totalAmount * 100);
+
+  if (amountPaise < 100) {
+    throw new AppError('Minimum order amount must be at least ₹1.00', 400);
+  }
+
+  let rzpOrder;
+  try {
+    rzpOrder = await razorpay.orders.create({
+      amount: amountPaise,
+      currency: 'INR',
+      receipt: orderNumber
+    });
+  } catch (err) {
+    console.error('[Razorpay] Order creation failed:', err);
+    throw new AppError(`Razorpay Order creation failed: ${err.message || 'Unknown error'}`, 502);
+  }
 
   // 6. Database Transaction
   const order = await prisma.$transaction(async (tx) => {
     const newOrder = await tx.order.create({
       data: {
         userId,
-        orderNumber: ordersUtils.generateOrderNumber(),
+        orderNumber: orderNumber,
         idempotencyKey,
-        paymentIntentId: paymentIntent.id,
+        paymentIntentId: rzpOrder.id,
         subtotal,
         taxAmount,
         shippingAmount,
         totalAmount,
-        currency: 'USD',
+        currency: 'INR',
         status: 'PENDING',
         shippingAddress: shippingAddress, // JSON snapshot
         billingAddress: billingAddress,   // JSON snapshot
@@ -170,10 +193,9 @@ exports.createCheckoutIntent = async (userId, payload, idempotencyKey) => {
   return {
     orderId: order.id,
     orderNumber: order.orderNumber,
-    paymentIntentId: paymentIntent.id,
-    clientSecret: paymentIntent.client_secret,
+    paymentIntentId: rzpOrder.id,
     totalAmount,
-    currency: 'USD'
+    currency: 'INR'
   };
 };
 

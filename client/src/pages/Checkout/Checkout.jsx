@@ -130,6 +130,75 @@ const Checkout = () => {
     }
   };
 
+  // Load Razorpay Script dynamically
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  const openRazorpayCheckout = (orderData) => {
+    const activeAddress = addresses.find(addr => addr.id === selectedAddressId);
+    const options = {
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_T9u6UGx0oTRl3W",
+      amount: Math.round(orderData.totalAmount * 100),
+      currency: orderData.currency || "INR",
+      name: "KAMIGAMI",
+      description: `Purchase offering for Order #${orderData.orderNumber}`,
+      image: "/logo.png",
+      order_id: orderData.paymentIntentId,
+      handler: async function (response) {
+        try {
+          setPaymentProcessing(true);
+          setCheckoutError("");
+          
+          // Call backend verification endpoint
+          const res = await api.post("/payments/verify", {
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_signature: response.razorpay_signature
+          });
+          
+          const result = res.data?.data?.order;
+          if (result) {
+            setPaidOrderDetails(result);
+            setPaymentSuccess(true);
+            setCartItems([]);
+          } else {
+            setCheckoutError("Signature verification failed. Payment was captured but not verified.");
+          }
+        } catch (err) {
+          console.error("Signature verification error:", err);
+          setCheckoutError(err.response?.data?.message || "Payment verification failed. Please contact support.");
+        } finally {
+          setPaymentProcessing(false);
+        }
+      },
+      prefill: {
+        name: activeAddress ? `${activeAddress.street1}` : "",
+        email: "kamigamipurchase@gmail.com"
+      },
+      theme: {
+        color: "#DC2626"
+      },
+      modal: {
+        ondismiss: function () {
+          setCheckoutError("Payment checkout cancelled by user.");
+        }
+      }
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.on("payment.failed", function (resp) {
+      setCheckoutError(`Payment Failed: ${resp.error.description}`);
+    });
+    rzp.open();
+  };
+
   // 1. Initiate Order placement (POST /checkout/intent)
   const handlePlaceOrder = async () => {
     if (!selectedAddressId) {
@@ -147,7 +216,7 @@ const Checkout = () => {
 
       const payload = {
         shippingAddressId: selectedAddressId,
-        billingAddressId: selectedAddressId, // simplify, billing same as shipping
+        billingAddressId: selectedAddressId,
         items: cartItems.map(item => ({
           variantId: item.variantId,
           quantity: item.quantity
@@ -160,7 +229,7 @@ const Checkout = () => {
 
       if (orderResult) {
         setCreatedOrder(orderResult);
-        setShowPaymentGate(true); // Open Shinto Razorpay Simulation Modal
+        openRazorpayCheckout(orderResult);
       } else {
         setCheckoutError("Failed to initiate order. Try again.");
       }
@@ -169,36 +238,6 @@ const Checkout = () => {
       setCheckoutError(err.response?.data?.message || "Checkout failed. A selected item may be out of stock.");
     } finally {
       setPlacingOrder(false);
-    }
-  };
-
-  // 2. Commencing the simulated payment capture flow (calls server mock success)
-  const handleSimulatePaymentSuccess = async () => {
-    if (!createdOrder) return;
-
-    try {
-      setPaymentProcessing(true);
-      
-      // Hit developer mockup endpoint
-      const res = await api.post("/payments/mock-success", {
-        orderId: createdOrder.orderId
-      });
-
-      const result = res.data?.data?.order;
-      if (result) {
-        setPaidOrderDetails(result);
-        setPaymentSuccess(true);
-        setShowPaymentGate(false);
-        // Clear storefront shopping cart upon successful payment
-        setCartItems([]);
-      } else {
-        alert("Payment simulation failed.");
-      }
-    } catch (err) {
-      console.error("Payment capture failure:", err);
-      alert("Payment simulation failed. Checkout error logged.");
-    } finally {
-      setPaymentProcessing(false);
     }
   };
 
@@ -504,71 +543,20 @@ const Checkout = () => {
               </button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* ==============================================
-          OCCULT PAYMENT GATE (RAZORPAY MODAL SIMULATOR)
+          {/* ==============================================
+          OCCULT PAYMENT GATE (RAZORPAY VERIFICATION OVERLAY)
          ============================================== */}
-      {showPaymentGate && createdOrder && (
+      {paymentProcessing && (
         <div className="occult-gate-overlay animate-fade">
           <div className="occult-gate-box">
             <div className="gate-glow-halo"></div>
-            <CreditCard className="gate-header-icon text-red-600 animate-pulse" size={48} />
-            
-            <h2 className="gate-title">THE SUMMONING GATE</h2>
-            <p className="gate-subtitle">RAZORPAY SANDBOX SECURE SIMULATOR</p>
-
-            <div className="gate-details-card">
-              <div className="gate-row">
-                <span>Ritual Order ID:</span>
-                <strong className="text-white font-mono">{createdOrder.orderNumber}</strong>
-              </div>
-              <div className="gate-row">
-                <span>Deity Offering:</span>
-                <strong className="text-red-500 font-mono text-lg">₹{Number(createdOrder.totalAmount).toFixed(0)}</strong>
-              </div>
-              <div className="gate-row">
-                <span>Payment Intent Ref:</span>
-                <strong className="text-gray-400 font-mono text-xs">{createdOrder.paymentIntentId}</strong>
-              </div>
-            </div>
-
-            <p className="gate-warning-meta">
-              This is a developer sandbox mock gate. Clicking "Commence Ritual" will trigger secure local database stock capturing, complete the payment event, and trigger the integrated **Shiprocket** dispatch.
-            </p>
-
-            <div className="gate-actions-wrap">
-              <button 
-                type="button" 
-                onClick={handleSimulatePaymentSuccess} 
-                disabled={paymentProcessing}
-                className="gate-btn-success"
-              >
-                {paymentProcessing ? (
-                  <>
-                    <Loader2 className="animate-spin" size={16} />
-                    BINDING SOUL PACT...
-                  </>
-                ) : (
-                  "COMMENCE RITUAL"
-                )}
-              </button>
-              <button 
-                type="button" 
-                onClick={() => {
-                  setShowPaymentGate(false);
-                  setCheckoutError("Offering aborted by user.");
-                }} 
-                disabled={paymentProcessing}
-                className="gate-btn-cancel"
-              >
-                ABORT RITUAL
-              </button>
-            </div>
+            <Loader2 className="gate-header-icon text-red-600 animate-spin" size={48} />
+            <h2 className="gate-title">SEALING THE PACT...</h2>
+            <p className="gate-subtitle">Verifying offering signature with the deities</p>
           </div>
         </div>
       )}
+        </div>
     </div>
   );
 };
