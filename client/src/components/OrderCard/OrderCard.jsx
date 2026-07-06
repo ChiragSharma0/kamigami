@@ -7,9 +7,9 @@ const statusColors = {
   Processing: "processing",
 };
 
-const OrderCard = ({ image, name, status, date, price }) => {
+const OrderCard = ({ image, name, status, date, price, onViewDetails }) => {
   return (
-    <div className="order-card">
+    <div className="order-card" onClick={onViewDetails} style={{ cursor: "pointer" }}>
       <div className="order-card-img">
         <img src={image} alt={name} />
       </div>
@@ -24,7 +24,7 @@ const OrderCard = ({ image, name, status, date, price }) => {
         <span className={`order-status ${statusColors[status]}`}>
           {status}
         </span>
-        <button className="order-view-btn">
+        <button className="order-view-btn" onClick={(e) => { e.stopPropagation(); onViewDetails(); }}>
           <Eye size={14} />
           View Details
         </button>

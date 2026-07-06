@@ -111,7 +111,7 @@ const Hero = () => {
   return (
     <div className="relative h-dvh w-full overflow-x-hidden">
       {loading && (
-        <div className="flex-center absolute z-[100] h-dvh w-full overflow-hidden bg-violet-50">
+        <div className="flex-center absolute z-[100] h-dvh w-full overflow-hidden bg-black">
           
           <div className="three-body">
             <div className="three-body__dot"></div>

@@ -107,12 +107,7 @@ const AboutSection = () => {
 
           <div className="image-overlay"></div>
 
-          {/* SOCIAL ICONS */}
-          <div className="social-icons">
-            <div>fb</div>
-            <div>tw</div>
-            <div>in</div>
-          </div>
+         
         </div>
       </div>
     </section>

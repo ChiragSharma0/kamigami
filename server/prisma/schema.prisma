@@ -71,14 +71,16 @@ model User {
   updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz()
   deletedAt    DateTime?  @map("deleted_at") @db.Timestamptz()
 
-  addresses     Address[]
-  drops         Drop[]
-  inventoryLogs InventoryLog[]
-  carts         Cart[]
-  orders        Order[]
-  adminLogs     AdminLog[]
-  notifications Notification[]
-  uploadedMedia Media[]        @relation("UserMedia")
+  addresses      Address[]
+  drops          Drop[]
+  inventoryLogs  InventoryLog[]
+  carts          Cart[]
+  orders         Order[]
+  adminLogs      AdminLog[]
+  notifications  Notification[]
+  uploadedMedia  Media[]        @relation("UserMedia")
+  returnRequests ReturnRequest[]
+  blogPosts      BlogPost[]
 
   @@index([status])
   @@index([createdAt])
@@ -99,6 +101,7 @@ model Address {
   postalCode    String      @map("postal_code") @db.VarChar(20)
   country       String      @db.VarChar(100)
   isDefault     Boolean     @default(false) @map("is_default")
+  phoneNumber   String?     @map("phone_number") @db.VarChar(20)
   createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt     DateTime    @updatedAt @map("updated_at") @db.Timestamptz()
 
@@ -344,8 +347,9 @@ model Order {
   createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz()
 
-  user  User?       @relation(fields: [userId], references: [id], onDelete: Restrict)
-  items OrderItem[]
+  user           User?           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items          OrderItem[]
+  returnRequests ReturnRequest[]
 
   @@index([userId])
   @@index([status])
@@ -522,4 +526,61 @@ model CategoryMedia {
   @@index([categoryId])
   @@index([mediaId])
   @@map("category_media")
+}
+
+// ---------------------------------------------------------
+// 17. FAQS & BLOGS & RETURNS
+// ---------------------------------------------------------
+
+model Faq {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  question  String   @db.Text
+  answer    String   @db.Text
+  category  String   @default("General") @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("faqs")
+}
+
+model BlogPost {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title       String      @db.VarChar(255)
+  slug        String      @unique @db.VarChar(255)
+  content     String      @db.Text
+  summary     String?     @db.Text
+  authorId    String      @map("author_id") @db.Uuid
+  publishedAt DateTime?   @map("published_at") @db.Timestamptz()
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime    @updatedAt @map("updated_at") @db.Timestamptz()
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([publishedAt])
+  @@map("blog_posts")
+}
+
+model ReturnRequest {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId     String       @map("order_id") @db.Uuid
+  userId      String       @map("user_id") @db.Uuid
+  reason      String       @db.Text
+  status      ReturnStatus @default(PENDING)
+  items       Json
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz()
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([userId])
+  @@map("return_requests")
+}
+
+enum ReturnStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
 }

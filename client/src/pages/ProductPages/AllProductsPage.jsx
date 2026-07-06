@@ -82,16 +82,25 @@ const getProductColors = (product) => {
   return Array.from(colors);
 };
 
+const isProductInStock = (p) => {
+  if (!p) return false;
+  if (p.totalStockAvailable !== undefined) {
+    return p.totalStockAvailable > 0;
+  }
+  if (p.variants && Array.isArray(p.variants)) {
+    return p.variants.some((v) => (v.inventory?.stockAvailable || 0) > 0);
+  }
+  return true; // assume in stock if no inventory data
+};
+
 const colorShadeMap = {
-  white: ["#ffffff", "#f3f3f3", "#e5e5e5", "#d6d6d6", "#c8c8c8"],
-  black: ["#000000", "#222222", "#444444", "#666666", "#888888"],
+  neutrals: ["#ffffff", "#cccccc", "#888888", "#444444", "#000000"], // white to black neutral spectrum
   red: ["#7f0000", "#b71c1c", "#e53935", "#ef5350", "#ffcdd2"],
   green: ["#1b5e20", "#2e7d32", "#43a047", "#66bb6a", "#c8e6c9"],
   blue: ["#0d47a1", "#1565c0", "#1e88e5", "#64b5f6", "#bbdefb"],
   purple: ["#4a148c", "#6a1b9a", "#8e24aa", "#ba68c8", "#e1bee7"],
   yellow: ["#f57f17", "#f9a825", "#fdd835", "#ffee58", "#fff9c4"],
   brown: ["#3e2723", "#5d4037", "#795548", "#a1887f", "#d7ccc8"],
-  neutrals: ["#111827", "#4b5563", "#9ca3af", "#d1d5db", "#f3f4f6"],
 };
 
 const AllProductsPage = () => {
@@ -103,6 +112,7 @@ const AllProductsPage = () => {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [selectedColors, setSelectedColors] = useState([]);
+  const [selectedAvailability, setSelectedAvailability] = useState([]);
   const [sortBy, setSortBy] = useState("default");
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(12);
@@ -157,13 +167,11 @@ const AllProductsPage = () => {
 
   const colorCounts = useMemo(() => {
     const counts = {
-      white: 0,
-      black: 0,
+      neutrals: 0,
       red: 0,
       green: 0,
       blue: 0,
       purple: 0,
-      neutrals: 0,
       yellow: 0,
       brown: 0
     };
@@ -172,12 +180,32 @@ const AllProductsPage = () => {
       const colors = getProductColors(p);
       colors.forEach((c) => {
         const normalised = c.toLowerCase().trim();
-        if (counts[normalised] !== undefined) {
-          counts[normalised]++;
-        } else if (normalised === "gray" || normalised === "grey" || normalised === "neutral") {
+        if (
+          normalised === "white" ||
+          normalised === "black" ||
+          normalised === "gray" ||
+          normalised === "grey" ||
+          normalised === "neutral" ||
+          normalised === "neutrals"
+        ) {
           counts.neutrals++;
+        } else if (counts[normalised] !== undefined) {
+          counts[normalised]++;
         }
       });
+    });
+    return counts;
+  }, [productData]);
+
+  const availabilityCounts = useMemo(() => {
+    const counts = { "in-stock": 0, "out-of-stock": 0 };
+    if (!productData) return counts;
+    productData.forEach((p) => {
+      if (isProductInStock(p)) {
+        counts["in-stock"]++;
+      } else {
+        counts["out-of-stock"]++;
+      }
     });
     return counts;
   }, [productData]);
@@ -221,14 +249,31 @@ const AllProductsPage = () => {
       result = result.filter((p) => {
         const productColors = getProductColors(p).map(c => {
           const norm = c.toLowerCase().trim();
-          if (norm === "gray" || norm === "grey" || norm === "neutral") return "neutrals";
+          if (
+            norm === "white" ||
+            norm === "black" ||
+            norm === "gray" ||
+            norm === "grey" ||
+            norm === "neutral" ||
+            norm === "neutrals"
+          ) {
+            return "neutrals";
+          }
           return norm;
         });
         return selectedColors.some(c => productColors.includes(c));
       });
     }
 
-    // (Price filters removed)
+    // 6. Availability Filter
+    if (selectedAvailability.length > 0) {
+      result = result.filter((p) => {
+        const inStock = isProductInStock(p);
+        const matchesInStock = selectedAvailability.includes("in-stock") && inStock;
+        const matchesOutOfStock = selectedAvailability.includes("out-of-stock") && !inStock;
+        return matchesInStock || matchesOutOfStock;
+      });
+    }
 
     // 7. Sorting
     if (sortBy === "price-asc") {
@@ -249,6 +294,7 @@ const AllProductsPage = () => {
     selectedCategories,
     selectedSizes,
     selectedColors,
+    selectedAvailability,
     sortBy,
   ]);
 
@@ -281,12 +327,19 @@ const AllProductsPage = () => {
     );
   };
 
+  const handleAvailabilityToggle = (status) => {
+    setSelectedAvailability((prev) =>
+      prev.includes(status) ? prev.filter((item) => item !== status) : [...prev, status]
+    );
+  };
+
   const clearAllFilters = () => {
     setSearch("");
     setSelectedGenders([]);
     setSelectedCategories([]);
     setSelectedSizes([]);
     setSelectedColors([]);
+    setSelectedAvailability([]);
     setSortBy("default");
   };
 
@@ -297,7 +350,8 @@ const AllProductsPage = () => {
       selectedGenders.length > 0 ||
       selectedCategories.length > 0 ||
       selectedSizes.length > 0 ||
-      selectedColors.length > 0
+      selectedColors.length > 0 ||
+      selectedAvailability.length > 0
     );
   }, [
     search,
@@ -305,6 +359,7 @@ const AllProductsPage = () => {
     selectedCategories,
     selectedSizes,
     selectedColors,
+    selectedAvailability,
   ]);
 
   // Dynamic label helpers for active tags
@@ -342,6 +397,13 @@ const AllProductsPage = () => {
         clear: () => handleColorToggle(color),
       });
     });
+    selectedAvailability.forEach((status) => {
+      tags.push({
+        id: `availability-${status}`,
+        label: status === "in-stock" ? "In Stock" : "Out of Stock",
+        clear: () => handleAvailabilityToggle(status),
+      });
+    });
     return tags;
   }, [
     search,
@@ -349,6 +411,7 @@ const AllProductsPage = () => {
     selectedCategories,
     selectedSizes,
     selectedColors,
+    selectedAvailability,
   ]);
 
   // Reset visible items when filter variables update
@@ -360,6 +423,7 @@ const AllProductsPage = () => {
     selectedCategories,
     selectedSizes,
     selectedColors,
+    selectedAvailability,
     sortBy,
   ]);
 
@@ -458,8 +522,6 @@ const AllProductsPage = () => {
         </div>
       </div>
 
-      {/* Price Filters Removed */}
-
       {/* Sizes Section */}
       <div className="refinement-group">
         <h4>SIZES</h4>
@@ -483,32 +545,67 @@ const AllProductsPage = () => {
       {/* Colors Section */}
       <div className="refinement-group">
         <h4>COLORS</h4>
-       <div className="color-swatch-grid">
-  {Object.keys(colorShadeMap).map((color) => {
-    const isSelected = selectedColors.includes(color);
+        <div className="color-swatch-grid">
+          {Object.keys(colorShadeMap).map((color) => {
+            const isSelected = selectedColors.includes(color);
+            const count = colorCounts[color] || 0;
 
-    return (
-      <button
-        key={color}
-        onClick={() => handleColorToggle(color)}
-        className={`color-pill ${isSelected ? "selected" : ""}`}
-        title={color}
-      >
-        <div className="pill-colors">
-          {colorShadeMap[color].map((shade, index) => (
-            <span
-              key={index}
-              className="shade-dot"
-              style={{ background: shade }}
-            />
-          ))}
+            return (
+              <button
+                key={color}
+                onClick={() => handleColorToggle(color)}
+                className={`color-pill ${isSelected ? "selected" : ""}`}
+                title={color}
+              >
+                <div className="pill-colors">
+                  {colorShadeMap[color].map((shade, index) => (
+                    <span
+                      key={index}
+                      className="shade-dot"
+                      style={{ background: shade }}
+                    />
+                  ))}
+                </div>
+                <span className="color-label-text">
+                  {color.charAt(0).toUpperCase() + color.slice(1)}
+                </span>
+                <span className="color-count-text">({count})</span>
+
+                {isSelected && <Check size={12} className="swatch-check" />}
+              </button>
+            );
+          })}
         </div>
+      </div>
 
-        {isSelected && <Check size={14} className="swatch-check" />}
-      </button>
-    );
-  })}
-</div>
+      {/* Availability Status */}
+      <div className="refinement-group">
+        <h4>AVAILABILITY</h4>
+        <div className="checkbox-list">
+          {[
+            { id: "in-stock", label: "In Stock" },
+            { id: "out-of-stock", label: "Out of Stock" }
+          ].map((item) => {
+            const isChecked = selectedAvailability.includes(item.id);
+            const count = availabilityCounts[item.id] || 0;
+            return (
+              <label key={item.id} className={`checkbox-item ${isChecked ? "active" : ""}`}>
+                <div className="checkbox-box">
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => handleAvailabilityToggle(item.id)}
+                  />
+                  <div className="checkbox-custom">
+                    <Check size={10} className="check-icon" />
+                  </div>
+                </div>
+                <span className="checkbox-label">{item.label}</span>
+                <span className="checkbox-count">({count})</span>
+              </label>
+            );
+          })}
+        </div>
       </div>
 
     </div>

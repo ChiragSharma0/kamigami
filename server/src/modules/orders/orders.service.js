@@ -75,24 +75,24 @@ exports.createCheckoutIntent = async (userId, payload, idempotencyKey) => {
     }
 
     if (!variant) {
-        // Fallback: check if the ID refers to a Product without variants
-        const productOnly = await prisma.product.findUnique({
-          where: { id: item.variantId },
-          // No need for variants include
-        });
-        if (productOnly) {
-          // Create a mock variant using the product's basic info
-          variant = {
-            id: productOnly.id,
-            product: productOnly,
-            price: productOnly.basePrice || 0,
-            inventory: { stockAvailable: 9999 }, // assume ample stock for dummy products
-            sku: productOnly.sku || productOnly.id,
-            attributes: {}
-          };
-        }
+      // Fallback: check if the ID refers to a Product without variants
+      const productOnly = await prisma.product.findUnique({
+        where: { id: item.variantId },
+        // No need for variants include
+      });
+      if (productOnly) {
+        // Create a mock variant using the product's basic info
+        variant = {
+          id: productOnly.id,
+          product: productOnly,
+          price: productOnly.basePrice || 0,
+          inventory: { stockAvailable: 9999 }, // assume ample stock for dummy products
+          sku: productOnly.sku || productOnly.id,
+          attributes: {}
+        };
       }
-      if (!variant) throw new AppError(`Variant ${item.variantId} not found`, 404);
+    }
+    if (!variant) throw new AppError(`Variant ${item.variantId} not found`, 404);
 
     // Drop Validation
     if (item.isDrop || variant.product.isDrop) {

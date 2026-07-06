@@ -18,7 +18,7 @@ exports.processRazorpayWebhook = async (payload) => {
   const paymentId = paymentEntity.id;
 
   // Find order by paymentIntentId (which we store as razorpay_order_id)
-  const order = await prisma.order.findUnique({
+  const order = await prisma.order.findFirst({
     where: { paymentIntentId: razorpayOrderId },
     include: { items: true }
   });
@@ -232,7 +232,7 @@ exports.verifyPaymentSignature = async (userId, data) => {
   }
 
   // 2. Fetch the corresponding order
-  const order = await prisma.order.findUnique({
+  const order = await prisma.order.findFirst({
     where: { paymentIntentId: razorpay_order_id },
     include: { items: true }
   });

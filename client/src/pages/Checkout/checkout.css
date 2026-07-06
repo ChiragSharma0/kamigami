@@ -181,7 +181,8 @@
     color: #e71e22;
 }
 
-.street-line, .street-line-2 {
+.street-line,
+.street-line-2 {
     font-size: 13px;
     font-weight: 700;
     color: #fff;
@@ -193,7 +194,8 @@
     font-weight: 500;
 }
 
-.city-zip-line, .country-line {
+.city-zip-line,
+.country-line {
     font-size: 12px;
     color: #71717a;
     margin: 0;
@@ -289,7 +291,8 @@
     gap: 12px;
 }
 
-.save-btn, .cancel-btn {
+.save-btn,
+.cancel-btn {
     padding: 12px 24px;
     border-radius: 8px;
     font-size: 10px;
@@ -868,7 +871,8 @@
     gap: 12px;
 }
 
-.gate-btn-success, .gate-btn-cancel {
+.gate-btn-success,
+.gate-btn-cancel {
     width: 100%;
     padding: 16px;
     border-radius: 12px;
@@ -903,7 +907,8 @@
     color: #fff;
 }
 
-.gate-btn-success:disabled, .gate-btn-cancel:disabled {
+.gate-btn-success:disabled,
+.gate-btn-cancel:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
@@ -917,6 +922,7 @@
         grid-template-columns: 1fr;
         gap: 40px;
     }
+
     .checkout-right-panel {
         position: static;
     }
@@ -926,15 +932,19 @@
     .checkout-main-container {
         padding: 100px 16px 80px 16px;
     }
+
     .form-grid {
         grid-template-columns: 1fr;
     }
+
     .checkout-section {
         padding: 20px;
     }
+
     .checkout-sticky-summary {
         padding: 20px;
     }
+
     .success-card {
         padding: 24px;
     }

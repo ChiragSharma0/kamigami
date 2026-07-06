@@ -336,27 +336,10 @@ const ProductDetails = () => {
       color: selectedColor || "Default",
       variantId: activeVariant?.id || product.id,
       sku: activeVariant?.sku || product.sku || product.id,
+      quantity: 1,
     };
 
-    const existing = cartItems.find((item) =>
-      item.id === cartItem.id &&
-      item.size === cartItem.size &&
-      item.color === cartItem.color
-    );
-
-    if (existing) {
-      const updated = cartItems.map((item) =>
-        item.id === cartItem.id &&
-          item.size === cartItem.size &&
-          item.color === cartItem.color
-          ? { ...item, quantity: item.quantity + 1 }
-          : item,
-      );
-      setCartItems(updated);
-    } else {
-      setCartItems([...cartItems, { ...cartItem, quantity: 1 }]);
-    }
-    navigate("/checkout");
+    navigate("/checkout", { state: { buyNowItem: cartItem } });
   };
 
   return (

@@ -6,8 +6,8 @@ exports.createShipment = async (adminId, orderId) => {
   // 1. Fetch Order with Items and Address
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    include: { items: true, user: true } 
-  }); 
+    include: { items: true, user: true }
+  });
 
   if (!order) throw new AppError('Order not found', 404);
   if (order.status !== 'PAID' && order.status !== 'PROCESSING') {
@@ -15,6 +15,20 @@ exports.createShipment = async (adminId, orderId) => {
   }
 
   const shippingAddr = order.shippingAddress;
+
+  const sanitizePhone = (phone) => {
+    if (!phone) return '9354029285';
+    let cleaned = phone.toString().replace(/\D/g, '');
+    if (cleaned.length === 12 && cleaned.startsWith('91')) {
+      cleaned = cleaned.substring(2);
+    }
+    if (cleaned.length < 10) {
+      return '9354029285';
+    }
+    return cleaned.slice(-10);
+  };
+
+  const billingPhone = sanitizePhone(shippingAddr?.phoneNumber || order.user?.phoneNumber);
 
   // 2. Transform into Shiprocket Payload
   const shiprocketPayload = {
@@ -30,7 +44,7 @@ exports.createShipment = async (adminId, orderId) => {
     billing_state: shippingAddr.stateProvince || shippingAddr.state_province || '',
     billing_country: shippingAddr.country || '',
     billing_email: order.user?.email || 'fake@email.com',
-    billing_phone: order.user?.phoneNumber || '0000000000',
+    billing_phone: billingPhone,
     shipping_is_billing: true,
     order_items: order.items.map(item => ({
       name: item.name,
@@ -126,7 +140,7 @@ exports.getTrackingInfo = async (orderId, userId = null) => {
   });
 
   if (!order) throw new AppError('Order not found', 404);
-  
+
   // Security check for users
   if (userId && order.userId !== userId) {
     throw new AppError('Unauthorized access to tracking info', 403);
@@ -140,4 +154,58 @@ exports.getTrackingInfo = async (orderId, userId = null) => {
     shipment_status: order.shipmentStatus,
     order_status: order.status
   };
+};
+
+exports.getETA = async (deliveryPostcode) => {
+  const pickupPostcode = process.env.DEFAULT_PICKUP_POSTCODE || '110001';
+
+  const formatDate = (date) => {
+    return date.toLocaleDateString("en-US", {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  try {
+    const serviceability = await shiprocket.getServiceability(pickupPostcode, deliveryPostcode);
+    const couriers = serviceability.data?.available_courier_companies || [];
+
+    if (couriers.length > 0) {
+      const fastest = couriers.reduce((prev, current) => {
+        const prevDays = prev.etd_hours || 120;
+        const currDays = current.etd_hours || 120;
+        return currDays < prevDays ? current : prev;
+      });
+
+      const etdDateString = fastest.etd;
+      if (etdDateString) {
+        const etdDate = new Date(etdDateString);
+        const days = Math.ceil((etdDate - new Date()) / (1000 * 60 * 60 * 24));
+        if (days > 0) {
+          return {
+            status: 'serviceable',
+            days: days,
+            etaString: `Expected Delivery: ${formatDate(etdDate)}`
+          };
+        }
+      }
+    }
+
+    const fallbackDate = new Date(Date.now() + 4 * 24 * 60 * 60 * 1000);
+    return {
+      status: 'serviceable',
+      days: 4,
+      etaString: `Expected Delivery: ${formatDate(fallbackDate)}`
+    };
+  } catch (err) {
+    console.warn('[Logistics] Serviceability ETA failed, using fallback:', err.message);
+    const fallbackDate = new Date(Date.now() + 4 * 24 * 60 * 60 * 1000);
+    return {
+      status: 'serviceable',
+      days: 4,
+      etaString: `Expected Delivery: ${formatDate(fallbackDate)}`
+    };
+  }
 };

@@ -3,32 +3,25 @@ import { Link } from "react-router-dom";
 
 import "./Module.css"
 
-// ─── Edit your links here ───────────────────────────────────────────
 const LINKS = {
   connectWithUs: [
     { label: "Call", href: "#" },
     { label: "Text (WhatsApp)", href: "#" },
     { label: "Instagram", href: "#" },
-    { label: "YouTube", href: "#" },
-    { label: "LinkedIn", href: "#" },
   ],
   orderSupport: [
-    { label: "Make a return/Exchange", href: "#" },
+    { label: "Make a return/Exchange", href: "/returns" },
     { label: "Refund/Exchange policy", href: "/refund-policy" },
-    { label: "Track your order", href: "#" },
+    { label: "Track your order", href: "/userprofile" },
     { label: "Shipping policy", href: "/shipping-policy" },
-    { label: "FAQ's", href: "#" },
+    { label: "FAQ's", href: "/faq" },
     { label: "Terms & Conditions", href: "/terms-and-conditions" },
     { label: "Privacy Policy", href: "/privacy-policy" },
   ],
   weAreKAMIGAMI: [
     { label: "Our Story", href: "/about-us" },
     { label: "Contact Us", href: "/contact-us" },
-    { label: "Walk-in Stores", href: "#" },
-    { label: "Collaborations", href: "#" },
-    { label: "Careers", href: "#" },
-    { label: "Media", href: "#" },
-    { label: "Blogs", href: "#" },
+    { label: "Blogs", href: "/blogs" },
   ],
 };
 // ────────────────────────────────────────────────────────────────────

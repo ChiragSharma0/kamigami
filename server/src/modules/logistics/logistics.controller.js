@@ -20,3 +20,12 @@ exports.getTrackingInfo = asyncHandler(async (req, res) => {
   const tracking = await logisticsService.getTrackingInfo(req.params.order_id, userId);
   res.status(200).json({ status: 'success', data: tracking });
 });
+
+exports.getETA = asyncHandler(async (req, res) => {
+  const { delivery_postcode } = req.query;
+  if (!delivery_postcode) {
+    return res.status(400).json({ status: 'fail', message: 'delivery_postcode is required' });
+  }
+  const result = await logisticsService.getETA(delivery_postcode);
+  res.status(200).json({ status: 'success', data: result });
+});

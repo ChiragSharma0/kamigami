@@ -77,6 +77,26 @@ class ShiprocketProvider {
       throw err;
     }
   }
+
+  async getServiceability(pickupPostcode, deliveryPostcode) {
+    const token = await this.authenticate();
+    
+    try {
+      const response = await axios.get(`${this.baseUrl}/courier/serviceability`, {
+        params: {
+          pickup_postcode: pickupPostcode,
+          delivery_postcode: deliveryPostcode,
+          weight: 0.5,
+          cod: 0
+        },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data;
+    } catch (err) {
+      console.error('[Shiprocket] Serviceability check failed:', err.response?.data || err.message);
+      throw err;
+    }
+  }
 }
 
 module.exports = new ShiprocketProvider();

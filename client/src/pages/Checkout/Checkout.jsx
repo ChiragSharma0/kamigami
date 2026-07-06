@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import PageMeta from "../../components/PageMeta";
 import { CartContext } from "../../Context/CartContext";
 import api from "../../services/api";
-import { 
-  MapPin, 
-  Plus, 
-  CreditCard, 
-  Loader2, 
-  CheckCircle2, 
-  Truck, 
-  AlertCircle, 
-  ShieldCheck, 
+import {
+  MapPin,
+  Plus,
+  CreditCard,
+  Loader2,
+  CheckCircle2,
+  Truck,
+  AlertCircle,
+  ShieldCheck,
   ShoppingBag,
   ArrowLeft
 } from "lucide-react";
@@ -20,11 +20,15 @@ import "./checkout.css";
 const Checkout = () => {
   const { cartItems, setCartItems } = useContext(CartContext);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const buyNowItem = location.state?.buyNowItem || null;
+  const checkoutItems = buyNowItem ? [buyNowItem] : cartItems;
 
   // Authentication & Loading States
   const [isLoggedIn, setIsLoggedIn] = useState(true);
   const [loading, setLoading] = useState(true);
-  
+
   // Addresses States
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState("");
@@ -35,14 +39,19 @@ const Checkout = () => {
     city: "",
     stateProvince: "",
     postalCode: "",
-    country: "India"
+    country: "India",
+    phoneNumber: ""
   });
   const [savingAddress, setSavingAddress] = useState(false);
 
   // Checkout Status States
   const [placingOrder, setPlacingOrder] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
-  
+
+  // ETA States
+  const [addressETA, setAddressETA] = useState("");
+  const [fetchingETA, setFetchingETA] = useState(false);
+
   // Order & Payment Gate States
   const [createdOrder, setCreatedOrder] = useState(null);
   const [showPaymentGate, setShowPaymentGate] = useState(false);
@@ -65,7 +74,7 @@ const Checkout = () => {
         const res = await api.get("/users/me/addresses");
         const addressList = res.data?.data?.addresses || res.data?.addresses || [];
         setAddresses(addressList);
-        
+
         // Auto-select default address
         const defaultAddr = addressList.find(addr => addr.isDefault) || addressList[0];
         if (defaultAddr) {
@@ -81,6 +90,35 @@ const Checkout = () => {
     fetchAddresses();
   }, []);
 
+  // Fetch estimated delivery time on address selection
+  useEffect(() => {
+    if (!selectedAddressId) {
+      setAddressETA("");
+      return;
+    }
+    const activeAddress = addresses.find(addr => addr.id === selectedAddressId);
+    if (!activeAddress) return;
+
+    const fetchETA = async () => {
+      try {
+        setFetchingETA(true);
+        const res = await api.get(`/logistics/serviceability/eta?delivery_postcode=${activeAddress.postalCode}`);
+        if (res.data?.data?.etaString) {
+          setAddressETA(res.data.data.etaString);
+        } else {
+          setAddressETA("");
+        }
+      } catch (err) {
+        console.error("Failed to fetch delivery ETA:", err);
+        setAddressETA("Expected delivery: 3 to 5 business days");
+      } finally {
+        setFetchingETA(false);
+      }
+    };
+
+    fetchETA();
+  }, [selectedAddressId, addresses]);
+
   const handleAddressInputChange = (e) => {
     const { name, value } = e.target;
     setAddressForm(prev => ({ ...prev, [name]: value }));
@@ -88,8 +126,8 @@ const Checkout = () => {
 
   const handleSaveAddress = async (e) => {
     e.preventDefault();
-    if (!addressForm.street1 || !addressForm.city || !addressForm.stateProvince || !addressForm.postalCode) {
-      alert("Please fill all required shipping fields.");
+    if (!addressForm.street1 || !addressForm.city || !addressForm.stateProvince || !addressForm.postalCode || !addressForm.phoneNumber) {
+      alert("Please fill all required shipping fields, including a contact phone number.");
       return;
     }
 
@@ -103,12 +141,13 @@ const Checkout = () => {
         stateProvince: addressForm.stateProvince,
         postalCode: addressForm.postalCode,
         country: addressForm.country,
+        phoneNumber: addressForm.phoneNumber,
         isDefault: addresses.length === 0 // Make default if it's the first
       };
 
       const res = await api.post("/users/me/addresses", payload);
       const newAddress = res.data?.data?.address || res.data?.address;
-      
+
       if (newAddress) {
         setAddresses(prev => [...prev, newAddress]);
         setSelectedAddressId(newAddress.id);
@@ -119,7 +158,8 @@ const Checkout = () => {
           city: "",
           stateProvince: "",
           postalCode: "",
-          country: "India"
+          country: "India",
+          phoneNumber: ""
         });
       }
     } catch (err) {
@@ -155,19 +195,22 @@ const Checkout = () => {
         try {
           setPaymentProcessing(true);
           setCheckoutError("");
-          
+
           // Call backend verification endpoint
           const res = await api.post("/payments/verify", {
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_order_id: response.razorpay_order_id,
             razorpay_signature: response.razorpay_signature
           });
-          
+
           const result = res.data?.data?.order;
+          console.log("[Verification] Order result loaded:", result);
           if (result) {
             setPaidOrderDetails(result);
             setPaymentSuccess(true);
-            setCartItems([]);
+            if (!buyNowItem) {
+              setCartItems([]);
+            }
           } else {
             setCheckoutError("Signature verification failed. Payment was captured but not verified.");
           }
@@ -205,8 +248,15 @@ const Checkout = () => {
       setCheckoutError("Select or add a shipping address first.");
       return;
     }
-    if (cartItems.length === 0) {
-      setCheckoutError("Your cart is empty.");
+    const activeAddress = addresses.find(addr => addr.id === selectedAddressId);
+    const addressPhone = activeAddress?.phoneNumber || "";
+    const cleanedPhone = addressPhone.replace(/\D/g, "");
+    if (cleanedPhone.length < 10) {
+      setCheckoutError("The selected address is missing a valid 10-digit contact number for delivery. Please add new coordinates containing a phone number.");
+      return;
+    }
+    if (checkoutItems.length === 0) {
+      setCheckoutError("Your checkout list is empty.");
       return;
     }
 
@@ -217,7 +267,8 @@ const Checkout = () => {
       const payload = {
         shippingAddressId: selectedAddressId,
         billingAddressId: selectedAddressId,
-        items: cartItems.map(item => ({
+        phoneNumber: cleanedPhone,
+        items: checkoutItems.map(item => ({
           variantId: item.variantId,
           quantity: item.quantity
         }))
@@ -242,8 +293,8 @@ const Checkout = () => {
   };
 
   const getPrice = (price) => (typeof price === "number" ? price : parseInt(price.replace(/[^0-9]/g, "")));
-  const subtotal = cartItems.reduce((total, item) => total + getPrice(item.price) * item.quantity, 0);
-  const discount = cartItems.reduce((total, item) => total + (item.discount ? (getPrice(item.price) * (item.discount / 100)) * item.quantity : 0), 0);
+  const subtotal = checkoutItems.reduce((total, item) => total + getPrice(item.price) * item.quantity, 0);
+  const discount = checkoutItems.reduce((total, item) => total + (item.discount ? (getPrice(item.price) * (item.discount / 100)) * item.quantity : 0), 0);
   const total = subtotal - discount;
 
   // Render Access Initiation state if user not authenticated
@@ -290,34 +341,17 @@ const Checkout = () => {
             </div>
           </div>
 
-          {/* Dynamic Shiprocket Tracking Info */}
-          <div className="shiprocket-delivery-card">
-            <div className="delivery-header">
-              <Truck className="delivery-icon text-blue-500 animate-pulse" />
-              <h3>SHIPROCKET INTEGRATED LOGISTICS</h3>
-            </div>
-            <p className="delivery-desc">Your order is logged and dispatched via Shiprocket premium logistics network.</p>
-            <div className="tracking-meta">
-              <div className="tracking-row">
-                <span>Courier Agent:</span>
-                <strong>{paidOrderDetails.courierName}</strong>
-              </div>
-              <div className="tracking-row">
-                <span>AWB Slip Code:</span>
-                <strong className="text-white font-mono">{paidOrderDetails.awbCode}</strong>
-              </div>
-            </div>
-            <a 
-              href={paidOrderDetails.trackingUrl || `https://shiprocket.co/tracking/${paidOrderDetails.awbCode}`} 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="tracking-action-link"
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '32px' }}>
+            <Link 
+              to={`/orders/${paidOrderDetails.id || paidOrderDetails.order_id || ''}`} 
+              className="home-action-btn" 
+              style={{ background: '#ef4444', color: '#fff', border: 'none', display: 'block', textAlign: 'center' }}
             >
-              TRACK MANIFESTATION SHIPMENT
-            </a>
+              VIEW ORDER & TRACKING DETAILS
+            </Link>
+            
+            <Link to="/" className="home-action-btn">RETURN TO REALM</Link>
           </div>
-
-          <Link to="/" className="home-action-btn">RETURN TO REALM</Link>
         </div>
       </div>
     );
@@ -343,220 +377,237 @@ const Checkout = () => {
           <p>Unraveling scroll addresses...</p>
         </div>
       ) : (
-        <div className="checkout-split-layout">
-          {/* LEFT: Shipping details */}
-          <div className="checkout-left-panel">
-            <section className="checkout-section select-address-sec">
-              <div className="section-title-wrap">
-                <MapPin className="sec-icon text-red-600" size={20} />
-                <h2>SHIPPING COORDINATES</h2>
-              </div>
-              
-              <div className="address-selections-list">
-                {addresses.map(addr => (
-                  <label 
-                    key={addr.id} 
-                    className={`address-card ${selectedAddressId === addr.id ? "selected" : ""}`}
-                  >
-                    <input 
-                      type="radio" 
-                      name="selected_address" 
-                      value={addr.id}
-                      checked={selectedAddressId === addr.id}
-                      onChange={() => setSelectedAddressId(addr.id)}
-                      className="hidden-radio"
-                    />
-                    <div className="card-selector-dot"></div>
-                    <div className="address-content-meta">
-                      <span className="addr-tag">{addr.isDefault ? "Primary Vault" : "Alternate Coordinates"}</span>
-                      <p className="street-line">{addr.street1}</p>
-                      {addr.street2 && <p className="street-line-2">{addr.street2}</p>}
-                      <p className="city-zip-line">{addr.city}, {addr.stateProvince} - {addr.postalCode}</p>
-                      <p className="country-line">{addr.country}</p>
-                    </div>
-                  </label>
-                ))}
-
-                {addresses.length === 0 && !showAddressForm && (
-                  <div className="no-addresses-card">
-                    <AlertCircle className="text-yellow-600" size={24} />
-                    <p>No delivery coordinates are currently logged for this profile.</p>
-                  </div>
-                )}
-              </div>
-
-              {!showAddressForm ? (
-                <button 
-                  type="button" 
-                  onClick={() => setShowAddressForm(true)} 
-                  className="add-coordinates-btn"
-                >
-                  <Plus size={16} /> ADD DELIVERY COORDINATES
-                </button>
-              ) : (
-                <form onSubmit={handleSaveAddress} className="address-inline-form animate-fade">
-                  <h3>ADD NEW COORDINATES</h3>
-                  <div className="form-grid">
-                    <input 
-                      type="text" 
-                      name="street1" 
-                      placeholder="STREET ADDRESS 1 *" 
-                      value={addressForm.street1}
-                      onChange={handleAddressInputChange}
-                      required
-                    />
-                    <input 
-                      type="text" 
-                      name="street2" 
-                      placeholder="STREET ADDRESS 2 (APARTMENT, SUITE, ETC.)" 
-                      value={addressForm.street2}
-                      onChange={handleAddressInputChange}
-                    />
-                    <input 
-                      type="text" 
-                      name="city" 
-                      placeholder="CITY *" 
-                      value={addressForm.city}
-                      onChange={handleAddressInputChange}
-                      required
-                    />
-                    <input 
-                      type="text" 
-                      name="stateProvince" 
-                      placeholder="STATE / PROVINCE *" 
-                      value={addressForm.stateProvince}
-                      onChange={handleAddressInputChange}
-                      required
-                    />
-                    <input 
-                      type="text" 
-                      name="postalCode" 
-                      placeholder="PINCODE / POSTAL CODE *" 
-                      value={addressForm.postalCode}
-                      onChange={handleAddressInputChange}
-                      required
-                    />
-                    <input 
-                      type="text" 
-                      name="country" 
-                      placeholder="COUNTRY *" 
-                      value={addressForm.country}
-                      onChange={handleAddressInputChange}
-                      required
-                    />
-                  </div>
-                  <div className="form-action-btns">
-                    <button type="submit" disabled={savingAddress} className="save-btn">
-                      {savingAddress ? <Loader2 className="animate-spin" size={14} /> : "LOG COORDINATES"}
-                    </button>
-                    <button type="button" onClick={() => setShowAddressForm(false)} className="cancel-btn">CANCEL</button>
-                  </div>
-                </form>
-              )}
-            </section>
-
-            <section className="checkout-section security-credentials-sec">
-              <div className="security-banner">
-                <ShieldCheck className="sec-icon text-green-500" size={22} />
-                <div>
-                  <h4>OCCULT ENCRYPTED BILLING</h4>
-                  <p>All spiritual offerings and transactional data are bound securely via custom cryptographic tokens.</p>
+        <>
+          <div className="checkout-split-layout">
+            {/* LEFT: Shipping details */}
+            <div className="checkout-left-panel">
+              <section className="checkout-section select-address-sec">
+                <div className="section-title-wrap">
+                  <MapPin className="sec-icon text-red-600" size={20} />
+                  <h2>SHIPPING COORDINATES</h2>
                 </div>
-              </div>
-            </section>
-          </div>
 
-          {/* RIGHT: Order summary */}
-          <div className="checkout-right-panel">
-            <div className="checkout-sticky-summary">
-              <div className="section-title-wrap">
-                <ShoppingBag className="sec-icon text-red-600" size={20} />
-                <h2>SACRED ITEMS</h2>
-              </div>
+                <div className="address-selections-list">
+                  {addresses.map(addr => (
+                    <label
+                      key={addr.id}
+                      className={`address-card ${selectedAddressId === addr.id ? "selected" : ""}`}
+                    >
+                      <input
+                        type="radio"
+                        name="selected_address"
+                        value={addr.id}
+                        checked={selectedAddressId === addr.id}
+                        onChange={() => setSelectedAddressId(addr.id)}
+                        className="hidden-radio"
+                      />
+                      <div className="card-selector-dot"></div>
+                      <div className="address-content-meta">
+                        <span className="addr-tag">{addr.isDefault ? "Primary Vault" : "Alternate Coordinates"}</span>
+                        <p className="street-line">{addr.street1}</p>
+                        {addr.street2 && <p className="street-line-2">{addr.street2}</p>}
+                        <p className="city-zip-line">{addr.city}, {addr.stateProvince} - {addr.postalCode}</p>
+                        <p className="country-line">{addr.country}</p>
+                        {addr.phoneNumber && <p className="phone-line" style={{ fontSize: '11px', color: '#a1a1aa', marginTop: '4px', fontWeight: 'bold' }}>📞 {addr.phoneNumber}</p>}
+                        {selectedAddressId === addr.id && (
+                          <div className="address-eta-badge animate-fade" style={{ marginTop: '10px', fontSize: '11px', color: '#3b82f6', fontWeight: '800', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                            🚚 {fetchingETA ? "Calculating transit pact..." : (addressETA || "Expected delivery: 3 to 5 business days")}
+                          </div>
+                        )}
+                      </div>
+                    </label>
+                  ))}
 
-              <div className="summary-items-list">
-                {cartItems.map(item => (
-                  <div key={`${item.id}-${item.size}-${item.color}`} className="summary-item">
-                    <img src={item.image} alt={item.title} className="item-thumbnail" />
-                    <div className="summary-item-meta">
-                      <h3>{item.title}</h3>
-                      <p className="options">SIZE: {item.size} • COLOR: {item.color}</p>
-                      <div className="qty-price">
-                        <span>QTY: {item.quantity}</span>
-                        <strong className="text-white">₹{getPrice(item.price) * item.quantity}</strong>
+                  {addresses.length === 0 && !showAddressForm && (
+                    <div className="no-addresses-card">
+                      <AlertCircle className="text-yellow-600" size={24} />
+                      <p>No delivery coordinates are currently logged for this profile.</p>
+                    </div>
+                  )}
+                </div>
+
+                {!showAddressForm ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowAddressForm(true)}
+                    className="add-coordinates-btn"
+                  >
+                    <Plus size={16} /> ADD DELIVERY COORDINATES
+                  </button>
+                ) : (
+                  <form onSubmit={handleSaveAddress} className="address-inline-form animate-fade">
+                    <h3>ADD NEW COORDINATES</h3>
+                    <div className="form-grid">
+                      <input
+                        type="text"
+                        name="street1"
+                        placeholder="STREET ADDRESS 1 *"
+                        value={addressForm.street1}
+                        onChange={handleAddressInputChange}
+                        required
+                      />
+                      <input
+                        type="text"
+                        name="street2"
+                        placeholder="STREET ADDRESS 2 (APARTMENT, SUITE, ETC.)"
+                        value={addressForm.street2}
+                        onChange={handleAddressInputChange}
+                      />
+                      <input
+                        type="text"
+                        name="city"
+                        placeholder="CITY *"
+                        value={addressForm.city}
+                        onChange={handleAddressInputChange}
+                        required
+                      />
+                      <input
+                        type="text"
+                        name="stateProvince"
+                        placeholder="STATE / PROVINCE *"
+                        value={addressForm.stateProvince}
+                        onChange={handleAddressInputChange}
+                        required
+                      />
+                      <input
+                        type="text"
+                        name="postalCode"
+                        placeholder="PINCODE / POSTAL CODE *"
+                        value={addressForm.postalCode}
+                        onChange={handleAddressInputChange}
+                        required
+                      />
+                      <input
+                        type="text"
+                        name="country"
+                        placeholder="COUNTRY *"
+                        value={addressForm.country}
+                        onChange={handleAddressInputChange}
+                        required
+                      />
+                      <input
+                        type="text"
+                        name="phoneNumber"
+                        placeholder="CONTACT PHONE NUMBER *"
+                        value={addressForm.phoneNumber}
+                        onChange={handleAddressInputChange}
+                        required
+                      />
+                    </div>
+                    <div className="form-action-btns">
+                      <button type="submit" disabled={savingAddress} className="save-btn">
+                        {savingAddress ? <Loader2 className="animate-spin" size={14} /> : "LOG COORDINATES"}
+                      </button>
+                      <button type="button" onClick={() => setShowAddressForm(false)} className="cancel-btn">CANCEL</button>
+                    </div>
+                  </form>
+                )}
+              </section>
+
+              <section className="checkout-section security-credentials-sec">
+                <div className="security-banner">
+                  <ShieldCheck className="sec-icon text-green-500" size={22} />
+                  <div>
+                    <h4>OCCULT ENCRYPTED BILLING</h4>
+                    <p>All spiritual offerings and transactional data are bound securely via custom cryptographic tokens.</p>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            {/* RIGHT: Order summary */}
+            <div className="checkout-right-panel">
+              <div className="checkout-sticky-summary">
+                <div className="section-title-wrap">
+                  <ShoppingBag className="sec-icon text-red-600" size={20} />
+                  <h2>SACRED ITEMS</h2>
+                </div>
+
+                <div className="summary-items-list">
+                  {checkoutItems.map(item => (
+                    <div key={`${item.id}-${item.size}-${item.color}`} className="summary-item">
+                      <img src={item.image} alt={item.title} className="item-thumbnail" />
+                      <div className="summary-item-meta">
+                        <h3>{item.title}</h3>
+                        <p className="options">SIZE: {item.size} • COLOR: {item.color}</p>
+                        <div className="qty-price">
+                          <span>QTY: {item.quantity}</span>
+                          <strong className="text-white">₹{getPrice(item.price) * item.quantity}</strong>
+                        </div>
                       </div>
                     </div>
+                  ))}
+
+                  {checkoutItems.length === 0 && (
+                    <div className="summary-empty-state">
+                      <p>No sacred items are active in your portal.</p>
+                      <Link to="/" className="browse-link">Acquire Vestments</Link>
+                    </div>
+                  )}
+                </div>
+
+                <div className="bill-calculations-box">
+                  <div className="calc-row">
+                    <span>Offering Subtotal</span>
+                    <span>₹{subtotal}</span>
                   </div>
-                ))}
-                
-                {cartItems.length === 0 && (
-                  <div className="summary-empty-state">
-                    <p>No sacred items are active in your portal.</p>
-                    <Link to="/" className="browse-link">Acquire Vestments</Link>
+                  {discount > 0 && (
+                    <div className="calc-row discount">
+                      <span>Discount Applied</span>
+                      <span>- ₹{discount.toFixed(0)}</span>
+                    </div>
+                  )}
+                  <div className="calc-row delivery-shipping">
+                    <span>Shipping</span>
+                    <span className="text-green-500">FREE / COMPLIMENTARY</span>
+                  </div>
+                  <div className="calc-divider"></div>
+                  <div className="calc-row total">
+                    <span>Total Offering Value</span>
+                    <span className="glow">₹{total.toFixed(0)}</span>
+                  </div>
+                </div>
+
+                {checkoutError && (
+                  <div className="checkout-error-banner animate-fade">
+                    <AlertCircle size={16} />
+                    <span>{checkoutError}</span>
                   </div>
                 )}
+
+                <button
+                  type="button"
+                  onClick={handlePlaceOrder}
+                  disabled={placingOrder || checkoutItems.length === 0 || !selectedAddressId}
+                  className="commence-checkout-btn"
+                >
+                  {placingOrder ? (
+                    <>
+                      <Loader2 className="animate-spin" size={16} />
+                      LOCKING VESTMENTS IN ARCHIVE...
+                    </>
+                  ) : (
+                    "CONFIRM & PLACE ORDER"
+                  )}
+                </button>
               </div>
-
-              <div className="bill-calculations-box">
-                <div className="calc-row">
-                  <span>Offering Subtotal</span>
-                  <span>₹{subtotal}</span>
-                </div>
-                {discount > 0 && (
-                  <div className="calc-row discount">
-                    <span>Discount Applied</span>
-                    <span>- ₹{discount.toFixed(0)}</span>
-                  </div>
-                )}
-                <div className="calc-row delivery-shipping">
-                  <span>Shipping</span>
-                  <span className="text-green-500">FREE / COMPLIMENTARY</span>
-                </div>
-                <div className="calc-divider"></div>
-                <div className="calc-row total">
-                  <span>Total Offering Value</span>
-                  <span className="glow">₹{total.toFixed(0)}</span>
-                </div>
-              </div>
-
-              {checkoutError && (
-                <div className="checkout-error-banner animate-fade">
-                  <AlertCircle size={16} />
-                  <span>{checkoutError}</span>
-                </div>
-              )}
-
-              <button 
-                type="button" 
-                onClick={handlePlaceOrder} 
-                disabled={placingOrder || cartItems.length === 0 || !selectedAddressId}
-                className="commence-checkout-btn"
-              >
-                {placingOrder ? (
-                  <>
-                    <Loader2 className="animate-spin" size={16} />
-                    LOCKING VESTMENTS IN ARCHIVE...
-                  </>
-                ) : (
-                  "CONFIRM & PLACE ORDER"
-                )}
-              </button>
             </div>
-          </div>
-          {/* ==============================================
+            {/* ==============================================
           OCCULT PAYMENT GATE (RAZORPAY VERIFICATION OVERLAY)
          ============================================== */}
-      {paymentProcessing && (
-        <div className="occult-gate-overlay animate-fade">
-          <div className="occult-gate-box">
-            <div className="gate-glow-halo"></div>
-            <Loader2 className="gate-header-icon text-red-600 animate-spin" size={48} />
-            <h2 className="gate-title">SEALING THE PACT...</h2>
-            <p className="gate-subtitle">Verifying offering signature with the deities</p>
+            {paymentProcessing && (
+              <div className="occult-gate-overlay animate-fade">
+                <div className="occult-gate-box">
+                  <div className="gate-glow-halo"></div>
+                  <Loader2 className="gate-header-icon text-red-600 animate-spin" size={48} />
+                  <h2 className="gate-title">SEALING THE PACT...</h2>
+                  <p className="gate-subtitle">Verifying offering signature with the deities</p>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
+        </>
       )}
-        </div>
     </div>
   );
 };

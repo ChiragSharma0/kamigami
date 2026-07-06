@@ -24,6 +24,9 @@ import Collections from './pages/Collections';
 import CmsSettings from './pages/CmsSettings';
 import MediaGallery from './pages/MediaGallery';
 import Logistics from './pages/Logistics';
+import Blogs from './pages/Blogs';
+import Faqs from './pages/Faqs';
+import Returns from './pages/Returns';
 
 function App() {
   const { checkAuth, isAuthenticated } = useAuthStore();
@@ -58,6 +61,9 @@ function App() {
           <Route path="/logistics" element={<Logistics />} />
           <Route path="/settings" element={<CmsSettings />} />
           <Route path="/media" element={<MediaGallery />} />
+          <Route path="/blogs" element={<Blogs />} />
+          <Route path="/faqs" element={<Faqs />} />
+          <Route path="/returns" element={<Returns />} />
         </Route>
 
         {/* Default Redirects */}

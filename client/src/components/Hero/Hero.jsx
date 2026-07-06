@@ -158,15 +158,16 @@ export default function MaskVideo() {
         const canvas = mask.querySelector("canvas");
         const ctx = canvas.getContext("2d");
 
-        // IMPORTANT: width/height only once
-        if (!canvas._initialized) {
-          const rect = mask.getBoundingClientRect();
-          canvas.width = Math.round(rect.width);
-          canvas.height = Math.round(rect.height);
-          canvas._initialized = true;
+        const rect = mask.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          const w = Math.round(rect.width);
+          const h = Math.round(rect.height);
+          if (canvas.width !== w || canvas.height !== h) {
+            canvas.width = w;
+            canvas.height = h;
+          }
         }
 
-        const rect = mask.getBoundingClientRect();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawClipped(ctx, video, rect);
       });
@@ -175,7 +176,7 @@ export default function MaskVideo() {
     }
 
     function init() {
-      video.play();
+      video.play().catch(err => console.log("Video play failed or auto-play prevented:", err));
       render();
 
       Draggable.create(masks, {
@@ -230,8 +231,9 @@ export default function MaskVideo() {
 
     return () => {
       cancelAnimationFrame(animationFrameId);
+      video.removeEventListener("loadeddata", init);
     };
-  }, [featuredDrop]);
+  }, []);
 
   const addMaskRef = (el) => {
     if (el && !maskRefs.current.includes(el)) {

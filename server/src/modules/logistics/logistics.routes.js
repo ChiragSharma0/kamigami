@@ -5,6 +5,7 @@ const { verifyJWT, requireAdmin } = require('../auth/auth.middleware');
 const router = express.Router();
 
 // USER ROUTES (Protected)
+router.get('/serviceability/eta', verifyJWT, logisticsController.getETA);
 router.get('/:order_id', verifyJWT, logisticsController.getTrackingInfo);
 
 // ADMIN ROUTES (Protected + Admin Role)

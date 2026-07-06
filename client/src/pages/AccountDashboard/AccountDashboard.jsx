@@ -391,6 +391,7 @@ const AccountDashboard = () => {
                         price={Number(order.totalAmount).toLocaleString()}
                         date={new Date(order.createdAt).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' })}
                         status={getStatusText(order.status)}
+                        onViewDetails={() => navigate(`/orders/${order.id}`)}
                       />
                     ))}
                   </div>
@@ -422,6 +423,7 @@ const AccountDashboard = () => {
                       price={Number(order.totalAmount).toLocaleString()}
                       date={new Date(order.createdAt).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' })}
                       status={getStatusText(order.status)}
+                      onViewDetails={() => navigate(`/orders/${order.id}`)}
                     />
                   ))}
                 </div>

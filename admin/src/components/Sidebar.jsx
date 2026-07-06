@@ -10,7 +10,10 @@ import {
   Truck,
   Layers,
   Settings,
-  Image
+  Image,
+  BookOpen,
+  HelpCircle,
+  RefreshCw
 } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 
@@ -26,8 +29,11 @@ const Sidebar = () => {
     { to: '/inventory', icon: Package, label: 'Inventory' },
     { to: '/orders', icon: ShoppingCart, label: 'Orders' },
     { to: '/logistics', icon: Truck, label: 'Logistics' },
+    { to: '/returns', icon: RefreshCw, label: 'Returns' },
     { to: '/settings', icon: Settings, label: 'Homepage CMS' },
     { to: '/media', icon: Image, label: 'Media Gallery' },
+    { to: '/blogs', icon: BookOpen, label: 'Blog Articles' },
+    { to: '/faqs', icon: HelpCircle, label: 'FAQs' },
   ];
 
   return (
@@ -40,7 +46,7 @@ const Sidebar = () => {
         <p className="text-xs text-slate-400 font-medium tracking-widest mt-1">ADMIN CONSOLE</p>
       </div>
 
-      <nav className="flex-1 px-4 space-y-1">
+      <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
         {links.map((link) => (
           <NavLink
             key={link.to}

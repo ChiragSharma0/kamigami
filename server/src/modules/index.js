@@ -14,6 +14,9 @@ const reservationRoutes = require('./reservation/reservation.routes');
 const paymentRoutes = require('./payments/payment.routes');
 const mediaRoutes = require('./media/media.routes');
 const settingsRoutes = require('./settings/settings.routes');
+const faqsRoutes = require('./faqs/faqs.routes');
+const blogsRoutes = require('./blogs/blogs.routes');
+const returnsRoutes = require('./returns/returns.routes');
 
 const router = express.Router();
 
@@ -31,5 +34,9 @@ router.use('/admin', adminRoutes);
 router.use('/admin/media', mediaRoutes);
 router.use('/settings', settingsRoutes);
 router.use('/webhooks', paymentRoutes);
+router.use('/payments', paymentRoutes);
+router.use('/faqs', faqsRoutes);
+router.use('/blogs', blogsRoutes);
+router.use('/returns', returnsRoutes);
 
 module.exports = router;
