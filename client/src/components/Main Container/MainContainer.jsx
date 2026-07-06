@@ -5,7 +5,7 @@ import Product from "../../pages/ProductPages/Product";
 import HeroSlider from '../../pages/HeroSlider/HeroSlider';
 import AboutSection from '../../pages/AboutSection/AboutSection';
 import TestimonialSection from '../../pages/TestimonialSection/TestimonialSection';
-import videoSrc from "../../assets/videos/14.mp4";
+import videoSrc from "../../assets/videos/LandingPage_compressed.mp4";
 import api from "../../services/api";
 import "./MainContainer.css";
 

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import "../Hero/hero.css";
 import gsap from "gsap";
 import Draggable from "gsap/dist/Draggable";
-import videoSrc from "../../assets/videos/14.mp4";
+import videoSrc from "../../assets/videos/LandingPage_compressed.mp4";
 import api from "../../services/api";
 
 gsap.registerPlugin(Draggable);

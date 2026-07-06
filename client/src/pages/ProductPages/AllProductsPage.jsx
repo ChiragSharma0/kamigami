@@ -280,10 +280,12 @@ const AllProductsPage = () => {
       result.sort((a, b) => a.price - b.price);
     } else if (sortBy === "price-desc") {
       result.sort((a, b) => b.price - a.price);
-    } else if (sortBy === "discount-desc") {
-      result.sort((a, b) => (b.discount || 0) - (a.discount || 0));
     } else if (sortBy === "name-asc") {
       result.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+    } else if (sortBy === "name-desc") {
+      result.sort((a, b) => (b.title || "").localeCompare(a.title || ""));
+    } else if (sortBy === "latest") {
+      result.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
     }
 
     return result;
@@ -642,10 +644,11 @@ const AllProductsPage = () => {
               className="mobile-sort-select"
             >
               <option value="default">SORT BY: DEFAULT</option>
+              <option value="latest">NEWEST FIRST</option>
               <option value="price-asc">PRICE: LOW TO HIGH</option>
               <option value="price-desc">PRICE: HIGH TO LOW</option>
-              <option value="discount-desc">DISCOUNT: HIGH TO LOW</option>
-              <option value="name-asc">NAME: A - Z</option>
+              <option value="name-asc">NAME: A → Z</option>
+              <option value="name-desc">NAME: Z → A</option>
             </select>
           </div>
         </div>
@@ -711,10 +714,11 @@ const AllProductsPage = () => {
                     className="stylized-sort-select"
                   >
                     <option value="default">FEATURED</option>
+                    <option value="latest">NEWEST FIRST</option>
                     <option value="price-asc">PRICE: LOW TO HIGH</option>
                     <option value="price-desc">PRICE: HIGH TO LOW</option>
-                    <option value="discount-desc">DISCOUNT: HIGH TO LOW</option>
-                    <option value="name-asc">NAME: A - Z</option>
+                    <option value="name-asc">NAME: A → Z</option>
+                    <option value="name-desc">NAME: Z → A</option>
                   </select>
                 </div>
               </div>

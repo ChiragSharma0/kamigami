@@ -8,24 +8,24 @@ const DEFAULT_SLIDES = [
     id: 1,
     title: "Hoodies",
     subtitle: "Shop Now",
-    image: "https://i.pinimg.com/736x/81/cf/0a/81cf0ae5207c5af67de47a418b1fe6ef.jpg",
-    imageMobile: "https://i.pinimg.com/736x/81/cf/0a/81cf0ae5207c5af67de47a418b1fe6ef.jpg",
+    image: "/images/website1.png",
+    imageMobile: "/images/slider1.png",
     redirectUrl: "/collections/hoodies"
   },
   {
     id: 2,
     title: "New Collection",
     subtitle: "Discover",
-    image: "https://i.pinimg.com/736x/b0/df/44/b0df44b19351f3e5ea54f6d82c7e0f21.jpg",
-    imageMobile: "https://i.pinimg.com/736x/b0/df/44/b0df44b19351f3e5ea54f6d82c7e0f21.jpg",
+    image: "/images/website2.jpeg",
+    imageMobile: "/images/slider2.png",
     redirectUrl: "/collections"
   },
   {
     id: 3,
     title: "Street Wear",
     subtitle: "Shop Now",
-    image: "https://i.pinimg.com/1200x/77/07/c7/7707c7bc64430185043adc06d26a09b7.jpg",
-    imageMobile: "https://i.pinimg.com/1200x/77/07/c7/7707c7bc64430185043adc06d26a09b7.jpg",
+    image: "/images/website3.png",
+    imageMobile: "/images/slider3.png",
     redirectUrl: "/drops"
   },
 ];
