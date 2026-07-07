@@ -96,8 +96,11 @@ class ShiprocketProvider {
   async getOrderDetails(orderNumber) {
     const token = await this.authenticate();
     try {
-      const response = await axios.get(`${this.baseUrl}/orders/show/adhoc`, {
-        params: { channel_order_id: orderNumber },
+      const response = await axios.get(`${this.baseUrl}/orders`, {
+        params: { 
+          filter_by: 'channel_order_id', 
+          filter_value: orderNumber 
+        },
         headers: { Authorization: `Bearer ${token}` }
       });
       return response.data;

@@ -123,18 +123,8 @@ async function handlePaymentSuccess(order, payload) {
     const shipmentResult = await logisticsService.createShipment(null, order.id);
     console.log('[PaymentSuccess] Shiprocket order created successfully!', shipmentResult.awbCode);
   } catch (shipmentErr) {
-    console.warn('[PaymentSuccess] Shiprocket dispatch failed, assigning local mock fallback:', shipmentErr.message);
-    const awbCode = `SR-MOCK-${Math.floor(100000 + Math.random() * 900000)}`;
-    await prisma.order.update({
-      where: { id: order.id },
-      data: {
-        awbCode,
-        courierName: 'Shiprocket Mock Express',
-        shipmentStatus: 'shipped',
-        status: 'SHIPPED',
-        trackingUrl: `https://shiprocket.co/tracking/${awbCode}`
-      }
-    });
+    console.error('[PaymentSuccess] Shiprocket dispatch failed, failing transaction capture:', shipmentErr.message);
+    throw new AppError(`Logistics dispatch failed: ${shipmentErr.message || 'Courier partner rejected details'}`, 422);
   }
 }
 

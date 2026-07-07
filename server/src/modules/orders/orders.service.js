@@ -232,25 +232,28 @@ exports.getOrderById = async (userId, orderId) => {
       const srOrderData = await shiprocket.getOrderDetails(order.orderNumber);
       
       // Check if Shiprocket has shipment/AWB assigned
-      const srOrder = srOrderData?.data || srOrderData;
-      if (srOrder && srOrder.shipments && srOrder.shipments.length > 0) {
-        const shipment = srOrder.shipments[0];
-        const awbCode = shipment.awb_code;
-        const courierName = shipment.courier_name;
+      const srOrdersList = srOrderData?.data || [];
+      if (srOrdersList.length > 0) {
+        const srOrder = srOrdersList[0];
+        if (srOrder && srOrder.shipments && srOrder.shipments.length > 0) {
+          const shipment = srOrder.shipments[0];
+          const awbCode = shipment.awb_code;
+          const courierName = shipment.courier_name;
 
-        if (awbCode) {
-          order = await prisma.order.update({
-            where: { id: orderId },
-            data: {
-              awbCode,
-              courierName: courierName || 'Express Partner',
-              shipmentStatus: 'shipped',
-              status: 'SHIPPED',
-              trackingUrl: `https://shiprocket.co/tracking/${awbCode}`
-            },
-            include: { items: true }
-          });
-          console.log(`[AutoSync] AWB code ${awbCode} automatically fetched and updated for Order #${order.orderNumber}`);
+          if (awbCode) {
+            order = await prisma.order.update({
+              where: { id: orderId },
+              data: {
+                awbCode,
+                courierName: courierName || 'Express Partner',
+                shipmentStatus: 'shipped',
+                status: 'SHIPPED',
+                trackingUrl: `https://shiprocket.co/tracking/${awbCode}`
+              },
+              include: { items: true }
+            });
+            console.log(`[AutoSync] AWB code ${awbCode} automatically fetched and updated for Order #${order.orderNumber}`);
+          }
         }
       }
     } catch (err) {
