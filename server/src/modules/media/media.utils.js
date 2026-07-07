@@ -37,7 +37,7 @@ function getPublicUrl(storageKey) {
 }
 
 const upload = multer({
-  limits: { fileSize: 2 * 1024 * 1024 }, // 1 MB limit for images
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2 MB limit for images
   storage: multerS3({
     s3: s3Client,
     bucket: process.env.AWS_S3_BUCKET_NAME || 'kamigami-media',

@@ -219,6 +219,14 @@ export default function MaskVideo() {
             this.y = maxY;
             gsap.set(this.target, { y: maxY });
           }
+
+          // Dynamically update the coordinate text overlay
+          const labelSpan = this.target.querySelector('.coord-label');
+          if (labelSpan) {
+            const currentLeft = rect.left;
+            const currentTop = rect.top;
+            labelSpan.textContent = `LAT:${currentLeft.toFixed(1)} / LONG:${currentTop.toFixed(1)}`;
+          }
         },
       });
     }
@@ -266,6 +274,9 @@ export default function MaskVideo() {
               left: box.left,
             }}
           >
+            <span className="coord-label">
+              [{i + 1}] LAT:{(parseFloat(box.left) || i * 15).toFixed(1)} / LONG:{(parseFloat(box.top) || i * 20).toFixed(1)}
+            </span>
             <div className="corners"></div>
             <canvas />
           </div>
