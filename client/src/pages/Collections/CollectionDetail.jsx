@@ -182,9 +182,9 @@ const CollectionDetail = () => {
               {products.length} {products.length === 1 ? 'Product Available' : 'Products Available'}
             </div>
             <div className="detail-header-divider"></div>
-          </div>
-        );
-      })()}
+         );
+        })()
+      )}
 
       <div className="collection-products-content">
         {loading ? (
