@@ -2,6 +2,9 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import PageMeta from '../../components/PageMeta';
 import ProductCard from '../../components/ProductCards/ProductCards';
+import slider1 from '../../assets/images/slider1.png';
+import slider2 from '../../assets/images/slider2.png';
+import slider3 from '../../assets/images/slider3.png';
 import SoonImage from '../../assets/images/soon.png';
 import api from '../../services/api';
 import { ProductDataContext } from '../../Context/ProductDataContext';
@@ -81,7 +84,7 @@ const CollectionDetail = () => {
             {
               media: {
                 type: 'image',
-                url: `/img/blooded.jpg`
+                url: slider1
               }
             }
           ]
@@ -104,7 +107,7 @@ const CollectionDetail = () => {
               title: `${fallbackName} Sacred Vestment`,
               description: '240+ GSM ultra-heavyweight premium combed cotton relaxed fit.',
               price: 1499,
-              image: '/img/awaken_front.jpg',
+              image: slider2,
               category: slug,
               size: 'M',
               discount: 10
@@ -114,7 +117,7 @@ const CollectionDetail = () => {
               title: `${fallbackName} Hooded Shroud`,
               description: '450+ GSM loopback organic fleece luxury streetwear drop.',
               price: 2499,
-              image: '/img/armr.jpg',
+              image: slider3,
               category: slug,
               size: 'M',
               discount: 0
@@ -149,10 +152,14 @@ const CollectionDetail = () => {
       ) : (
         (() => {
           // Collection Banner Header
+          // Collection Banner Header
           const getBannerImage = () => {
             if (collection?.media && collection.media.length > 0) {
               const bannerMedia = collection.media.find(m => m.media && m.media.type === 'image') || collection.media[0];
+              // Support both nested database media object and direct imported string assets
               if (bannerMedia?.media?.url) return bannerMedia.media.url;
+              if (bannerMedia?.url) return bannerMedia.url;
+              if (typeof bannerMedia === 'string') return bannerMedia;
             }
             return null;
           };
