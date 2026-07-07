@@ -48,6 +48,21 @@ class ShiprocketProvider {
     }
   }
 
+  async cancelOrder(orderId) {
+    const token = await this.authenticate();
+    try {
+      const response = await axios.post(`${this.baseUrl}/orders/cancel`, {
+        ids: [orderId]
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data;
+    } catch (err) {
+      console.error('[Shiprocket] Order cancellation failed:', err.response?.data || err.message);
+      throw err;
+    }
+  }
+
   async assignAWB(shipmentId) {
     const token = await this.authenticate();
     

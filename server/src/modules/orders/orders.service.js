@@ -293,6 +293,17 @@ exports.cancelOrder = async (userId, orderId, reason = 'User Request') => {
       }
     });
 
+    // 5. Cancel on Shiprocket if registered
+    if (order.awbCode) {
+      try {
+        const shiprocket = require('../logistics/logistics.provider');
+        await shiprocket.cancelOrder(order.orderNumber);
+        console.log(`[Shiprocket] Cancelled order #${order.orderNumber} successfully.`);
+      } catch (shiprocketErr) {
+        console.error(`[Shiprocket] Failed to cancel order #${order.orderNumber}:`, shiprocketErr.message);
+      }
+    }
+
     return updatedOrder;
   });
 };

@@ -167,108 +167,124 @@ const OrderDetailPage = () => {
           )}
         </header>
 
-        {/* Collapsible tracker panel */}
-        <section className="details-section tracker-section">
-          <div className="tracker-header-bar" onClick={() => setIsTrackerCollapsed(!isTrackerCollapsed)}>
-            <div className="title-left">
-              <Truck size={18} className="text-red-500" />
-              <h2>EXPRESS DISPATCH TRACKER</h2>
+        {/* Tracker Panel / Cancellation Alert */}
+        {status === 'CANCELLED' ? (
+          <section className="details-section cancellation-alert-section">
+            <div className="cancellation-header">
+              <span className="alert-dot" />
+              <h2>ORDER CANCELLATION LOGGED</h2>
             </div>
-            <button className="collapse-toggle-btn">
-              {isTrackerCollapsed ? (
-                <>SHOW DETAILS <ChevronDown size={14} /></>
-              ) : (
-                <>HIDE DETAILS <ChevronUp size={14} /></>
-              )}
-            </button>
-          </div>
+            <div className="cancellation-body">
+              <p>This order has been officially cancelled. If payment was completed, an automatic refund has been triggered via Razorpay. Restored inventory stock has been returned to the warehouse vaults.</p>
+              <div className="cancellation-meta">
+                <span>REFUND METHOD: <strong>RAZORPAY SOURCE METHOD</strong></span>
+                <span>STATUS: <strong>SUCCESSFULLY PROCESSED</strong></span>
+              </div>
+            </div>
+          </section>
+        ) : (
+          <section className="details-section tracker-section">
+            <div className="tracker-header-bar" onClick={() => setIsTrackerCollapsed(!isTrackerCollapsed)}>
+              <div className="title-left">
+                <Truck size={18} className="text-red-500" />
+                <h2>EXPRESS DISPATCH TRACKER</h2>
+              </div>
+              <button className="collapse-toggle-btn">
+                {isTrackerCollapsed ? (
+                  <>SHOW DETAILS <ChevronDown size={14} /></>
+                ) : (
+                  <>HIDE DETAILS <ChevronUp size={14} /></>
+                )}
+              </button>
+            </div>
 
-          {!isTrackerCollapsed && (
-            <div className="tracker-body-wrapper animate-fade">
-              {/* PC Progress Tracker (Horizontal) */}
-              <div className="pc-tracker-timeline">
-                <div className="pc-timeline-line-bg">
-                  <div 
-                    className="pc-timeline-line-active" 
-                    style={{ 
-                      width: `${(steps.filter(s => s.active).length - 1) / (steps.length - 1) * 100}%` 
-                    }}
-                  />
-                </div>
-                <div className="pc-timeline-nodes">
-                  {steps.map((step, idx) => (
-                    <div key={idx} className={`pc-timeline-node ${step.active ? 'active' : ''}`}>
-                      <div className="node-dot-wrap">
-                        <div className="node-dot" />
+            {!isTrackerCollapsed && (
+              <div className="tracker-body-wrapper animate-fade">
+                {/* PC Progress Tracker (Horizontal) */}
+                <div className="pc-tracker-timeline">
+                  <div className="pc-timeline-line-bg">
+                    <div 
+                      className="pc-timeline-line-active" 
+                      style={{ 
+                        width: `${(steps.filter(s => s.active).length - 1) / (steps.length - 1) * 100}%` 
+                      }}
+                    />
+                  </div>
+                  <div className="pc-timeline-nodes">
+                    {steps.map((step, idx) => (
+                      <div key={idx} className={`pc-timeline-node ${step.active ? 'active' : ''}`}>
+                        <div className="node-dot-wrap">
+                          <div className="node-dot" />
+                        </div>
+                        <span className="node-label">{step.label}</span>
+                        <p className="node-desc">{step.desc}</p>
                       </div>
-                      <span className="node-label">{step.label}</span>
-                      <p className="node-desc">{step.desc}</p>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Mobile Progress Tracker (Vertical) */}
+                <div className="mobile-tracker-timeline">
+                  {steps.map((step, idx) => (
+                     <div key={idx} className={`mobile-timeline-step ${step.active ? 'active' : ''}`}>
+                      <div className="step-indicator-col">
+                        <div className="step-node-dot" />
+                        {idx !== steps.length - 1 && (
+                          <div className={`step-connecting-line ${step.active && steps[idx+1].active ? 'active' : ''}`} />
+                        )}
+                      </div>
+                      <div className="step-content-col">
+                        <span className="step-label">{step.label}</span>
+                        <p className="step-desc">{step.desc}</p>
+                      </div>
                     </div>
                   ))}
                 </div>
-              </div>
 
-              {/* Mobile Progress Tracker (Vertical) */}
-              <div className="mobile-tracker-timeline">
-                {steps.map((step, idx) => (
-                   <div key={idx} className={`mobile-timeline-step ${step.active ? 'active' : ''}`}>
-                    <div className="step-indicator-col">
-                      <div className="step-node-dot" />
-                      {idx !== steps.length - 1 && (
-                        <div className={`step-connecting-line ${step.active && steps[idx+1].active ? 'active' : ''}`} />
-                      )}
+                {/* Shiprocket Tracker Quick Action Buttons */}
+                {order.awbCode && (
+                  <div className="tracking-action-panel">
+                    <div className="tracking-info-text">
+                      <p className="awb-label">AWB Tracking Code: <span className="highlight-code">{order.awbCode}</span></p>
+                      <p className="courier-label">Courier Partner: <span>{order.courierName || "Kamigami Express"}</span></p>
                     </div>
-                    <div className="step-content-col">
-                      <span className="step-label">{step.label}</span>
-                      <p className="step-desc">{step.desc}</p>
+                    
+                    <div className="tracking-buttons-group">
+                      <button 
+                        onClick={() => setShowEmbeddedTracker(!showEmbeddedTracker)} 
+                        className={`tracking-btn secondary-btn ${showEmbeddedTracker ? 'active' : ''}`}
+                      >
+                        {showEmbeddedTracker ? "Hide Live Frame" : "Track On Page"}
+                      </button>
+                      <a 
+                        href={`https://shiprocket.co/tracking/${order.awbCode}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="tracking-btn primary-btn"
+                      >
+                        Track Off Page (Direct Link)
+                      </a>
                     </div>
-                  </div>
-                ))}
-              </div>
 
-              {/* Shiprocket Tracker Quick Action Buttons */}
-              {order.awbCode && (
-                <div className="tracking-action-panel">
-                  <div className="tracking-info-text">
-                    <p className="awb-label">AWB Tracking Code: <span className="highlight-code">{order.awbCode}</span></p>
-                    <p className="courier-label">Courier Partner: <span>{order.courierName || "Kamigami Express"}</span></p>
-                  </div>
-                  
-                  <div className="tracking-buttons-group">
-                    <button 
-                      onClick={() => setShowEmbeddedTracker(!showEmbeddedTracker)} 
-                      className={`tracking-btn secondary-btn ${showEmbeddedTracker ? 'active' : ''}`}
-                    >
-                      {showEmbeddedTracker ? "Hide Live Frame" : "Track On Page"}
-                    </button>
-                    <a 
-                      href={`https://shiprocket.co/tracking/${order.awbCode}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="tracking-btn primary-btn"
-                    >
-                      Track Off Page (Direct Link)
-                    </a>
-                  </div>
-
-                  {showEmbeddedTracker && (
-                    <div className="embedded-tracking-frame-container animate-fade">
-                      <div className="frame-header">
-                        <span>LIVE CARRIER LOGISTICS FEED</span>
+                    {showEmbeddedTracker && (
+                      <div className="embedded-tracking-frame-container animate-fade">
+                        <div className="frame-header">
+                          <span>LIVE CARRIER LOGISTICS FEED</span>
+                        </div>
+                        <iframe 
+                          src={`https://shiprocket.co/tracking/${order.awbCode}`}
+                          title="Carrier Tracking Portal"
+                          className="tracking-iframe"
+                          loading="lazy"
+                        />
                       </div>
-                      <iframe 
-                        src={`https://shiprocket.co/tracking/${order.awbCode}`}
-                        title="Carrier Tracking Portal"
-                        className="tracking-iframe"
-                        loading="lazy"
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </section>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Split Layout: items and addresses */}
         <div className="details-split-layout">
