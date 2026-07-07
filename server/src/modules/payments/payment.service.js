@@ -199,26 +199,15 @@ exports.processMockPaymentSuccess = async (orderId) => {
   await handlePaymentSuccess(order, mockPayload);
 
   // 2. Trigger automatic Shiprocket shipping integration
-  let shipmentResult = null;
   try {
-    shipmentResult = await logisticsService.createShipment(null, orderId);
+    const shipmentResult = await logisticsService.createShipment(null, orderId);
     console.log('[MockPayment] Shiprocket order created successfully!');
+    return { status: 'processed_success', order: shipmentResult };
   } catch (shipmentErr) {
-    console.warn('[MockPayment] Shiprocket credentials invalid or service unavailable, using local mock fallback:', shipmentErr.message);
-    const awbCode = `SR-MOCK-${Math.floor(100000 + Math.random() * 900000)}`;
-    shipmentResult = await prisma.order.update({
-      where: { id: orderId },
-      data: {
-        awbCode,
-        courierName: 'Shiprocket Mock Express',
-        shipmentStatus: 'shipped',
-        status: 'SHIPPED',
-        trackingUrl: `https://shiprocket.co/tracking/${awbCode}`
-      }
-    });
+    console.error('[MockPayment] Shiprocket dispatch failed:', shipmentErr.message);
+    throw new AppError(`Logistics dispatch failed: ${shipmentErr.message || 'Courier partner rejected details'}`, 422);
   }
-
-  return { status: 'processed_success', order: shipmentResult };
+  }
 };
 
 exports.verifyPaymentSignature = async (userId, data) => {
