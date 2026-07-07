@@ -37,7 +37,7 @@ function getPublicUrl(storageKey) {
 }
 
 const upload = multer({
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB limit for images
+  limits: { fileSize: 2 * 1024 * 1024 }, // 1 MB limit for images
   storage: multerS3({
     s3: s3Client,
     bucket: process.env.AWS_S3_BUCKET_NAME || 'kamigami-media',
@@ -64,26 +64,23 @@ const upload = multer({
   }
 });
 
-// Configure disk storage for temporary video files before compression
-const tempDir = path.join(__dirname, '../../../../uploads/tmp');
-if (!fs.existsSync(tempDir)) {
-  fs.mkdirSync(tempDir, { recursive: true });
-}
-
-const diskStorage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, tempDir);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, `raw-${uniqueSuffix}${ext}`);
-  }
-});
-
-const uploadDisk = multer({
-  storage: diskStorage,
-  limits: { fileSize: 200 * 1024 * 1024 }, // 200 MB limit for raw videos
+// Configure video upload directly to S3 memory buffer with a 10MB limit (no disk compression)
+const uploadVideoDirect = multer({
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB limit for videos
+  storage: multerS3({
+    s3: s3Client,
+    bucket: process.env.AWS_S3_BUCKET_NAME || 'kamigami-media',
+    contentType: multerS3.AUTO_CONTENT_TYPE,
+    key: function (req, file, cb) {
+      const folder = req.body.folder || 'videos';
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const ext = path.extname(file.originalname);
+      const filename = crypto.randomBytes(16).toString('hex') + ext;
+      const fullPath = `${folder}/${uniqueSuffix}-${filename}`;
+      
+      cb(null, fullPath);
+    }
+  }),
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('video/')) {
       cb(null, true);
@@ -125,7 +122,7 @@ const deleteMultipleFromS3 = async (storageKeys) => {
 
 module.exports = {
   upload,
-  uploadDisk,
+  uploadVideoDirect,
   deleteFromS3,
   deleteMultipleFromS3,
   s3Client,

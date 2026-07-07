@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mediaController = require('./media.controller');
-const { upload, uploadDisk } = require('./media.utils');
+const { upload, uploadVideoDirect } = require('./media.utils');
 const { verifyJWT, requireAdmin } = require('../auth/auth.middleware');
 
 // Routes mapping for Admin Media API
@@ -14,7 +14,7 @@ const { verifyJWT, requireAdmin } = require('../auth/auth.middleware');
 router.use(verifyJWT, requireAdmin);
 
 router.post('/upload', upload.array('files', 20), mediaController.uploadMedia);
-router.post('/upload/video', uploadDisk.single('file'), mediaController.uploadVideo);
+router.post('/upload/video', uploadVideoDirect.single('file'), mediaController.uploadVideo);
 router.get('/', mediaController.getAllMedia);
 router.get('/:id', mediaController.getMediaById);
 router.put('/:id', mediaController.updateMedia);
