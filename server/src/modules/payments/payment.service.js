@@ -116,16 +116,9 @@ async function handlePaymentSuccess(order, payload) {
 
     return { status: 'processed_success' };
   });
-
-  // F. Trigger automated Shiprocket shipping dispatch after transaction completes successfully
-  const logisticsService = require('../logistics/logistics.service');
-  try {
-    const shipmentResult = await logisticsService.createShipment(null, order.id);
-    console.log('[PaymentSuccess] Shiprocket order created successfully!', shipmentResult.awbCode);
-  } catch (shipmentErr) {
-    console.error('[PaymentSuccess] Shiprocket dispatch failed, failing transaction capture:', shipmentErr.message);
-    throw new AppError(`Logistics dispatch failed: ${shipmentErr.message || 'Courier partner rejected details'}`, 422);
-  }
+  // NOTE: Shiprocket dispatch is intentionally NOT called here.
+  // It is called by the caller (verifyPaymentSignature) after this transaction commits,
+  // so that a full rollback compensation can be issued if Shiprocket rejects the order.
 }
 
 async function handlePaymentFailure(order, payload) {
@@ -250,16 +243,65 @@ exports.verifyPaymentSignature = async (userId, data) => {
     return { status: 'already_paid', order };
   }
 
-  // 3. Mark payment as success in database and reserve inventory
+  // 3. Mark payment as success in database and deduct inventory
   const mockPayload = {
     id: razorpay_payment_id,
     event: 'payment.captured',
     rawBody: data
   };
-  
-  await handlePaymentSuccess(order, mockPayload);
 
-  // 4. Fetch the updated order containing AWB and courier details
+  console.log('[PaymentVerify] Step 1: Running DB payment success transaction...');
+  await handlePaymentSuccess(order, mockPayload);
+  console.log('[PaymentVerify] Step 2: DB transaction committed. Order marked PAID.');
+
+  // 4. Trigger Shiprocket order dispatch — if this fails, compensate fully
+  try {
+    console.log('[PaymentVerify] Step 3: Dispatching Shiprocket order creation...');
+    const shipmentResult = await logisticsService.createShipment(null, order.id);
+    console.log('[PaymentVerify] Step 4: Shiprocket order registered! AWB:', shipmentResult?.awbCode);
+  } catch (shipmentErr) {
+    console.error('[PaymentVerify] ❌ Shiprocket dispatch failed:', shipmentErr.message);
+    console.log('[PaymentVerify] ⚠️  Initiating compensation: reverting order status and issuing Razorpay refund...');
+
+    // Compensation Step A: Mark order as FAILED and restore inventory
+    await prisma.$transaction(async (tx) => {
+      await tx.order.update({
+        where: { id: order.id },
+        data: { status: 'FAILED', shipmentStatus: 'failed' }
+      });
+      for (const item of order.items) {
+        await tx.inventory.update({
+          where: { variantId: item.variantId },
+          data: {
+            stockReserved: { increment: item.quantity },
+            stockTotal: { increment: item.quantity }
+          }
+        });
+      }
+    });
+    console.log('[PaymentVerify] ✅ Inventory restored, order marked FAILED.');
+
+    // Compensation Step B: Issue Razorpay refund
+    try {
+      const Razorpay = require('razorpay');
+      const razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET
+      });
+      const amountInPaise = Math.round(parseFloat(order.totalAmount) * 100);
+      await razorpay.payments.refund(razorpay_payment_id, { amount: amountInPaise });
+      console.log('[PaymentVerify] ✅ Razorpay refund issued for payment:', razorpay_payment_id);
+    } catch (refundErr) {
+      console.error('[PaymentVerify] ❌ Razorpay refund failed (manual action required):', refundErr.message);
+    }
+
+    throw new AppError(
+      `Payment captured but shipment booking failed: ${shipmentErr.message}. Your payment has been refunded.`,
+      422
+    );
+  }
+
+  // 5. Fetch the updated order with AWB details
   const updatedOrder = await prisma.order.findUnique({
     where: { id: order.id }
   });
