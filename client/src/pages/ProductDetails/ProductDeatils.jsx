@@ -109,18 +109,8 @@ const ProductDetails = () => {
 
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
-  const [imageLoading, setImageLoading] = useState(true);
+  const [imageLoading, setImageLoading] = useState(false);
   const mainImageRef = useRef(null);
-
-  useEffect(() => {
-    if (mainImageRef.current) {
-      if (mainImageRef.current.complete) {
-        setImageLoading(false);
-      } else {
-        setImageLoading(true);
-      }
-    }
-  }, [mainImage]);
 
   // Set default selection on load (first in-stock variant)
   useEffect(() => {
@@ -172,6 +162,16 @@ const ProductDetails = () => {
   };
 
   const images = getProductImages();
+
+  // Preload all gallery images in the background to ensure instant switching
+  useEffect(() => {
+    if (images && images.length > 0) {
+      images.forEach((url) => {
+        const img = new Image();
+        img.src = url;
+      });
+    }
+  }, [images]);
 
   // Auto-switch main image when selectedColor changes
   useEffect(() => {
@@ -375,7 +375,9 @@ const ProductDetails = () => {
                   key={i}
                   src={img}
                   alt="thumb"
-                  onClick={() => setMainImage(img)}
+                  onClick={() => {
+                    setMainImage(img);
+                  }}
                   className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-lg cursor-pointer border border-neutral-800 hover:border-red-600 flex-shrink-0"
                 />
               ))}

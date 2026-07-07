@@ -175,6 +175,9 @@ exports.getCollectionBySlug = async (slug, productFilters) => {
   const collection = await prisma.collection.findUnique({
     where: { slug, isActive: true, deletedAt: null },
     include: {
+      media: {
+        include: { media: true }
+      },
       products: {
         orderBy: { position: 'asc' },
         skip: parseInt(skip),

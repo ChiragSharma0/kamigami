@@ -65,10 +65,10 @@ exports.createShipment = async (adminId, orderId) => {
     })),
     payment_method: 'Prepaid',
     sub_total: order.subtotal.toString(),
-    length: 10, // Default dimensions
+    length: 10, // Default dimensions (cm)
     breadth: 10,
     height: 10,
-    weight: 0.5
+    weight: Math.max(0.4, order.items.reduce((sum, item) => sum + (item.quantity * 0.4), 0)) // 400g per item
   };
 
   console.log(`[Logistics Service] 📦 Step 4: Constructed Shiprocket Payload:\n`, JSON.stringify(shiprocketPayload, null, 2));

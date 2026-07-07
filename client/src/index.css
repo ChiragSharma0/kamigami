@@ -25,10 +25,38 @@ body {
   width: 100%;
   /* overflow-x: hidden; */
   background-color: #000000;
-  font-family: "General Sans", sans-serif;
+  font-family: "Bytes", "General Sans", sans-serif;
 }
 
 @layer base {
+  @font-face {
+    font-family: "Bytes";
+    src: url("./assets/fonts/BYTES.ttf") format("truetype");
+    font-weight: 400; /* Regular */
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: "Bytes";
+    src: url("./assets/fonts/BYTES.ttf") format("truetype");
+    font-weight: 300; /* Light */
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: "Bytes";
+    src: url("./assets/fonts/BYTES.ttf") format("truetype");
+    font-weight: 700; /* Bold */
+    font-style: normal;
+  }
+
+  @font-face {
+    font-family: "Bytes";
+    src: url("./assets/fonts/BYTES.ttf") format("truetype");
+    font-weight: 400;
+    font-style: italic; /* Italic */
+  }
+
   @font-face {
     font-family: "circular-web";
     src: url("/fonts/circularweb-book.woff2") format("woff2");

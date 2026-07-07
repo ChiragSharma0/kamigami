@@ -1,69 +1,28 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
+import { X, Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ProductDataContext } from "../../Context/ProductDataContext";
+import SoonImage from "../../assets/images/soon.png";
 import "./module.css";
-
-const dummyProducts = [
-  {
-    id: 1,
-    title: "Wireless Noise-Cancelling Headphones",
-    description: "Premium ANC with 30h battery life",
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=120&h=120&fit=crop",
-  },
-  {
-    id: 2,
-    title: "Minimalist Leather Watch",
-    description: "Japanese quartz movement, genuine leather",
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=120&h=120&fit=crop",
-  },
-  {
-    id: 3,
-    title: "Running Sneakers Pro",
-    description: "Lightweight mesh, responsive cushioning",
-    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=120&h=120&fit=crop",
-  },
-  {
-    id: 4,
-    title: "Portable Bluetooth Speaker",
-    description: "360° sound, waterproof IPX7 rated",
-    image: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=120&h=120&fit=crop",
-  },
-  {
-    id: 5,
-    title: "Classic Aviator Sunglasses",
-    description: "UV400 protection, titanium frame",
-    image: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=120&h=120&fit=crop",
-  },
-  {
-    id: 6,
-    title: "Organic Cotton T-Shirt",
-    description: "Soft-touch fabric, relaxed fit",
-    image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=120&h=120&fit=crop",
-  },
-  {
-    id: 7,
-    title: "Smart Fitness Tracker",
-    description: "Heart rate, sleep & activity monitoring",
-    image: "https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?w=120&h=120&fit=crop",
-  },
-  {
-    id: 8,
-    title: "Canvas Backpack",
-    description: "Water-resistant, padded laptop sleeve",
-    image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=120&h=120&fit=crop",
-  },
-];
 
 const SearchOverlay = ({ isOpen, setIsOpen }) => {
   const inputRef = useRef(null);
+  const navigate = useNavigate();
+  const { productData } = useContext(ProductDataContext);
   const [query, setQuery] = useState("");
 
+  const productsList = productData || [];
+
   // Filter products based on search query
-  const filteredProducts = dummyProducts.filter(
-    (p) =>
-      p.title.toLowerCase().includes(query.toLowerCase()) ||
-      p.description.toLowerCase().includes(query.toLowerCase())
-  );
+  const filteredProducts = query.trim() === "" 
+    ? [] 
+    : productsList.filter(
+        (p) =>
+          (p.title && p.title.toLowerCase().includes(query.toLowerCase())) ||
+          (p.name && p.name.toLowerCase().includes(query.toLowerCase())) ||
+          (p.description && p.description.toLowerCase().includes(query.toLowerCase()))
+      );
 
   // Auto-focus the input when the overlay opens
   useEffect(() => {
@@ -83,6 +42,21 @@ const SearchOverlay = ({ isOpen, setIsOpen }) => {
     if (isOpen) window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [isOpen, setIsOpen]);
+
+  const handleItemClick = (productId) => {
+    setIsOpen(false);
+    navigate(`/all-products/${productId}`);
+  };
+
+  const getProductImage = (p) => {
+    if (p.image) return p.image;
+    if (p.media && p.media.length > 0) {
+      const firstImg = p.media.find(m => m.media && m.media.type === 'image');
+      if (firstImg?.media?.url) return firstImg.media.url;
+      if (p.media[0]?.media?.url) return p.media[0].media.url;
+    }
+    return SoonImage;
+  };
 
   return (
     <AnimatePresence>
@@ -115,44 +89,57 @@ const SearchOverlay = ({ isOpen, setIsOpen }) => {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3, duration: 0.2 }}
             >
-              <input
-                ref={inputRef}
-                type="text"
-                placeholder="Search products..."
-                className="search-input"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
+              <div className="search-header-row">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  placeholder="Search products..."
+                  className="search-input"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+                <button className="search-back-btn" onClick={() => setIsOpen(false)}>
+                  <X size={20} />
+                </button>
+              </div>
 
               <div className="search-results">
-                {filteredProducts.length === 0 ? (
+                {query.trim() === "" ? (
+                  <div className="search-placeholder-box">
+                    <Search size={32} className="search-icon-hint" />
+                    <p className="search-results-placeholder">
+                      Type to begin searching the archives...
+                    </p>
+                  </div>
+                ) : filteredProducts.length === 0 ? (
                   <p className="search-results-placeholder">
-                    No products found
+                    No products found matching "{query}"
                   </p>
                 ) : (
                   filteredProducts.map((product, index) => (
                     <motion.div
                       key={product.id}
                       className="search-result-item"
+                      onClick={() => handleItemClick(product.id)}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{
-                        delay: 0.35 + index * 0.04,
-                        duration: 0.25,
+                        delay: index * 0.03,
+                        duration: 0.2,
                         ease: "easeOut",
                       }}
                     >
                       <div className="result-thumb">
                         <img
-                          src={product.image}
-                          alt={product.title}
+                          src={getProductImage(product)}
+                          alt={product.title || product.name}
                           loading="lazy"
                         />
                       </div>
                       <div className="result-info">
-                        <span className="result-title">{product.title}</span>
+                        <span className="result-title">{product.title || product.name}</span>
                         <span className="result-desc">
-                          {product.description}
+                          {product.description || "Premium apparel drop artifact"}
                         </span>
                       </div>
                     </motion.div>

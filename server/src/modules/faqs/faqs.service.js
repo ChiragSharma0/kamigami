@@ -37,3 +37,25 @@ exports.deleteFaq = async (faqId) => {
 
   return { success: true };
 };
+
+exports.updateFaq = async (faqId, faqData) => {
+  const { question, answer, category } = faqData;
+
+  const faq = await prisma.faq.findUnique({
+    where: { id: faqId }
+  });
+
+  if (!faq) {
+    throw new AppError('FAQ not found', 404);
+  }
+
+  const updateData = {};
+  if (question) updateData.question = question;
+  if (answer) updateData.answer = answer;
+  if (category) updateData.category = category;
+
+  return await prisma.faq.update({
+    where: { id: faqId },
+    data: updateData
+  });
+};

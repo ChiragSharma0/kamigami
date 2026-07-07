@@ -9,11 +9,12 @@ export default {
     extend: {
 
       fontFamily: {
-        zentry: ["zentry", "sans-serif"],
-        general: ["general", "sans-serif"],
+        zentry: ["Bytes", "sans-serif"],
+        general: ["Bytes", "sans-serif"],
         "circular-web": ["circular-web", "sans-serif"],
-        "robert-medium": ["robert-medium", "sans-serif"],
-        "robert-regular": ["robert-regular", "sans-serif"],
+        "robert-medium": ["Bytes", "sans-serif"],
+        "robert-regular": ["Bytes", "sans-serif"],
+        bytes: ["Bytes", "sans-serif"]
       },
 
       colors: {

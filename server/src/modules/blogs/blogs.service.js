@@ -74,3 +74,28 @@ exports.deleteBlog = async (blogId) => {
 
   return { success: true };
 };
+
+exports.updateBlog = async (blogId, blogData) => {
+  const { title, content, summary } = blogData;
+  
+  const blog = await prisma.blogPost.findUnique({
+    where: { id: blogId }
+  });
+
+  if (!blog) {
+    throw new AppError('Blog post not found', 404);
+  }
+
+  const updateData = {};
+  if (title) {
+    updateData.title = title;
+    updateData.slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Math.floor(1000 + Math.random() * 9000);
+  }
+  if (content) updateData.content = content;
+  if (summary !== undefined) updateData.summary = summary;
+
+  return await prisma.blogPost.update({
+    where: { id: blogId },
+    data: updateData
+  });
+};

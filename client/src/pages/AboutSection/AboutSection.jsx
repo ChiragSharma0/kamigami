@@ -7,20 +7,20 @@ import "./Module.css";
 const DEFAULT_ABOUT = {
   heroTitle: "Forge Your \n Sacred Identity",
   heroText: "Step into a world of high-quality, dark streetwear and shadow-infused aesthetics. From daily statement wear to exclusive drops, find your place in the Kamigami bloodline.",
-  rightImage: "https://i5.walmartimages.com/seo/Cute-Hoodies-for-Teen-Girls-Trendy-Waffle-Hooded-Sweatshirts-Oversized-Long-Sleeve-Sweater-Tween-Girl-Clothes-With-Pocket_f5eaaedd-a0b2-4298-ad86-ecb4e60e4665.3f912967cc120203881ec023922d10b1.jpeg",
+  rightImage: "img/blooded.jpg",
   cards: [
     {
-      img: "https://images.unsplash.com/photo-1520975661595-6453be3f7070",
+      img: "img/blood.jpg",
       title: "SIGNATURE",
       sub: "STAPLES",
     },
     {
-      img: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c",
+      img: "img/realm.jpg",
       title: "TRENDSETTER",
       sub: "COLLECTION",
     },
     {
-      img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
+      img: "img/armr.jpg",
       title: "VINCE",
       sub: "EXCLUSIVE",
     },

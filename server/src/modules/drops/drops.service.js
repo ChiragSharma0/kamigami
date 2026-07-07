@@ -117,7 +117,16 @@ exports.getDropBySlug = async (slug) => {
     drop = await prisma.drop.findUnique({
       where: { slug },
       include: {
-        dropProducts: { include: { product: { include: { variants: { include: { inventory: true } } } } } }
+        dropProducts: { 
+          include: { 
+            product: { 
+              include: { 
+                media: { include: { media: true } },
+                variants: { include: { inventory: true } } 
+              } 
+            } 
+          } 
+        }
       }
     });
 
