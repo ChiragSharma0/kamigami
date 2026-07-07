@@ -71,7 +71,7 @@ const CollectionDetail = () => {
         }
       } catch (err) {
         console.warn('[Collections] Fetch failed, initializing high-fidelity UI fallback layout.');
-        
+
         // Match standard category slugs
         const fallbackName = slug.charAt(0).toUpperCase() + slug.slice(1);
         const fallbackCollection = {
@@ -149,40 +149,41 @@ const CollectionDetail = () => {
       ) : (
         (() => {
           // Collection Banner Header
-        const getBannerImage = () => {
-          if (collection?.media && collection.media.length > 0) {
-            const bannerMedia = collection.media.find(m => m.media && m.media.type === 'image') || collection.media[0];
-            if (bannerMedia?.media?.url) return bannerMedia.media.url;
-          }
-          return null;
-        };
-        const bannerUrl = getBannerImage();
+          const getBannerImage = () => {
+            if (collection?.media && collection.media.length > 0) {
+              const bannerMedia = collection.media.find(m => m.media && m.media.type === 'image') || collection.media[0];
+              if (bannerMedia?.media?.url) return bannerMedia.media.url;
+            }
+            return null;
+          };
+          const bannerUrl = getBannerImage();
 
-        return (
-          <div 
-            className="collection-detail-header"
-            style={bannerUrl ? {
-              backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.9)), url(${bannerUrl})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              minHeight: '260px',
-              justifyContent: 'center',
-              borderRadius: '12px',
-              padding: '40px 24px',
-              border: '1px solid rgba(255, 255, 255, 0.05)'
-            } : {}}
-          >
-            <Link to="/collections" className="back-link">← All Capsules</Link>
-            <div className="header-badge">Exclusive Release</div>
-            <h1 className="detail-title-text">{collection.name}</h1>
-            <p className="detail-desc-text">
-              {collection.description || "Limited-quantity capsule with premium fits, custom graphics, and refined tailoring."}
-            </p>
-            <div className="collection-product-count">
-              {products.length} {products.length === 1 ? 'Product Available' : 'Products Available'}
+          return (
+            <div
+              className="collection-detail-header"
+              style={bannerUrl ? {
+                backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0.9)), url(${bannerUrl})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                minHeight: '260px',
+                justifyContent: 'center',
+                borderRadius: '12px',
+                padding: '40px 24px',
+                border: '1px solid rgba(255, 255, 255, 0.05)'
+              } : {}}
+            >
+              <Link to="/collections" className="back-link">← All Capsules</Link>
+              <div className="header-badge">Exclusive Release</div>
+              <h1 className="detail-title-text">{collection.name}</h1>
+              <p className="detail-desc-text">
+                {collection.description || "Limited-quantity capsule with premium fits, custom graphics, and refined tailoring."}
+              </p>
+              <div className="collection-product-count">
+                {products.length} {products.length === 1 ? 'Product Available' : 'Products Available'}
+              </div>
+              <div className="detail-header-divider"></div>
             </div>
-            <div className="detail-header-divider"></div>
-         );
+          );
         })()
       )}
 
