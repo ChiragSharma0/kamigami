@@ -3,6 +3,7 @@ const multer = require('multer');
 const multerS3 = require('multer-s3');
 const path = require('path');
 const crypto = require('crypto');
+const fs = require('fs');
 
 // S3 Configuration
 const s3Client = new S3Client({
@@ -36,7 +37,7 @@ function getPublicUrl(storageKey) {
 }
 
 const upload = multer({
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB limit
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB limit for images
   storage: multerS3({
     s3: s3Client,
     bucket: process.env.AWS_S3_BUCKET_NAME || 'kamigami-media',
@@ -53,12 +54,41 @@ const upload = multer({
     }
   }),
   fileFilter: (req, file, cb) => {
-    // Validate mime types
-    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm'];
+    // For general endpoint, keep image-only uploads or general validation
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (allowedMimeTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only JPG, PNG, WEBP, GIF, MP4, and WEBM are allowed.'));
+      cb(new Error('Invalid file type. Only JPG, PNG, WEBP, and GIF are allowed on this endpoint. For videos, use the video endpoint.'));
+    }
+  }
+});
+
+// Configure disk storage for temporary video files before compression
+const tempDir = path.join(__dirname, '../../../../uploads/tmp');
+if (!fs.existsSync(tempDir)) {
+  fs.mkdirSync(tempDir, { recursive: true });
+}
+
+const diskStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, tempDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    cb(null, `raw-${uniqueSuffix}${ext}`);
+  }
+});
+
+const uploadDisk = multer({
+  storage: diskStorage,
+  limits: { fileSize: 200 * 1024 * 1024 }, // 200 MB limit for raw videos
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('video/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only video files are allowed on this endpoint.'));
     }
   }
 });
@@ -95,6 +125,7 @@ const deleteMultipleFromS3 = async (storageKeys) => {
 
 module.exports = {
   upload,
+  uploadDisk,
   deleteFromS3,
   deleteMultipleFromS3,
   s3Client,

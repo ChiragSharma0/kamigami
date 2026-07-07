@@ -86,22 +86,55 @@ const MediaGallery = () => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    const formData = new FormData();
-    for (let i = 0; i < files.length; i++) {
-      formData.append('files', files[i]);
-    }
-    formData.append('folder', 'gallery');
-
     setIsUploading(true);
+    let videosCount = 0;
+    let imagesCount = 0;
+
     try {
-      await api.post('/admin/media/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      toast.success('Media assets uploaded successfully');
+      // Process files: Upload videos to the compression endpoint individually; upload images in batch
+      const imageFiles = [];
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.type.startsWith('video/')) {
+          videosCount++;
+          const videoToast = toast.loading(`Compressing & Uploading Video: "${file.name}"... This may take a moment.`);
+          
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('folder', 'gallery');
+
+          try {
+            await api.post('/admin/media/upload/video', formData, {
+              headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            toast.success(`Video "${file.name}" compressed and uploaded!`, { id: videoToast });
+          } catch (err) {
+            console.error(err);
+            toast.error(`Failed to upload video "${file.name}": ${err.message || 'Error'}`, { id: videoToast });
+          }
+        } else {
+          imageFiles.push(file);
+        }
+      }
+
+      if (imageFiles.length > 0) {
+        imagesCount = imageFiles.length;
+        const formData = new FormData();
+        for (let i = 0; i < imageFiles.length; i++) {
+          formData.append('files', imageFiles[i]);
+        }
+        formData.append('folder', 'gallery');
+        await api.post('/admin/media/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        toast.success(`Uploaded ${imagesCount} image(s) successfully`);
+      }
+
       fetchMedia();
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.data?.message || 'Failed to upload media assets');
+      toast.error(err.response?.data?.message || err.message || 'Failed to upload media assets');
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
