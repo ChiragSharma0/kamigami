@@ -294,25 +294,69 @@ const Orders = () => {
               </div>
             </div>
 
-            {/* Tracking / Logistics */}
-            {selectedOrder.awbCode && (
-              <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl space-y-1">
-                <p className="text-xs text-indigo-700 font-bold uppercase tracking-wider">Logistics & Tracking</p>
-                <p className="text-sm font-bold text-indigo-900">AWB Code: {selectedOrder.awbCode}</p>
-                <p className="text-xs text-indigo-600">Courier: {selectedOrder.courierName}</p>
-                {selectedOrder.trackingUrl && (
+            {/* Tracking / Logistics Setup */}
+            <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl space-y-3">
+              <p className="text-xs text-indigo-700 font-bold uppercase tracking-wider">Logistics & Tracking</p>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] text-slate-500 font-bold uppercase block mb-1">AWB / Tracking Code</label>
+                  <input 
+                    type="text" 
+                    placeholder="Enter AWB Code"
+                    value={selectedOrder.awbCode || ''}
+                    onChange={(e) => setSelectedOrder({ ...selectedOrder, awbCode: e.target.value })}
+                    className="w-full text-xs font-semibold px-2 py-1.5 rounded border border-indigo-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-500 font-bold uppercase block mb-1">Courier Partner</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Shiprocket, BlueDart"
+                    value={selectedOrder.courierName || ''}
+                    onChange={(e) => setSelectedOrder({ ...selectedOrder, courierName: e.target.value })}
+                    className="w-full text-xs font-semibold px-2 py-1.5 rounded border border-indigo-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-1">
+                <button
+                  onClick={async () => {
+                    try {
+                      await api.put(`/admin/orders/${selectedOrder.id}/status`, {
+                        status: selectedOrder.status,
+                        awbCode: selectedOrder.awbCode,
+                        courierName: selectedOrder.courierName
+                      });
+                      toast.success('Logistics credentials updated!');
+                      fetchOrders();
+                    } catch (err) {
+                      toast.error('Failed to update tracking details');
+                    }
+                  }}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-1 px-3 rounded transition-all"
+                >
+                  Save Tracking Info
+                </button>
+              </div>
+
+              {selectedOrder.awbCode && (
+                <div className="border-t border-indigo-200/50 pt-2 flex items-center justify-between">
+                  <span className="text-[10px] text-indigo-600 font-bold">Active Track Link:</span>
                   <a 
-                    href={selectedOrder.trackingUrl} 
+                    href={`https://shiprocket.co/tracking/${selectedOrder.awbCode}`} 
                     target="_blank" 
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-primary-600 font-bold hover:underline mt-2 cursor-pointer"
+                    className="inline-flex items-center gap-1 text-[10px] text-primary-600 font-bold hover:underline cursor-pointer"
                   >
-                    <span>Track Package</span>
-                    <ExternalLink className="w-3 h-3" />
+                    <span>Verify Live Page</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
                   </a>
-                )}
-              </div>
-            )}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </Modal>

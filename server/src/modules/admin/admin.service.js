@@ -601,17 +601,26 @@ exports.getOrderDetails = async (orderId) => {
   return order;
 };
 
-exports.updateOrderStatus = async (orderId, status, adminId) => {
+exports.updateOrderStatus = async (orderId, status, adminId, additionalData = {}) => {
   return await prisma.$transaction(async (tx) => {
     const order = await tx.order.findUnique({ where: { id: orderId } });
     if (!order) throw new AppError('Order not found', 404);
 
+    const updatePayload = { status };
+    if (additionalData.awbCode !== undefined) updatePayload.awbCode = additionalData.awbCode;
+    if (additionalData.courierName !== undefined) updatePayload.courierName = additionalData.courierName;
+
     const updated = await tx.order.update({
       where: { id: orderId },
-      data: { status }
+      data: updatePayload
     });
 
-    await logAction(tx, adminId, 'updated_order_status', orderId, { oldStatus: order.status, newStatus: status });
+    await logAction(tx, adminId, 'updated_order_status', orderId, { 
+      oldStatus: order.status, 
+      newStatus: status,
+      awbCode: additionalData.awbCode,
+      courierName: additionalData.courierName
+    });
     return updated;
   });
 };
