@@ -146,10 +146,9 @@ const CollectionDetail = () => {
           <h2>{error}</h2>
           <Link to="/collections" className="back-btn">Back to Capsules</Link>
         </div>
-      ) :
-       (
-        // Collection Banner Header
-        // Collection Banner Header
+      ) : (
+        (() => {
+          // Collection Banner Header
         const getBannerImage = () => {
           if (collection?.media && collection.media.length > 0) {
             const bannerMedia = collection.media.find(m => m.media && m.media.type === 'image') || collection.media[0];
