@@ -10,5 +10,6 @@ router.post('/checkout/intent', verifyJWT, ordersController.createCheckoutIntent
 // User Orders
 router.get('/orders/me', verifyJWT, ordersController.getMe);
 router.get('/orders/:id', verifyJWT, ordersController.getOrder);
+router.post('/orders/:id/cancel', verifyJWT, ordersController.cancelOrder);
 
 module.exports = router;

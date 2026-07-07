@@ -24,6 +24,8 @@ const Orders = () => {
   // Lightbox Modal state
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [editedAddress, setEditedAddress] = useState({});
 
   const statusMap = {
     PENDING: { label: 'Pending', icon: Clock, color: 'text-amber-600 bg-amber-50 border-amber-100' },
@@ -214,11 +216,29 @@ const Orders = () => {
               </div>
               <div className="text-right">
                 <p className="text-xs text-slate-500 font-semibold">Payment Status</p>
-                <div className={`mt-1 flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider w-fit ml-auto ${
-                  statusMap[selectedOrder.status]?.color || 'bg-slate-100 text-slate-600'
-                }`}>
-                  {selectedOrder.status}
-                </div>
+                <select
+                  value={selectedOrder.status}
+                  onChange={async (e) => {
+                    const nextStatus = e.target.value;
+                    try {
+                      await api.put(`/admin/orders/${selectedOrder.id}/status`, { status: nextStatus });
+                      toast.success(`Order status set to ${nextStatus}`);
+                      setSelectedOrder({ ...selectedOrder, status: nextStatus });
+                      fetchOrders();
+                    } catch (err) {
+                      toast.error('Failed to change status');
+                    }
+                  }}
+                  className="mt-1 text-xs font-bold px-2 py-1.5 rounded border border-slate-200 outline-none bg-white focus:ring-1 focus:ring-primary-500"
+                >
+                  <option value="PENDING">Pending</option>
+                  <option value="PAID">Paid</option>
+                  <option value="PROCESSING">Processing</option>
+                  <option value="SHIPPED">Shipped</option>
+                  <option value="DELIVERED">Delivered</option>
+                  <option value="CANCELLED">Cancelled</option>
+                  <option value="FAILED">Failed</option>
+                </select>
               </div>
             </div>
 
@@ -234,16 +254,120 @@ const Orders = () => {
               </div>
             </div>
 
-            {/* Shipping Address */}
+            {/* Shipping Address (Editable) */}
             <div className="space-y-2">
-              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Shipping Address</h3>
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-1">
-                <p className="font-bold text-slate-800">{selectedOrder.shippingAddress?.firstName || selectedOrder.user?.firstName} {selectedOrder.shippingAddress?.lastName || selectedOrder.user?.lastName}</p>
-                <p>{selectedOrder.shippingAddress?.street_1 || selectedOrder.shippingAddress?.addressLine1}</p>
-                {(selectedOrder.shippingAddress?.street_2 || selectedOrder.shippingAddress?.addressLine2) && <p>{selectedOrder.shippingAddress?.street_2 || selectedOrder.shippingAddress?.addressLine2}</p>}
-                <p>{selectedOrder.shippingAddress?.city}, {selectedOrder.shippingAddress?.state_province || selectedOrder.shippingAddress?.state} {selectedOrder.shippingAddress?.postal_code || selectedOrder.shippingAddress?.pincode || selectedOrder.shippingAddress?.postalCode}</p>
-                <p>{selectedOrder.shippingAddress?.country}</p>
+              <div className="flex justify-between items-center">
+                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Shipping Address</h3>
+                <button
+                  onClick={() => {
+                    if (!isEditingAddress) {
+                      setEditedAddress({
+                        street_1: selectedOrder.shippingAddress?.street_1 || selectedOrder.shippingAddress?.street1 || '',
+                        street_2: selectedOrder.shippingAddress?.street_2 || selectedOrder.shippingAddress?.street2 || '',
+                        city: selectedOrder.shippingAddress?.city || '',
+                        state_province: selectedOrder.shippingAddress?.state_province || selectedOrder.shippingAddress?.stateProvince || '',
+                        postal_code: selectedOrder.shippingAddress?.postal_code || selectedOrder.shippingAddress?.postalCode || '',
+                        country: selectedOrder.shippingAddress?.country || 'India',
+                        phoneNumber: selectedOrder.shippingAddress?.phoneNumber || ''
+                      });
+                    }
+                    setIsEditingAddress(!isEditingAddress);
+                  }}
+                  className="text-xs font-bold text-primary-600 hover:text-primary-700 hover:underline"
+                >
+                  {isEditingAddress ? 'Cancel Edit' : 'Edit Address'}
+                </button>
               </div>
+
+              {isEditingAddress ? (
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="col-span-2">
+                      <label className="text-[10px] text-slate-400 block mb-0.5">Address Line 1</label>
+                      <input 
+                        type="text" 
+                        value={editedAddress.street_1}
+                        onChange={(e) => setEditedAddress({ ...editedAddress, street_1: e.target.value })}
+                        className="w-full px-2 py-1.5 rounded border border-slate-200 bg-white"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-[10px] text-slate-400 block mb-0.5">Address Line 2 (Optional)</label>
+                      <input 
+                        type="text" 
+                        value={editedAddress.street_2}
+                        onChange={(e) => setEditedAddress({ ...editedAddress, street_2: e.target.value })}
+                        className="w-full px-2 py-1.5 rounded border border-slate-200 bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-400 block mb-0.5">City</label>
+                      <input 
+                        type="text" 
+                        value={editedAddress.city}
+                        onChange={(e) => setEditedAddress({ ...editedAddress, city: e.target.value })}
+                        className="w-full px-2 py-1.5 rounded border border-slate-200 bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-400 block mb-0.5">State/Province</label>
+                      <input 
+                        type="text" 
+                        value={editedAddress.state_province}
+                        onChange={(e) => setEditedAddress({ ...editedAddress, state_province: e.target.value })}
+                        className="w-full px-2 py-1.5 rounded border border-slate-200 bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-400 block mb-0.5">Postal / Pincode</label>
+                      <input 
+                        type="text" 
+                        value={editedAddress.postal_code}
+                        onChange={(e) => setEditedAddress({ ...editedAddress, postal_code: e.target.value })}
+                        className="w-full px-2 py-1.5 rounded border border-slate-200 bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-slate-400 block mb-0.5">Country</label>
+                      <input 
+                        type="text" 
+                        value={editedAddress.country}
+                        onChange={(e) => setEditedAddress({ ...editedAddress, country: e.target.value })}
+                        className="w-full px-2 py-1.5 rounded border border-slate-200 bg-white"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      onClick={async () => {
+                        try {
+                          await api.put(`/admin/orders/${selectedOrder.id}/status`, {
+                            status: selectedOrder.status,
+                            shippingAddress: editedAddress
+                          });
+                          toast.success('Shipping address updated successfully!');
+                          setSelectedOrder({ ...selectedOrder, shippingAddress: editedAddress });
+                          setIsEditingAddress(false);
+                          fetchOrders();
+                        } catch (err) {
+                          toast.error('Failed to save address details');
+                        }
+                      }}
+                      className="bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold py-1.5 px-4 rounded-lg transition-all"
+                    >
+                      Save Address
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-1">
+                  <p className="font-bold text-slate-800">{selectedOrder.shippingAddress?.firstName || selectedOrder.user?.firstName} {selectedOrder.shippingAddress?.lastName || selectedOrder.user?.lastName}</p>
+                  <p>{selectedOrder.shippingAddress?.street_1 || selectedOrder.shippingAddress?.street1 || selectedOrder.shippingAddress?.addressLine1}</p>
+                  {(selectedOrder.shippingAddress?.street_2 || selectedOrder.shippingAddress?.street2 || selectedOrder.shippingAddress?.addressLine2) && <p>{selectedOrder.shippingAddress?.street_2 || selectedOrder.shippingAddress?.street2 || selectedOrder.shippingAddress?.addressLine2}</p>}
+                  <p>{selectedOrder.shippingAddress?.city}, {selectedOrder.shippingAddress?.state_province || selectedOrder.shippingAddress?.stateProvince || selectedOrder.shippingAddress?.state} {selectedOrder.shippingAddress?.postal_code || selectedOrder.shippingAddress?.postalCode || selectedOrder.shippingAddress?.pincode}</p>
+                  <p>{selectedOrder.shippingAddress?.country}</p>
+                </div>
+              )}
             </div>
 
             {/* Order Items */}

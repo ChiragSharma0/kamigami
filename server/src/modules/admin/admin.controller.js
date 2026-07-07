@@ -128,12 +128,12 @@ exports.getOrder = asyncHandler(async (req, res) => {
 });
 
 exports.updateOrderStatus = asyncHandler(async (req, res) => {
-  const { status, awbCode, courierName } = req.body;
+  const { status, awbCode, courierName, shippingAddress } = req.body;
   const order = await adminService.updateOrderStatus(
     req.params.id, 
     status, 
     req.user.userId, 
-    { awbCode, courierName }
+    { awbCode, courierName, shippingAddress }
   );
   res.status(200).json({ status: 'success', data: { order } });
 });

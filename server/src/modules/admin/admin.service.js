@@ -609,6 +609,7 @@ exports.updateOrderStatus = async (orderId, status, adminId, additionalData = {}
     const updatePayload = { status };
     if (additionalData.awbCode !== undefined) updatePayload.awbCode = additionalData.awbCode;
     if (additionalData.courierName !== undefined) updatePayload.courierName = additionalData.courierName;
+    if (additionalData.shippingAddress !== undefined) updatePayload.shippingAddress = additionalData.shippingAddress;
 
     const updated = await tx.order.update({
       where: { id: orderId },
@@ -619,7 +620,8 @@ exports.updateOrderStatus = async (orderId, status, adminId, additionalData = {}
       oldStatus: order.status, 
       newStatus: status,
       awbCode: additionalData.awbCode,
-      courierName: additionalData.courierName
+      courierName: additionalData.courierName,
+      shippingAddressUpdated: !!additionalData.shippingAddress
     });
     return updated;
   });

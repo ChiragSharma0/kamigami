@@ -19,6 +19,28 @@ const OrderDetailPage = () => {
   // Collapse/Expand state for the tracker
   const [isTrackerCollapsed, setIsTrackerCollapsed] = useState(false);
   const [showEmbeddedTracker, setShowEmbeddedTracker] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  const handleCancelOrder = async () => {
+    if (!window.confirm("Are you sure you want to cancel this order? This action cannot be undone and will trigger inventory releases/refunds.")) {
+      return;
+    }
+    
+    try {
+      setIsCancelling(true);
+      const res = await api.post(`/orders/${order_id}/cancel`);
+      const updatedOrder = res.data?.data || res.data;
+      if (updatedOrder) {
+        setOrder(updatedOrder);
+        alert("Order successfully cancelled.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Failed to cancel order. Please contact support.");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -122,7 +144,7 @@ const OrderDetailPage = () => {
         </div>
 
         {/* Header Summary */}
-        <header className="details-header">
+        <header className="details-header flex-header-row">
           <div>
             <span className="order-badge">VESTMENTS MANIFESTATION</span>
             <h1 className="order-id-title">ORDER #{order.orderNumber}</h1>
@@ -132,6 +154,17 @@ const OrderDetailPage = () => {
               {etaText && <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>🚚 {etaText}</span>}
             </div>
           </div>
+          {['PENDING', 'PAID', 'PROCESSING'].includes(status) && (
+            <div className="header-actions">
+              <button 
+                onClick={handleCancelOrder} 
+                disabled={isCancelling}
+                className="cancel-order-button-header"
+              >
+                {isCancelling ? "Cancelling..." : "Cancel Order"}
+              </button>
+            </div>
+          )}
         </header>
 
         {/* Collapsible tracker panel */}

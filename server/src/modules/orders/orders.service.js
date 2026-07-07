@@ -227,3 +227,72 @@ exports.getOrderById = async (userId, orderId) => {
 
   return order;
 };
+
+exports.cancelOrder = async (userId, orderId, reason = 'User Request') => {
+  return await prisma.$transaction(async (tx) => {
+    // 1. Fetch Order details
+    const order = await tx.order.findUnique({
+      where: { id: orderId },
+      include: { items: true }
+    });
+
+    if (!order) throw new AppError('Order not found', 404);
+    if (order.userId !== userId) throw new AppError('Unauthorized to cancel this order', 403);
+    
+    // Check constraints
+    if (['SHIPPED', 'DELIVERED', 'CANCELLED'].includes(order.status)) {
+      throw new AppError(`Order cannot be cancelled in status: ${order.status}`, 400);
+    }
+
+    // 2. Razorpay Refund (if order status is PAID or PROCESSING)
+    if (order.status === 'PAID' || order.status === 'PROCESSING') {
+      const payment = await tx.paymentEvent.findFirst({
+        where: { payload: { path: ['payment', 'entity', 'order_id'], equals: order.paymentIntentId } }
+      });
+      const paymentId = payment?.eventId || order.paymentIntentId;
+
+      if (paymentId) {
+        try {
+          // Convert total to paise (multiply by 100)
+          const amountInPaise = Math.round(parseFloat(order.totalAmount) * 100);
+          await razorpay.payments.refund(paymentId, { amount: amountInPaise });
+          console.log(`[Refund] Successfully refunded order #${order.orderNumber} via Razorpay.`);
+        } catch (refundErr) {
+          console.error(`[Refund] Failed to issue automated Razorpay refund:`, refundErr.message);
+          // Don't fail the transaction, allow manual refund log
+        }
+      }
+    }
+
+    // 3. Restore inventory levels
+    for (const item of order.items) {
+      await tx.inventory.update({
+        where: { variantId: item.variantId },
+        data: {
+          stockAvailable: { increment: item.quantity },
+          stockTotal: { increment: item.quantity }
+        }
+      });
+
+      await tx.inventoryLog.create({
+        data: {
+          variantId: item.variantId,
+          changeAmount: item.quantity,
+          reason: 'CANCELLED',
+          referenceId: order.id
+        }
+      });
+    }
+
+    // 4. Update order status
+    const updatedOrder = await tx.order.update({
+      where: { id: orderId },
+      data: { 
+        status: 'CANCELLED',
+        shipmentStatus: 'cancelled'
+      }
+    });
+
+    return updatedOrder;
+  });
+};

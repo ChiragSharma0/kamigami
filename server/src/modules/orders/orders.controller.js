@@ -32,3 +32,14 @@ exports.getOrder = asyncHandler(async (req, res) => {
     data: order
   });
 });
+
+exports.cancelOrder = asyncHandler(async (req, res) => {
+  const userId = req.user.userId;
+  const { reason } = req.body;
+  const result = await ordersService.cancelOrder(userId, req.params.id, reason);
+
+  res.status(200).json({
+    status: 'success',
+    data: result
+  });
+});
