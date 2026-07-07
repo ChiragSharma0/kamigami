@@ -31,15 +31,11 @@ services:
       dockerfile: Dockerfile
     container_name: kamigami_backend
     ports:
-      - "7000:7000"
-    volumes:
-      - ./server:/app
-      - /app/node_modules
+      - "7000:3000"
     environment:
-      - PORT=7000
+      - PORT=3000
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/kamigami
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      - REDIS_URL=redis://redis:6379
       - NODE_ENV=production
     depends_on:
       postgres:

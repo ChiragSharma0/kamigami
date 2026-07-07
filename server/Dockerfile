@@ -18,4 +18,4 @@ COPY . .
 EXPOSE 3000
 
 # Generate prisma client and start the app at runtime
-CMD npx prisma generate && npm run dev
+CMD npx prisma generate && npm start

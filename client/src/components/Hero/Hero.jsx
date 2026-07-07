@@ -225,7 +225,7 @@ export default function MaskVideo() {
           if (labelSpan) {
             const currentLeft = rect.left;
             const currentTop = rect.top;
-            labelSpan.textContent = `LAT:${currentLeft.toFixed(1)} / LONG:${currentTop.toFixed(1)}`;
+            labelSpan.textContent = `X:${currentLeft.toFixed(0)}/Y:${currentTop.toFixed(0)}`;
           }
         },
       });
@@ -275,7 +275,7 @@ export default function MaskVideo() {
             }}
           >
             <span className="coord-label">
-              [{i + 1}] LAT:{(parseFloat(box.left) || i * 15).toFixed(1)} / LONG:{(parseFloat(box.top) || i * 20).toFixed(1)}
+              X:{(parseFloat(box.left) || i * 15).toFixed(0)}/Y:{(parseFloat(box.top) || i * 20).toFixed(0)}
             </span>
             <div className="corners"></div>
             <canvas />
