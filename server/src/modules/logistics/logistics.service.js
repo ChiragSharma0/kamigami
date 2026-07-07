@@ -94,7 +94,11 @@ exports.createShipment = async (adminId, orderId) => {
 
     return updatedOrder;
   } catch (err) {
-    console.error('[Logistics] API Error:', err.message);
+    if (err.response?.data) {
+      console.error('❌ [Logistics] Shiprocket API Rejected Payload:', JSON.stringify(err.response.data, null, 2));
+    } else {
+      console.error('[Logistics] API Error:', err.message);
+    }
     throw new AppError(`Shiprocket API failed: ${err.message}`, 502);
   }
 };
