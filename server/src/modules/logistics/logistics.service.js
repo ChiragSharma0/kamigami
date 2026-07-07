@@ -3,13 +3,21 @@ const shiprocket = require('./logistics.provider');
 const AppError = require('../../common/errors/AppError');
 
 exports.createShipment = async (adminId, orderId) => {
+  console.log(`[Logistics Service] 🚀 Step 1: Starting shipment generation for Order ID: ${orderId}`);
+
   // 1. Fetch Order with Items and Address
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: { items: true, user: true }
   });
 
-  if (!order) throw new AppError('Order not found', 404);
+  if (!order) {
+    console.error(`[Logistics Service] ❌ Order not found: ${orderId}`);
+    throw new AppError('Order not found', 404);
+  }
+  
+  console.log(`[Logistics Service] ✅ Step 2: Loaded order #${order.orderNumber}. Status: ${order.status}`);
+
   if (order.status !== 'PAID' && order.status !== 'PROCESSING') {
     throw new AppError('Order must be PAID or PROCESSING to create shipment', 400);
   }
@@ -29,6 +37,7 @@ exports.createShipment = async (adminId, orderId) => {
   };
 
   const billingPhone = sanitizePhone(shippingAddr?.phoneNumber || order.user?.phoneNumber);
+  console.log(`[Logistics Service] 📱 Step 3: Sanitized phone for Shiprocket: ${billingPhone}`);
 
   // 2. Transform into Shiprocket Payload
   const shiprocketPayload = {
@@ -60,15 +69,24 @@ exports.createShipment = async (adminId, orderId) => {
     weight: 0.5
   };
 
+  console.log(`[Logistics Service] 📦 Step 4: Constructed Shiprocket Payload:\n`, JSON.stringify(shiprocketPayload, null, 2));
+
   try {
     // 3. Call Shiprocket API
+    console.log(`[Logistics Service] 📡 Step 5: Sending request to Shiprocket to create order...`);
     const srOrder = await shiprocket.createOrder(shiprocketPayload);
+    console.log(`[Logistics Service] 📥 Step 6: Shiprocket order created successfully! Response:\n`, JSON.stringify(srOrder, null, 2));
+    
     const shipmentId = srOrder.shipment_id;
+    console.log(`[Logistics Service] 📡 Step 7: Requesting AWB code assignment for Shipment ID: ${shipmentId}`);
 
     // 4. Assign AWB
     const awbResult = await shiprocket.assignAWB(shipmentId);
+    console.log(`[Logistics Service] 📥 Step 8: AWB Assignment Response:\n`, JSON.stringify(awbResult, null, 2));
+
     const awbCode = awbResult.response.data.awb_code;
     const courierName = awbResult.response.data.courier_name;
+    console.log(`[Logistics Service] 🎯 Step 9: AWB assigned! Code: ${awbCode}, Courier: ${courierName}`);
 
     // 5. Update Order in DB
     const updatedOrder = await prisma.order.update({
@@ -82,13 +100,15 @@ exports.createShipment = async (adminId, orderId) => {
       }
     });
 
+    console.log(`[Logistics Service] 🎉 Step 10: Storefront database updated! Shipment registration complete.`);
+
     // 6. Admin Log
     await prisma.adminLog.create({
       data: {
-        adminId,
+        adminId: adminId || null,
         action: 'create_shipment',
         entityId: orderId,
-        metadata: { awbCode, provider: 'shiprocket' }
+        details: { awbCode, courierName, shipmentId }
       }
     });
 
