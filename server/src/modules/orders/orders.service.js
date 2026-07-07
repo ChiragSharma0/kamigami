@@ -293,14 +293,14 @@ exports.cancelOrder = async (userId, orderId, reason = 'User Request') => {
       }
     });
 
-    // 5. Cancel on Shiprocket if registered
-    if (order.awbCode) {
+    // 5. Cancel on Shiprocket if order was previously paid/processing
+    if (order.status === 'PAID' || order.status === 'PROCESSING' || order.awbCode) {
       try {
         const shiprocket = require('../logistics/logistics.provider');
         await shiprocket.cancelOrder(order.orderNumber);
         console.log(`[Shiprocket] Cancelled order #${order.orderNumber} successfully.`);
       } catch (shiprocketErr) {
-        console.error(`[Shiprocket] Failed to cancel order #${order.orderNumber}:`, shiprocketErr.message);
+        console.warn(`[Shiprocket] Cancel request sent but skipped (order might not be in Shiprocket dashboard yet):`, shiprocketErr.message);
       }
     }
 
