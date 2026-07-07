@@ -93,6 +93,20 @@ class ShiprocketProvider {
     }
   }
 
+  async getOrderDetails(orderNumber) {
+    const token = await this.authenticate();
+    try {
+      const response = await axios.get(`${this.baseUrl}/orders/show/adhoc`, {
+        params: { channel_order_id: orderNumber },
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data;
+    } catch (err) {
+      console.error('[Shiprocket] Fetch order details failed:', err.response?.data || err.message);
+      throw err;
+    }
+  }
+
   async getServiceability(pickupPostcode, deliveryPostcode) {
     const token = await this.authenticate();
     

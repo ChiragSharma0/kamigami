@@ -214,7 +214,7 @@ exports.getUserOrders = async (userId) => {
 };
 
 exports.getOrderById = async (userId, orderId) => {
-  const order = await prisma.order.findUnique({
+  let order = await prisma.order.findUnique({
     where: { id: orderId },
     include: {
       items: true
@@ -223,6 +223,39 @@ exports.getOrderById = async (userId, orderId) => {
 
   if (!order || order.userId !== userId) {
     throw new AppError('Order not found', 404);
+  }
+
+  // Auto-sync AWB tracking credentials from Shiprocket if missing
+  if (!order.awbCode && ['PAID', 'PROCESSING'].includes(order.status)) {
+    try {
+      const shiprocket = require('../logistics/logistics.provider');
+      const srOrderData = await shiprocket.getOrderDetails(order.orderNumber);
+      
+      // Check if Shiprocket has shipment/AWB assigned
+      const srOrder = srOrderData?.data || srOrderData;
+      if (srOrder && srOrder.shipments && srOrder.shipments.length > 0) {
+        const shipment = srOrder.shipments[0];
+        const awbCode = shipment.awb_code;
+        const courierName = shipment.courier_name;
+
+        if (awbCode) {
+          order = await prisma.order.update({
+            where: { id: orderId },
+            data: {
+              awbCode,
+              courierName: courierName || 'Express Partner',
+              shipmentStatus: 'shipped',
+              status: 'SHIPPED',
+              trackingUrl: `https://shiprocket.co/tracking/${awbCode}`
+            },
+            include: { items: true }
+          });
+          console.log(`[AutoSync] AWB code ${awbCode} automatically fetched and updated for Order #${order.orderNumber}`);
+        }
+      }
+    } catch (err) {
+      console.warn(`[AutoSync] Could not auto-sync Shiprocket AWB for Order #${order.orderNumber}:`, err.message);
+    }
   }
 
   return order;
