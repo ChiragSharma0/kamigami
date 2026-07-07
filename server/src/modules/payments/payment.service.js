@@ -281,6 +281,16 @@ exports.verifyPaymentSignature = async (userId, data) => {
     });
     console.log('[PaymentVerify] ✅ Inventory restored, order marked FAILED.');
 
+    // Compensation Step A.1: If order was created in Shiprocket before crashing, cancel it there
+    try {
+      const shiprocket = require('../logistics/logistics.provider');
+      console.log(`[PaymentVerify] 📡 Requesting Shiprocket cancellation for order #${order.orderNumber}...`);
+      await shiprocket.cancelOrder(order.orderNumber);
+      console.log(`[PaymentVerify] ✅ Shiprocket order #${order.orderNumber} successfully cancelled.`);
+    } catch (cancelErr) {
+      console.error('[PaymentVerify] ⚠️ Shiprocket order cancellation failed or order was not created:', cancelErr.message);
+    }
+
     // Compensation Step B: Issue Razorpay refund
     try {
       const Razorpay = require('razorpay');
