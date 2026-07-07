@@ -18,6 +18,7 @@ const OrderDetailPage = () => {
   
   // Collapse/Expand state for the tracker
   const [isTrackerCollapsed, setIsTrackerCollapsed] = useState(false);
+  const [showEmbeddedTracker, setShowEmbeddedTracker] = useState(false);
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -177,7 +178,7 @@ const OrderDetailPage = () => {
               {/* Mobile Progress Tracker (Vertical) */}
               <div className="mobile-tracker-timeline">
                 {steps.map((step, idx) => (
-                  <div key={idx} className={`mobile-timeline-step ${step.active ? 'active' : ''}`}>
+                   <div key={idx} className={`mobile-timeline-step ${step.active ? 'active' : ''}`}>
                     <div className="step-indicator-col">
                       <div className="step-node-dot" />
                       {idx !== steps.length - 1 && (
@@ -191,6 +192,47 @@ const OrderDetailPage = () => {
                   </div>
                 ))}
               </div>
+
+              {/* Shiprocket Tracker Quick Action Buttons */}
+              {order.awbCode && (
+                <div className="tracking-action-panel">
+                  <div className="tracking-info-text">
+                    <p className="awb-label">AWB Tracking Code: <span className="highlight-code">{order.awbCode}</span></p>
+                    <p className="courier-label">Courier Partner: <span>{order.courierName || "Kamigami Express"}</span></p>
+                  </div>
+                  
+                  <div className="tracking-buttons-group">
+                    <button 
+                      onClick={() => setShowEmbeddedTracker(!showEmbeddedTracker)} 
+                      className={`tracking-btn secondary-btn ${showEmbeddedTracker ? 'active' : ''}`}
+                    >
+                      {showEmbeddedTracker ? "Hide Live Frame" : "Track On Page"}
+                    </button>
+                    <a 
+                      href={`https://shiprocket.co/tracking/${order.awbCode}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="tracking-btn primary-btn"
+                    >
+                      Track Off Page (Direct Link)
+                    </a>
+                  </div>
+
+                  {showEmbeddedTracker && (
+                    <div className="embedded-tracking-frame-container animate-fade">
+                      <div className="frame-header">
+                        <span>LIVE CARRIER LOGISTICS FEED</span>
+                      </div>
+                      <iframe 
+                        src={`https://shiprocket.co/tracking/${order.awbCode}`}
+                        title="Carrier Tracking Portal"
+                        className="tracking-iframe"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </section>

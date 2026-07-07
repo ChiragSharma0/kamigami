@@ -591,3 +591,109 @@
     padding: 32px 20px;
   }
 }
+
+/* Shiprocket Tracking Panel */
+.tracking-action-panel {
+  margin-top: 32px;
+  border-top: 1px solid #18181b;
+  padding-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tracking-info-text {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 12px;
+  color: #a1a1aa;
+}
+
+.tracking-info-text p {
+  margin: 0;
+}
+
+.tracking-info-text .highlight-code {
+  color: #ef4444;
+  font-family: monospace;
+  font-weight: 800;
+  background: rgba(239, 68, 68, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.tracking-info-text .courier-label span {
+  color: #fff;
+  font-weight: 700;
+}
+
+.tracking-buttons-group {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tracking-btn {
+  padding: 10px 18px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+
+.tracking-btn.primary-btn {
+  background: #ef4444;
+  color: #fff;
+}
+
+.tracking-btn.primary-btn:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.tracking-btn.secondary-btn {
+  background: #18181b;
+  border: 1px solid #27272a;
+  color: #a1a1aa;
+}
+
+.tracking-btn.secondary-btn:hover, .tracking-btn.secondary-btn.active {
+  background: #27272a;
+  color: #fff;
+  border-color: #52525b;
+}
+
+.embedded-tracking-frame-container {
+  border: 1px solid #18181b;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 12px;
+  background: #000;
+}
+
+.embedded-tracking-frame-container .frame-header {
+  background: #09090b;
+  border-bottom: 1px solid #18181b;
+  padding: 10px 16px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  color: #ef4444;
+}
+
+.tracking-iframe {
+  width: 100%;
+  height: 520px;
+  border: none;
+  background: #fff;
+}
+
