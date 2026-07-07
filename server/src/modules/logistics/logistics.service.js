@@ -86,8 +86,17 @@ exports.createShipment = async (adminId, orderId) => {
     const awbResult = await shiprocket.assignAWB(shipmentId);
     console.log(`[Logistics Service] 📥 Step 8: AWB Assignment Response:\n`, JSON.stringify(awbResult, null, 2));
 
-    const awbCode = awbResult.response.data.awb_code;
-    const courierName = awbResult.response.data.courier_name;
+    const awbCode = awbResult.response?.data?.awb_code;
+    const courierName = awbResult.response?.data?.courier_name;
+    const awbAssignStatus = awbResult.awb_assign_status;
+    const awbError = awbResult.response?.data?.awb_assign_error || awbResult.message;
+
+    // Validate AWB was actually assigned - status 0 means failure
+    if (!awbCode || awbAssignStatus === 0) {
+      console.error(`[Logistics Service] ❌ AWB assignment failed: ${awbError}`);
+      throw new Error(awbError || 'AWB assignment failed. Please check your Shiprocket wallet balance.');
+    }
+
     console.log(`[Logistics Service] 🎯 Step 9: AWB assigned! Code: ${awbCode}, Courier: ${courierName}`);
 
     // 5. Update Order in DB
@@ -104,10 +113,10 @@ exports.createShipment = async (adminId, orderId) => {
 
     console.log(`[Logistics Service] 🎉 Step 10: Storefront database updated! Shipment registration complete.`);
 
-    // 6. Admin Log
+    // 6. Admin Log (use relation connect only when adminId is provided)
     await prisma.adminLog.create({
       data: {
-        adminId: adminId || null,
+        ...(adminId ? { admin: { connect: { id: adminId } } } : {}),
         action: 'create_shipment',
         entityId: orderId,
         details: { awbCode, courierName, shipmentId }
