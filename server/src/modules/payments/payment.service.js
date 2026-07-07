@@ -116,6 +116,26 @@ async function handlePaymentSuccess(order, payload) {
 
     return { status: 'processed_success' };
   });
+
+  // F. Trigger automated Shiprocket shipping dispatch after transaction completes successfully
+  const logisticsService = require('../logistics/logistics.service');
+  try {
+    const shipmentResult = await logisticsService.createShipment(null, order.id);
+    console.log('[PaymentSuccess] Shiprocket order created successfully!', shipmentResult.awbCode);
+  } catch (shipmentErr) {
+    console.warn('[PaymentSuccess] Shiprocket dispatch failed, assigning local mock fallback:', shipmentErr.message);
+    const awbCode = `SR-MOCK-${Math.floor(100000 + Math.random() * 900000)}`;
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        awbCode,
+        courierName: 'Shiprocket Mock Express',
+        shipmentStatus: 'shipped',
+        status: 'SHIPPED',
+        trackingUrl: `https://shiprocket.co/tracking/${awbCode}`
+      }
+    });
+  }
 }
 
 async function handlePaymentFailure(order, payload) {
@@ -260,26 +280,11 @@ exports.verifyPaymentSignature = async (userId, data) => {
   
   await handlePaymentSuccess(order, mockPayload);
 
-  // 4. Trigger automated Shiprocket shipping dispatch
-  let shipmentResult = null;
-  try {
-    shipmentResult = await logisticsService.createShipment(null, order.id);
-    console.log('[PaymentVerify] Shiprocket order created successfully!');
-  } catch (shipmentErr) {
-    console.warn('[PaymentVerify] Shiprocket dispatch failed, using local mock fallback:', shipmentErr.message);
-    const awbCode = `SR-MOCK-${Math.floor(100000 + Math.random() * 900000)}`;
-    shipmentResult = await prisma.order.update({
-      where: { id: order.id },
-      data: {
-        awbCode,
-        courierName: 'Shiprocket Mock Express',
-        shipmentStatus: 'shipped',
-        status: 'SHIPPED',
-        trackingUrl: `https://shiprocket.co/tracking/${awbCode}`
-      }
-    });
-  }
+  // 4. Fetch the updated order containing AWB and courier details
+  const updatedOrder = await prisma.order.findUnique({
+    where: { id: order.id }
+  });
 
-  return { status: 'verification_success', order: shipmentResult };
+  return { status: 'verification_success', order: updatedOrder };
 };
 
