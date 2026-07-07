@@ -47,10 +47,10 @@ const ProductDetails = () => {
         if (p) {
           let image = SoonImage;
           if (p.media && p.media.length > 0) {
-            const firstImage = p.media.find(m => m.media && m.media.type !== 'video');
-            if (firstImage && firstImage.media.url) {
+            const firstImage = p.media.find(m => m?.media && m?.media?.type !== 'video');
+            if (firstImage?.media?.url) {
               image = firstImage.media.url;
-            } else if (p.media[0].media && p.media[0].media.url) {
+            } else if (p.media[0]?.media?.url) {
               image = p.media[0].media.url;
             }
           }
@@ -153,7 +153,7 @@ const ProductDetails = () => {
       return [product.image, product.image, product.image];
     }
 
-    const allMedia = product.media.map(m => m.media || m).filter(Boolean);
+    const allMedia = product.media.map(m => m?.media || m).filter(m => m && m.url);
 
     if (selectedColor && product.metadata?.colorMedia?.[selectedColor]) {
       const colorMediaIds = product.metadata.colorMedia[selectedColor] || [];

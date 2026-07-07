@@ -207,7 +207,7 @@ exports.processMockPaymentSuccess = async (orderId) => {
     console.error('[MockPayment] Shiprocket dispatch failed:', shipmentErr.message);
     throw new AppError(`Logistics dispatch failed: ${shipmentErr.message || 'Courier partner rejected details'}`, 422);
   }
-  }
+  
 };
 
 exports.verifyPaymentSignature = async (userId, data) => {
