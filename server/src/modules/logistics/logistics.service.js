@@ -119,7 +119,7 @@ exports.createShipment = async (adminId, orderId) => {
         ...(adminId ? { admin: { connect: { id: adminId } } } : {}),
         action: 'create_shipment',
         entityId: orderId,
-        details: { awbCode, courierName, shipmentId }
+        metadata: { awbCode, courierName, shipmentId }
       }
     });
 
