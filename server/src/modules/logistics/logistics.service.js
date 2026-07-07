@@ -25,13 +25,15 @@ exports.createShipment = async (adminId, orderId) => {
   const shippingAddr = order.shippingAddress;
 
   const sanitizePhone = (phone) => {
-    if (!phone) return '9354029285';
+    if (!phone) {
+      throw new AppError('A valid phone number is required to book a shipment.', 400);
+    }
     let cleaned = phone.toString().replace(/\D/g, '');
     if (cleaned.length === 12 && cleaned.startsWith('91')) {
       cleaned = cleaned.substring(2);
     }
     if (cleaned.length < 10) {
-      return '9354029285';
+      throw new AppError('Phone number must be a valid 10-digit number for courier booking.', 400);
     }
     return cleaned.slice(-10);
   };
