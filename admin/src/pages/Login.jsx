@@ -5,8 +5,8 @@ import useAuthStore from '../store/authStore';
 import toast from 'react-hot-toast';
 
 const Login = () => {
-  const [email, setEmail] = useState('admin@kamigami.com');
-  const [password, setPassword] = useState('adminpassword@234');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const login = useAuthStore(state => state.login);
   const isLoading = useAuthStore(state => state.isLoading);
   const navigate = useNavigate();
