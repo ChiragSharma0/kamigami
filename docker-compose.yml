@@ -53,7 +53,7 @@ services:
       - "7500:5432"
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PASSWORD=postgres_password_kamigami
       - POSTGRES_DB=kamigami
     volumes:
       - postgres_data:/var/lib/postgresql/data
