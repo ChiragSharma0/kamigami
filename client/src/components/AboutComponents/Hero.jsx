@@ -12,7 +12,7 @@ const DEFAULT_ABOUT_PAGE = {
   heroTitle: "reawak<b>e</b>n",
   heroText: "Enter the Realm of Shadows <br /> Unleash Your Dark Identity",
   heroBtnText: "EXPLORE COLLECTION",
-  heroVideoCount: 4
+  heroVideoCount: 1
 };
 
 gsap.registerPlugin(ScrollTrigger);
@@ -105,7 +105,11 @@ const Hero = () => {
 
   const getVideoSrc = (index) => {
     const customUrl = aboutPageData[`heroVideo${index}`];
-    return customUrl || `videos/hero-${index}.mp4`;
+    if (customUrl) return customUrl;
+    if (aboutPageData.heroVideoCount === 1 || index === 1) {
+      return 'videos/about_compressed.mp4';
+    }
+    return `videos/hero-${index}.mp4`;
   };
 
   return (
