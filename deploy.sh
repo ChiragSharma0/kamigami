@@ -19,8 +19,8 @@ docker compose up -d --build
 # 3. Run Database Migrations
 echo "🗄️ Step 3: Applying database migrations via Prisma..."
 # Wait for postgres container health status to settle
-echo "Waiting 5 seconds for Postgres DB startup..."
-sleep 5
+echo "Waiting 20 seconds for Postgres DB startup..."
+sleep 20
 docker compose exec -T backend npx prisma migrate deploy
 
 # 4. Reload Host Nginx Proxy (if applicable)
