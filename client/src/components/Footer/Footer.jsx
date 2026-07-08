@@ -5,11 +5,10 @@ import "./Module.css"
 
 const LINKS = {
   connectWithUs: [
-    { label: "Call", href: "#" },
-    { label: "Text (WhatsApp)", href: "#" },
+    { label: "Call", href: "tel:+917383240089" },
+    { label: "Text (WhatsApp)", href: "https://wa.me/917383240089" },
     { label: "Instagram", href: "https://www.instagram.com/kamigami.in?igsh=MTczdDMwZndsam9rcA%3D%3D&utm_source=qr" },
     { label: "Youtube", href: "https://www.youtube.com/@joinkamigami?si=9VEG_MUp4ImJc83_" },
-
   ],
   orderSupport: [
     { label: "Make a return/Exchange", href: "/returns" },
