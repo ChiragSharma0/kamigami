@@ -21,7 +21,7 @@ const PageMeta = ({ title, description, keywords, image, canonicalPath }) => {
   const defaultKeywords = 
     "kamigami, Japanese streetwear, luxury fashion, graphic hoodies, oversized tees, streetwear brand, premium apparel, street style";
 
-  const siteUrl = "https://kamigami.com";
+  const siteUrl = "https://kamigami.in";
   const canonicalUrl = `${siteUrl}${canonicalPath || (typeof window !== "undefined" ? window.location.pathname : "")}`;
 
   return (

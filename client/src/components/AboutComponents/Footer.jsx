@@ -28,7 +28,7 @@ const Footer = () => {
             clipClass="absolute md:scale-125"
           />
           <ImageClipBox
-            src="/img/swordman.webp"
+            src="/img/about_right.webp"
             clipClass="sword-man-clip-path md:scale-125"
           />
         </div>
